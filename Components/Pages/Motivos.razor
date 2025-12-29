@@ -1,0 +1,178 @@
+﻿@page "/motivos"
+
+@using HsqvLogistica.Components.Pages.Dialogs
+@using HsqvLogistica.Models.DTOs.Motivos
+@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
+
+@inject IMotivoService MotivoService
+@inject IDialogService DialogService
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+
+    <!-- HEADER -->
+    <MudStack Row="true"
+              AlignItems="AlignItems.Center"
+              Justify="Justify.SpaceBetween"
+              Class="mb-4">
+
+        <MudText Typo="Typo.h5">
+            Mantenimiento · Motivos de Movimiento
+        </MudText>
+
+        <MudButton Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   Color="Color.Primary"
+                   OnClick="OpenCreateDialog">
+            Nuevo Motivo
+        </MudButton>
+    </MudStack>
+
+    <!-- TABLA -->
+    <MudPaper Elevation="2" Class="pa-4">
+
+        <MudTable Items="_motivos"
+                  Dense="true"
+                  Hover="true"
+                  Striped="true"
+                  Filter="FilterMotivos"
+                  Loading="_loading">
+
+            <ToolBarContent>
+                <MudTextField @bind-Value="_search"
+                              Placeholder="Buscar motivo..."
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search" />
+            </ToolBarContent>
+
+            <HeaderContent>
+                <MudTh>Id</MudTh>
+                <MudTh>Descripción</MudTh>
+                <MudTh>Tipo</MudTh>
+                <MudTh>Estado</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+
+            <RowTemplate Context="row">
+                <MudTd>@row.Id</MudTd>
+
+                <MudTd>@row.Descripcion</MudTd>
+
+                <!-- TIPO ING / SAL -->
+                <MudTd>
+                    <MudChip T="string" Color="@(row.TipoMov == "ING" ? Color.Info : Color.Warning)"
+                             Variant="Variant.Filled"
+                             Size="Size.Small">
+                        @row.TipoMov
+                    </MudChip>
+                </MudTd>
+
+                <!-- ESTADO -->
+                <MudTd>
+                    <MudChip T="string" Color="@(row.Activo == true ? Color.Success : Color.Error)"
+                             Variant="Variant.Filled"
+                             Size="Size.Small">
+                        @(row.Activo == true ? "Activo" : "Inactivo")
+                    </MudChip>
+                </MudTd>
+
+                <!-- ACCIONES -->
+                <MudTd Align="Align.Right">
+
+                    <!-- EDITAR (solo si activo) -->
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                   Color="Color.Primary"
+                                   Disabled="@(row.Activo == false)"
+                                   OnClick="@(() => OpenEditDialog(row))" />
+
+                    <!-- ACTIVAR / DESACTIVAR -->
+                    <MudIconButton Icon="@(row.Activo == true
+                                            ? Icons.Material.Filled.Block
+                                            : Icons.Material.Filled.CheckCircle)"
+                                   Color="Color.Error"
+                                   OnClick="@(() => ToggleMotivo(row))" />
+                </MudTd>
+            </RowTemplate>
+
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+
+        </MudTable>
+
+    </MudPaper>
+
+</MudContainer>
+
+@code {
+
+    List<MotivoDto> _motivos = new();
+    bool _loading;
+    string? _search;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        _loading = true;
+        _motivos = (await MotivoService.GetAllAsync()).ToList();
+        _loading = false;
+    }
+
+    bool FilterMotivos(MotivoDto motivo)
+    {
+        if (string.IsNullOrWhiteSpace(_search))
+            return true;
+
+        return motivo.Descripcion?
+            .Contains(_search, StringComparison.OrdinalIgnoreCase) == true;
+    }
+
+    async Task OpenCreateDialog()
+    {
+        var dialog = DialogService.Show<MotivoDialog>(
+            "Nuevo Motivo",
+            new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true });
+
+        var result = await dialog.Result;
+        if (!result.Canceled)
+            await LoadData();
+    }
+
+    async Task OpenEditDialog(MotivoDto motivo)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Motivo", motivo }
+        };
+
+        var dialog = DialogService.Show<MotivoDialog>(
+            "Editar Motivo",
+            parameters,
+            new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true });
+
+        var result = await dialog.Result;
+        if (!result.Canceled)
+            await LoadData();
+    }
+
+    async Task ToggleMotivo(MotivoDto motivo)
+    {
+        bool? confirm = await DialogService.ShowMessageBox(
+            "Confirmar",
+            motivo.Activo == true
+                ? "¿Desea desactivar el motivo?"
+                : "¿Desea activar el motivo?",
+            yesText: "Sí",
+            cancelText: "Cancelar");
+
+        if (confirm == true)
+        {
+            await MotivoService.ToggleAsync(motivo.Id);
+            await LoadData();
+        }
+    }
+}

@@ -1,0 +1,107 @@
+﻿@page "/clientes"
+@using HsqvLogistica.Components.Pages.Dialogs
+@using HsqvLogistica.Integrations.Models.Clientes
+@using HsqvLogistica.Integrations.Clients.Interfaces
+@using MudBlazor
+
+@inject IClienteApiClient ClienteApi
+@inject IDialogService DialogService
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+
+    <MudText Typo="Typo.h5" Class="mb-4">
+        Mantenimiento · Clientes
+    </MudText>
+
+    <MudPaper Elevation="2" Class="pa-4">
+
+        <MudTable Items="_clientes"
+                  Dense="true"
+                  Hover="true"
+                  Striped="true"
+                  Filter="FilterClientes"
+                  Loading="_loading">
+
+            <ToolBarContent>
+                <MudTextField @bind-Value="_search"
+                              Placeholder="Buscar cliente..."
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search" />
+            </ToolBarContent>
+
+            <HeaderContent>
+                <MudTh>Id</MudTh>
+                <MudTh>Cliente</MudTh>
+                <MudTh>Documento</MudTh>
+                <MudTh>Celular</MudTh>
+                <MudTh>Distrito</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+
+            <RowTemplate Context="row">
+                <MudTd>@row.IdCliente</MudTd>
+                <MudTd>@row.NombresApellidos</MudTd>
+                <MudTd>@row.NroDoc</MudTd>
+                <MudTd>@row.Celular</MudTd>
+                <MudTd>@row.Distrito</MudTd>
+
+                <MudTd Align="Align.Right">
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                   Color="Color.Info"
+                                   OnClick="@(() => OpenDetalle(row.IdCliente))" />
+                </MudTd>
+            </RowTemplate>
+
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+
+        </MudTable>
+
+    </MudPaper>
+
+</MudContainer>
+
+@code {
+
+    private List<ClienteLookupDto> _clientes = new();
+    private bool _loading;
+    private string? _search;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loading = true;
+        _clientes = await ClienteApi.GetClientesAsync();
+        _loading = false;
+    }
+
+    private bool FilterClientes(ClienteLookupDto cliente)
+    {
+        if (string.IsNullOrWhiteSpace(_search))
+            return true;
+
+        return cliente.NombresApellidos?.Contains(_search, StringComparison.OrdinalIgnoreCase) == true
+            || cliente.NroDoc?.Contains(_search, StringComparison.OrdinalIgnoreCase) == true;
+    }
+
+    private async Task OpenDetalle(int idCliente)
+    {
+        var cliente = await ClienteApi.GetByIdAsync(idCliente);
+        if (cliente is null) return;
+
+        var parameters = new DialogParameters
+        {
+            { "Cliente", cliente }
+        };
+
+        DialogService.Show<ClienteDetalleDialog>(
+            "Detalle del Cliente",
+            parameters,
+            new DialogOptions
+            {
+                CloseButton = true,
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true
+            });
+    }
+}

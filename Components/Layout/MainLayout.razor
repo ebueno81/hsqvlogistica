@@ -1,0 +1,60 @@
+﻿@using MudBlazor
+@inherits LayoutComponentBase
+@inject NavigationManager Nav
+@inject IDialogService DialogService
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                       Color="Color.Inherit"
+                       Edge="Edge.Start"
+                       OnClick="@((e) => DrawerToggle())" />
+        
+        <MudText Typo="Typo.h5" Class="ml-3">Application</MudText>
+
+        <MudSpacer />
+
+        <MudInputLabel>Admin</MudInputLabel>
+        <MudIconButton Icon="@Icons.Material.Filled.SupervisedUserCircle" Color="Color.Inherit" />
+        <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" OnClick="CerrarSesion" />
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen"
+               ClipMode="DrawerClipMode.Always"
+               Elevation="2">
+        <NavMenu />
+    </MudDrawer>
+
+    <MudMainContent Class="pa-18" TopMargin="true">
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    bool _drawerOpen = true;
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    async Task CerrarSesion()
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Confirmar",
+            "¿Desea cerrar sesión?",
+            yesText: "Salir",
+            cancelText: "Cancelar",
+            options: new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true }
+        );
+
+        if (result == true)
+            Nav.NavigateTo("/login", forceLoad: true);
+    }
+
+}

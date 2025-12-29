@@ -1,0 +1,157 @@
+﻿@using HsqvLogistica.Models.DTOs.Articulos
+@using HsqvLogistica.Models.DTOs.Lineas
+@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
+
+<MudDialog>
+
+    <DialogContent>
+
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+            Complete los datos del artículo
+        </MudText>
+
+        <MudForm @ref="_form">
+
+            <MudTextField Label="Código"
+                          @bind-Value="_codigo"
+                          Disabled="@_isEditMode"
+                          Required />
+
+            <MudTextField Label="Descripción"
+                          @bind-Value="_descripcion"
+                          Required />
+
+            <!-- 🔍 COMBO BUSCABLE -->
+            <MudSelect T="int"
+                       Label="Línea"
+                       @bind-Value="_idLinea"
+                       Required="true"
+                       Searchable="true"
+                       Dense="true"
+                       Clearable="true">
+
+                @foreach (var linea in Lineas)
+                {
+                    <MudSelectItem Value="@linea.Id">
+                        @linea.Descripcion
+                    </MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudTextField Label="Detalles"
+                          @bind-Value="_detalles"/>
+
+            <!-- 🖼️ RUTA IMAGEN -->
+            <MudTextField Label="Ruta de imagen"
+                          @bind-Value="_rutaImagen"
+                          Placeholder="/images/productos/ejemplo.png"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Image" />
+
+            <MudNumericField T="int" Label="Stock" @bind-Value="_stock" />
+            <MudNumericField T="decimal" Label="Precio MN" @bind-Value="_precioMn" />
+            <MudNumericField T="decimal" Label="Precio US" @bind-Value="_precioUs" />
+
+        </MudForm>
+
+
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   OnClick="Save">
+            @(_isEditMode ? "Actualizar" : "Guardar")
+        </MudButton>
+
+    </DialogActions>
+
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public ArticuloDto? Articulo { get; set; }
+    [Parameter] 
+    public List<LineaLookupDto> Lineas { get; set; } = new();
+
+    [Inject]
+    public IArticuloService ArticuloService { get; set; } = default!;
+
+    MudForm? _form;
+    bool _isEditMode;
+
+    string _codigo = string.Empty;
+    string _descripcion = string.Empty;
+    int _stock;
+    decimal _precioMn;
+    decimal _precioUs;
+    int _idLinea;
+    string _rutaImagen = string.Empty;
+    string _detalles = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        if (Articulo != null)
+        {
+            _isEditMode = true;
+            _codigo = Articulo.Codigo ?? "";
+            _descripcion = Articulo.Descripcion ?? "";
+            _stock = Articulo.Stock ?? 0;
+            _precioMn = Articulo.PrecioMn ?? 0;
+            _precioUs = Articulo.PrecioUs ?? 0;
+            _idLinea = Articulo.IdLinea ?? 0; 
+            _rutaImagen = Articulo.RutaImagen ?? "";
+        }
+    }
+
+    async Task Save()
+    {
+        if (_form is null) return;
+        await _form.Validate();
+        if (!_form.IsValid) return;
+
+        if (_isEditMode && Articulo != null)
+        {
+            await ArticuloService.UpdateAsync(
+                Articulo.Id,
+                new ArticuloUpdateDto
+                {
+                    Descripcion = _descripcion,
+                    Stock = _stock,
+                    PrecioMn = _precioMn,
+                    PrecioUs = _precioUs,
+                    RutaImagen = _rutaImagen,
+                    IdLinea = _idLinea,
+                    Detalles = _detalles,
+                    UsuaModifica = "admin"
+                });
+        }
+        else
+        {
+            await ArticuloService.CreateAsync(
+                new ArticuloCreateDto
+                {
+                    Codigo = _codigo,
+                    Descripcion = _descripcion,
+                    Stock = _stock,
+                    PrecioMn = _precioMn,
+                    PrecioUs = _precioUs,
+                    RutaImagen = _rutaImagen,
+                    IdLinea = _idLinea,
+                    Detalles = _detalles,
+                    UsuaCreacion = "admin"
+                });
+        }
+
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}

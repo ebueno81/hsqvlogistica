@@ -1,0 +1,197 @@
+﻿@page "/articulos"
+@using HsqvLogistica.Components.Pages.Dialogs
+@using HsqvLogistica.Models.DTOs.Articulos
+@using HsqvLogistica.Models.DTOs.Lineas
+@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
+
+@inject IArticuloService ArticuloService
+@inject ILineaService LineaService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+
+    <MudStack Row AlignItems="AlignItems.Center"
+              Justify="Justify.SpaceBetween"
+              Class="mb-4">
+
+        <MudText Typo="Typo.h5">
+            Mantenimiento · Artículos
+        </MudText>
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="OpenCreateDialog">
+            Nuevo Artículo
+        </MudButton>
+
+    </MudStack>
+
+    <MudPaper Elevation="2" Class="pa-4">
+
+        <MudTable Items="_articulos"
+                  Dense="true"
+                  Hover="true"
+                  Striped="true"
+                  Filter="FilterArticulos"
+                  Loading="_loading">
+
+            <ToolBarContent>
+                <MudTextField @bind-Value="_search"
+                              Placeholder="Buscar artículo..."
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search" />
+            </ToolBarContent>
+
+            <HeaderContent>
+                <MudTh>Id</MudTh>
+                <MudTh>Código</MudTh>
+                <MudTh>Descripción</MudTh>
+                <MudTh>Línea</MudTh>
+                <MudTh>Stock</MudTh>
+                <MudTh>Precio MN</MudTh>
+                <MudTh>Estado</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+
+            <RowTemplate Context="row">
+
+                <MudTd>@row.Id</MudTd>
+                <MudTd>@row.Codigo</MudTd>
+                <MudTd>@row.Descripcion</MudTd>
+                <MudTd>@row.LineaDescripcion</MudTd>
+                <MudTd>@row.Stock</MudTd>
+                <MudTd>@row.PrecioMn</MudTd>
+
+                <MudTd>
+                    <MudChip T="bool" Color="@(row.Activo == true ? Color.Success : Color.Error)"
+                             Variant="Variant.Filled"
+                             Size="Size.Small">
+                        @(row.Activo == true ? "Activo" : "Inactivo")
+                    </MudChip>
+                </MudTd>
+
+                <MudTd Align="Align.Right">
+
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                   Color="Color.Primary"
+                                   Disabled="@(row.Activo != true)"
+                                   OnClick="@(() => OpenEditDialog(row))" />
+
+                    <MudIconButton Icon="@Icons.Material.Filled.Block"
+                                   Color="Color.Error"
+                                   OnClick="@(() => ConfirmChangeStatus(row))" />
+                </MudTd>
+
+            </RowTemplate>
+
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+
+        </MudTable>
+
+    </MudPaper>
+
+</MudContainer>
+
+@code {
+
+    List<ArticuloDto> _articulos = new();
+    bool _loading;
+    string? _search;
+    List<LineaLookupDto> _lineasActivas = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _lineasActivas = (await LineaService.GetActivasAsync())
+            .Select(x => new LineaLookupDto
+            {
+                Id = x.Id,
+                Descripcion = x.Descripcion!
+            }).ToList();
+
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        _loading = true;
+        _articulos = (await ArticuloService.GetAllAsync()).ToList();
+        _loading = false;
+    }
+
+    bool FilterArticulos(ArticuloDto articulo)
+    {
+        if (string.IsNullOrWhiteSpace(_search))
+            return true;
+
+        return articulo.Descripcion?.Contains(_search,
+            StringComparison.OrdinalIgnoreCase) == true
+            || articulo.Codigo?.Contains(_search,
+            StringComparison.OrdinalIgnoreCase) == true;
+    }
+
+    async Task OpenCreateDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { "Lineas", _lineasActivas }
+        };
+
+        var dialog = DialogService.Show<ArticuloDialog>(
+            "Nuevo Artículo",
+            parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true }
+        );
+
+        var result = await dialog.Result;
+        if (!result.Canceled)
+            await LoadData();
+    }
+
+    async Task OpenEditDialog(ArticuloDto articulo)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Articulo", articulo },
+            { "Lineas", _lineasActivas }
+        };
+
+        var dialog = DialogService.Show<ArticuloDialog>(
+            "Editar Artículo",
+            parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true }
+        );
+
+        var result = await dialog.Result;
+        if (!result.Canceled)
+            await LoadData();
+    }
+
+    async Task ConfirmChangeStatus(ArticuloDto articulo)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Confirmar",
+            articulo.Activo == true
+                ? "¿Desea desactivar este artículo?"
+                : "¿Desea activar este artículo?",
+            yesText: "Sí",
+            cancelText: "Cancelar");
+
+        if (result == true)
+        {
+            await ArticuloService.ChangeStatusAsync(
+                articulo.Id,
+                !articulo.Activo.GetValueOrDefault(),
+            "admin");
+
+            Snackbar.Add("Estado actualizado correctamente",
+                Severity.Success);
+
+            await LoadData();
+        }
+    }
+}

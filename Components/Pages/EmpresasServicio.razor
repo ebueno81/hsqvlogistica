@@ -1,0 +1,108 @@
+﻿@page "/empresas-servicio"
+
+@using HsqvLogistica.Integrations.Models
+@using HsqvLogistica.Integrations.Clients.Interfaces
+@using MudBlazor
+
+@inject IEmpServApiClient EmpServApi
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+
+    <!-- HEADER -->
+    <MudStack Row="true"
+              AlignItems="AlignItems.Center"
+              Justify="Justify.SpaceBetween"
+              Class="mb-4">
+
+        <MudText Typo="Typo.h5">
+            Mantenimiento · Empresas / Servicios
+        </MudText>
+
+    </MudStack>
+
+    <MudPaper Elevation="2" Class="pa-4">
+
+        <MudTable Items="_items"
+                  Dense="true"
+                  Hover="true"
+                  Striped="true"
+                  Filter="FilterEmpServ"
+                  Loading="_loading">
+
+            <!-- TOOLBAR -->
+            <ToolBarContent>
+                <MudTextField @bind-Value="_search"
+                              Placeholder="Buscar empresa, nombre o correo..."
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              Immediate="true" />
+            </ToolBarContent>
+
+            <!-- HEADER -->
+            <HeaderContent>
+                <MudTh>ID</MudTh>
+                <MudTh>Empresa</MudTh>
+                <MudTh>Nombres</MudTh>
+                <MudTh>Correo</MudTh>
+            </HeaderContent>
+
+            <!-- ROW -->
+            <RowTemplate Context="row">
+                <MudTd>@row.IdEmpServ</MudTd>
+                <MudTd>@row.Empresa</MudTd>
+                <MudTd>@row.Nombres</MudTd>
+                <MudTd>@row.Correo</MudTd>
+            </RowTemplate>
+
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+
+        </MudTable>
+
+    </MudPaper>
+
+</MudContainer>
+
+@code {
+
+    List<EmpServLookupDto> _items = new();
+    bool _loading = true;
+    string? _search;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        try
+        {
+            _loading = true;
+            _items = await EmpServApi.GetAllAsync();
+        }
+        catch
+        {
+            Snackbar.Add(
+                "Error al cargar empresas / servicios",
+                Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    bool FilterEmpServ(EmpServLookupDto item)
+    {
+        if (string.IsNullOrWhiteSpace(_search))
+            return true;
+
+        return
+            (item.Empresa?.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (item.Nombres?.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (item.Correo?.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false);
+    }
+}

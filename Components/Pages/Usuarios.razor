@@ -1,0 +1,155 @@
+﻿@page "/usuarios"
+@using HsqvLogistica.Components.Pages.Dialogs
+@using HsqvLogistica.Models.DTOs.Usuarios
+@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
+
+@inject IUsuarioService UsuarioService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+
+    <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4">
+        <MudText Typo="Typo.h5">Mantenimiento · Usuarios</MudText>
+
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="OpenCreateDialog">
+            Nuevo Usuario
+        </MudButton>
+    </MudStack>
+
+    <MudPaper Elevation="2" Class="pa-4">
+
+        <MudTable Items="_usuarios"
+                  Dense
+                  Hover
+                  Striped
+                  Loading="_loading">
+
+            <HeaderContent>
+                <MudTh>Usuario</MudTh>
+                <MudTh>Nombres</MudTh>
+                <MudTh>Correo</MudTh>
+                <MudTh>Tipo</MudTh>
+                <MudTh Align="Right"></MudTh>
+            </HeaderContent>
+
+            <RowTemplate Context="row">
+                <MudTd>@row.Usuario</MudTd>
+                <MudTd>@row.Nombres</MudTd>
+                <MudTd>@row.Correo</MudTd>
+                <MudTd>@row.TipoUsuario</MudTd>
+
+                <MudTd Align="Align.Right">
+
+                    <!-- Editar -->
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                   Color="Color.Primary"
+                                   Disabled="@(row.Activo == false)"
+                                   OnClick="@(() => OpenEditDialog(row))" />
+
+                    <!-- Activar / Desactivar -->
+                    <MudIconButton Icon="@(row.Activo == true
+                                                          ? Icons.Material.Filled.Block   // desactivar
+                                                          : Icons.Material.Filled.CheckCircle)" // activar
+                                   Color="@(row.Activo == true
+                                                          ? Color.Error
+                                                          : Color.Success)"
+                                   OnClick="@(() => ConfirmChangeStatus(row))" />
+
+                </MudTd>
+
+            </RowTemplate>
+
+        </MudTable>
+
+    </MudPaper>
+</MudContainer>
+
+@code {
+
+    List<UsuarioDto> _usuarios = new();
+    bool _loading;
+
+    protected override async Task OnInitializedAsync()
+        => await LoadData();
+
+    async Task LoadData()
+    {
+        _loading = true;
+        _usuarios = (await UsuarioService.GetAllAsync()).ToList();
+        _loading = false;
+    }
+
+    async Task OpenCreateDialog()
+    {
+        var dialog = DialogService.Show<UsuarioDialog>(
+            "Nuevo Usuario",
+            new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+
+        if (!(await dialog.Result).Canceled)
+            await LoadData();
+    }
+
+    async Task OpenEditDialog(UsuarioDto usuario)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Usuario", usuario }
+        };
+
+        var dialog = DialogService.Show<UsuarioDialog>(
+            "Editar Usuario",
+            parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+
+        if (!(await dialog.Result).Canceled)
+            await LoadData();
+    }
+
+    async Task ConfirmChangeStatus(UsuarioDto usuario)
+    {
+        var action = usuario.Activo == true ? "desactivar" : "activar";
+
+        var result = await DialogService.ShowMessageBox(
+            "Confirmar",
+            $"¿Desea {action} el usuario \"{usuario.Usuario}\"?",
+            yesText: "Sí",
+            cancelText: "Cancelar",
+            options: new DialogOptions
+            {
+                CloseButton = true,
+                MaxWidth = MaxWidth.Small,
+                FullWidth = true
+            });
+
+        if (result == true)
+        {
+            await ChangeStatus(usuario);
+        }
+    }
+
+    async Task ChangeStatus(UsuarioDto usuario)
+    {
+        var nuevoEstado = !usuario.Activo.GetValueOrDefault();
+
+        var ok = await UsuarioService.ChangeStatusAsync(usuario.Id, nuevoEstado);
+
+        if (ok)
+        {
+            usuario.Activo = nuevoEstado;
+
+            Snackbar.Add(
+                nuevoEstado ? "Usuario activado" : "Usuario desactivado",
+                Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("No se pudo cambiar el estado", Severity.Error);
+        }
+    }
+
+}

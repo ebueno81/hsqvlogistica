@@ -1,0 +1,74 @@
+﻿@using MudBlazor
+
+<MudPaper Width="250px" Class="d-inline-flex py-3" Elevation="0">
+
+    <MudNavMenu Class="mud-width-full" Dense="true">
+
+        <MudText Typo="Typo.h6" Class="px-4">HSQV Logística</MudText>
+        <MudText Typo="Typo.body2" Class="px-4 mud-text-secondary">Menú principal</MudText>
+
+        <MudDivider Class="my-2" />
+
+        <!-- Dashboard -->
+        <MudNavLink Href="/dashboard"
+                    Match="NavLinkMatch.All"
+                    Icon="@Icons.Material.Filled.Dashboard">
+            Dashboard
+        </MudNavLink>
+
+        <!-- Mantenimiento -->
+        <MudNavGroup Title="Mantenimiento"
+                     Icon="@Icons.Material.Filled.Build"
+                     Expanded="true">
+            <MudNavLink Href="/lineas" Icon="@Icons.Material.Filled.Warehouse">
+                Líneas
+            </MudNavLink>
+            <MudNavLink Href="/articulos" Icon="@Icons.Material.Filled.Inventory">
+                Artículos
+            </MudNavLink>
+            <MudNavLink Href="/clientes" Icon="@Icons.Material.Filled.Groups">
+                Clientes
+            </MudNavLink>
+            <MudNavLink Href="/empresas-servicio" Icon="@Icons.Material.Filled.LocalShipping">
+                Transportistas
+            </MudNavLink>
+            <MudNavLink Href="/motivos" Icon="@Icons.Material.Filled.AddComment">
+                Motivos
+            </MudNavLink>
+        </MudNavGroup>
+
+        <!-- Operaciones -->
+        <MudNavGroup Title="Operaciones"
+                     Icon="@Icons.Material.Filled.SyncAlt"
+                     Expanded="true">
+            <MudNavLink Href="/pedidos" Icon="@Icons.Material.Filled.ShoppingCart">
+                Pedidos
+            </MudNavLink>
+            <MudNavLink Href="/movimientos" Icon="@Icons.Material.Filled.SwapHoriz">
+                Movimientos
+            </MudNavLink>
+            <MudNavLink Href="/garantias" Icon="@Icons.Material.Filled.AssignmentReturned">
+                Garantías
+            </MudNavLink>
+        </MudNavGroup>
+
+        <!-- Reportes -->
+        <MudNavLink Href="/reportes"
+                    Icon="@Icons.Material.Filled.BarChart">
+            Reportes
+        </MudNavLink>
+
+        <!-- Configuración -->
+        <MudNavGroup Title="Configuración"
+                     Icon="@Icons.Material.Filled.Settings"
+                     Expanded="true">
+            <MudNavLink Href="/usuarios" Icon="@Icons.Material.Filled.ManageAccounts">
+                Usuarios
+            </MudNavLink>
+            <MudNavLink Href="/empresa" Icon="@Icons.Material.Filled.Apartment">
+                Empresa
+            </MudNavLink>
+        </MudNavGroup>
+
+    </MudNavMenu>
+</MudPaper>

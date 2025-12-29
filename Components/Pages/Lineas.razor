@@ -1,0 +1,213 @@
+﻿@page "/lineas"
+@using HsqvLogistica.Components.Pages.Dialogs
+@using HsqvLogistica.Models.DTOs.Lineas
+@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
+
+@inject ILineaService LineaService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+
+    <MudStack Row="true"
+              AlignItems="AlignItems.Center"
+              Justify="Justify.SpaceBetween"
+              Class="mb-4">
+
+        <MudText Typo="Typo.h5">
+            Mantenimiento · Líneas
+        </MudText>
+
+        <MudButton Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   Color="Color.Primary"
+                   OnClick="OpenCreateDialog">
+            Nueva Línea
+        </MudButton>
+    </MudStack>
+
+    <MudPaper Elevation="2" Class="pa-4">
+
+        <MudTable Items="_lineas"
+                  Dense="true"
+                  Hover="true"
+                  Striped="true"
+                  Filter="FilterLineas"
+                  Loading="_loading">
+
+            <ToolBarContent>
+                <MudTextField @bind-Value="_search"
+                              Placeholder="Buscar línea..."
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search" />
+            </ToolBarContent>
+
+            <HeaderContent>
+                <MudTh>Id</MudTh>
+                <MudTh>Descripción</MudTh>
+                <MudTh>Estado</MudTh>
+                <MudTh></MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+
+            <RowTemplate Context="row">
+                <MudTd>@row.Id</MudTd>
+                <MudTd>@row.Descripcion</MudTd>
+                
+                <MudTd>
+                    <MudChip T="string"
+                             Color="@(row.Activo.GetValueOrDefault() ? Color.Success : Color.Error)"
+                             Variant="Variant.Filled"
+                             Size="Size.Small">
+                        @(row.Activo.GetValueOrDefault() ? "Activo" : "Inactivo")
+                    </MudChip>
+                </MudTd>
+
+                <MudTd Align="Align.Right">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                   Color="Color.Primary"
+                                   OnClick="@(() => TryOpenEditDialog(row))" />
+
+                </MudTd>
+                <MudTd Align="Align.Right">
+                    <MudIconButton Icon="@(row.Activo == true
+                                                               ? Icons.Material.Filled.Close
+                                                               : Icons.Material.Filled.Restore)"
+                                   Color="@(row.Activo == true ? Color.Error : Color.Success)"
+                                   Title="@(row.Activo == true ? "Desactivar línea" : "Activar línea")"
+                                   OnClick="@(() => ConfirmChangeStatus(row))" />
+                </MudTd>
+            </RowTemplate>
+
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+
+        </MudTable>
+
+    </MudPaper>
+
+</MudContainer>
+
+@code {
+
+    List<LineaDto> _lineas = new();
+    bool _loading;
+    string? _search;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        _loading = true;
+        _lineas = (await LineaService.GetAllAsync()).ToList();
+        _loading = false;
+    }
+
+    bool FilterLineas(LineaDto linea)
+    {
+        if (string.IsNullOrWhiteSpace(_search))
+            return true;
+
+        return linea.Descripcion?.Contains(_search,
+            StringComparison.OrdinalIgnoreCase) == true;
+    }
+
+    async Task OpenCreateDialog()
+    {
+        var options = new DialogOptions
+        {
+            CloseButton = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var dialog = DialogService.Show<LineaDialog>(
+            "Nueva Línea",
+            options
+        );
+
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData(); // recargar tabla
+        }
+    }
+
+
+    async Task OpenEditDialog(LineaDto linea)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Linea", linea }
+        };
+
+        var options = new DialogOptions
+        {
+            CloseButton = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var dialog = DialogService.Show<LineaDialog>(
+            "Editar Línea",
+            parameters,
+            options
+        );
+
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+        }
+    }
+
+    async Task ConfirmChangeStatus(LineaDto linea)
+    {
+        var accion = linea.Activo == true ? "desactivar" : "activar";
+
+        var result = await DialogService.ShowMessageBox(
+            "Confirmación",
+            $"¿Desea {accion} la línea '{linea.Descripcion}'?",
+            yesText: "Sí",
+            cancelText: "Cancelar",
+            options: new DialogOptions
+            {
+                CloseButton = true,
+                MaxWidth = MaxWidth.Small,
+                FullWidth = true
+            }
+        );
+
+        if (result == true)
+        {
+            await LineaService.ChangeStatusAsync(
+                linea.Id,
+                !(linea.Activo ?? false)
+            );
+
+            await LoadData();
+        }
+    }
+
+    private async Task TryOpenEditDialog(LineaDto linea)
+    {
+        if (linea.Activo != true)
+        {
+            Snackbar.Add(
+                "No se puede editar una línea inactiva. Actívela primero.",
+                Severity.Error
+            );
+            return;
+        }
+
+        await OpenEditDialog(linea);
+    }
+
+}

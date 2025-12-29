@@ -1,0 +1,111 @@
+﻿@using HsqvLogistica.Models.DTOs.Motivos
+@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
+@using System.Net.NetworkInformation
+
+<MudDialog>
+
+    <DialogContent>
+
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+            Complete los datos del artículo
+        </MudText>
+
+        <MudForm @ref="_form">
+
+            <MudTextField Label="Descripción"
+                          @bind-Value="_descripcion"
+                          Required="true"
+                          RequiredError="La descripción es obligatoria"
+                          Variant="Variant.Outlined"
+                          FullWidth />  
+
+            <MudSelect T="string"
+                       Label="Tipo de Movimiento"
+                       @bind-Value="_tipoMov"
+                       Required="true"
+                       Variant="Variant.Outlined"
+                       FullWidth>
+
+                <MudSelectItem Value="@("ING")">Ingreso</MudSelectItem>
+                <MudSelectItem Value="@("SAL")">Salida</MudSelectItem>
+
+            </MudSelect>
+
+
+        </MudForm>
+
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel">
+            Cancelar
+        </MudButton>
+
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   OnClick="Save">
+            Guardar
+        </MudButton>
+    </DialogActions>
+
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public MotivoDto? Motivo { get; set; }
+
+    [Inject]
+    public IMotivoService MotivoService { get; set; } = default!;
+
+    MudForm? _form;
+    bool _isEditMode;
+
+    string _descripcion = string.Empty;
+    string _tipoMov = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        if (Motivo != null)
+        {
+            _isEditMode = true;
+            _descripcion = Motivo.Descripcion ?? "";
+            _tipoMov = Motivo.TipoMov ?? "";
+        }
+    }
+
+    async Task Save()
+    {
+        if (_form is null) return;
+        await _form.Validate();
+        if (!_form.IsValid) return;
+
+        if (_isEditMode && Motivo != null)
+        {
+            await MotivoService.UpdateAsync(
+                Motivo.Id,
+                new MotivoUpdateDto
+                {
+                    Descripcion = _descripcion,
+                    TipoMov = _tipoMov
+                });
+        }
+        else
+        {
+            await MotivoService.CreateAsync(
+                new MotivoCreateDto
+                {
+                    Descripcion = _descripcion,
+                    TipoMov = _tipoMov
+                });
+        }
+
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}

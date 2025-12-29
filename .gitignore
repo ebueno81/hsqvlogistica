@@ -1,0 +1,23 @@
+# Archivos de Visual Studio
+.vs/
+*.vsidx
+
+# Archivos de configuración locales
+*.user
+*.suo
+
+# Build y binarios
+bin/
+obj/
+target/
+
+# Logs
+*.log
+
+# Configuración de IDE
+.idea/
+*.iml
+
+# Archivos temporales
+*.tmp
+*.swp

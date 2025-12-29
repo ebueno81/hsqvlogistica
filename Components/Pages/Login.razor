@@ -1,0 +1,195 @@
+﻿@page "/"
+@page "/login"
+@layout EmptyLayout
+@inject NavigationManager Nav
+@using HsqvLogistica.Components.Layout
+@using MudBlazor
+
+<MudContainer MaxWidth="MaxWidth.False" Class="login-page">
+    <MudPaper Elevation="10" Class="login-card">
+
+        <!-- Logo -->
+        <div class="logo-wrap">
+            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Large" Class="logo-icon" />
+        </div>
+
+        <MudText Typo="Typo.h5" Align="Align.Center" Class="title">Sign In</MudText>
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="subtitle">
+            Login with your Credentials.
+        </MudText>
+
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="register-line">
+            Don't have an account?
+            <MudLink Href="#" Underline="Underline.Always">Register here</MudLink>
+        </MudText>
+
+        <MudDivider Class="my-4" />
+
+        <!-- Form -->
+        <MudForm @ref="_form" Model="_model">
+            <MudTextField @bind-Value="_model.Email"
+                          Label="E-mail"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          FullWidth="true"
+                          Required="true"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@Icons.Material.Filled.MailOutline" />
+
+            <MudTextField @bind-Value="_model.Password"
+                          Label="Password"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          FullWidth="true"
+                          Required="true"
+                          InputType="@(_showPassword? InputType.Text: InputType.Password)"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@(_showPassword? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                          OnAdornmentClick="TogglePassword" />
+
+            <div class="row-between">
+                <MudCheckBox T="bool" @bind-Checked="_model.RememberMe" Label="Remember me?" Dense="true" />
+                <MudLink Href="#" Underline="Underline.Always">Forgot password?</MudLink>
+            </div>
+
+            <MudButton FullWidth="true"
+                       Size="Size.Large"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Class="mt-4"
+                       OnClick="SignIn">
+                SIGN IN
+            </MudButton>
+
+            <MudText Typo="Typo.caption" Class="helper-title mt-6">
+                FILL ADMINISTRATOR CREDENTIALS
+            </MudText>
+
+            <MudText Typo="Typo.caption" Class="helper-title mt-2">
+                FILL BASIC USER CREDENTIALS
+            </MudText>
+        </MudForm>
+
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private MudForm? _form;
+    private readonly LoginModel _model = new();
+    private bool _showPassword;
+
+    private void TogglePassword() => _showPassword = !_showPassword;
+
+    private async Task SignIn()
+    {
+        if (_form is null) return;
+
+        await _form.Validate();
+        if (!_form.IsValid) return;
+
+        // TODO: autenticar y navegar
+        Nav.NavigateTo("/home", forceLoad: true);
+    }
+
+    private sealed class LoginModel
+    {
+        public string? Email { get; set; }
+        public string? Password { get; set; }
+        public bool RememberMe { get; set; }
+    }
+}
+
+<style>
+    /* Fondo elegante */
+    .login-page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: linear-gradient(135deg, rgba(78, 84, 200, 0.20), rgba(143, 148, 251, 0.20));
+        position: relative;
+        overflow: hidden;
+    }
+
+        /* Burbujas suaves */
+        .login-page::before,
+        .login-page::after {
+            content: "";
+            position: absolute;
+            border-radius: 999px;
+            filter: blur(34px);
+            opacity: 0.80;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .login-page::before {
+            width: 460px;
+            height: 460px;
+            top: -140px;
+            left: -140px;
+            background: radial-gradient(circle at 30% 30%, rgba(98, 0, 234, 0.40), rgba(98, 0, 234, 0));
+        }
+
+        .login-page::after {
+            width: 560px;
+            height: 560px;
+            bottom: -210px;
+            right: -200px;
+            background: radial-gradient(circle at 70% 70%, rgba(33, 150, 243, 0.40), rgba(33, 150, 243, 0));
+        }
+
+    /* Tarjeta con efecto “glass” */
+    .login-card {
+        width: 420px;
+        max-width: 92vw;
+        padding: 28px 28px 22px 28px;
+        border-radius: 16px;
+        z-index: 1;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.55);
+    }
+
+    .logo-wrap {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+
+    .logo-icon {
+        font-size: 56px;
+        opacity: .92;
+    }
+
+    .title {
+        margin-top: 6px;
+        font-weight: 700;
+    }
+
+    .subtitle {
+        margin-top: 6px;
+        opacity: .75;
+    }
+
+    .register-line {
+        margin-top: 10px;
+        opacity: .85;
+    }
+
+    .row-between {
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .helper-title {
+        letter-spacing: .6px;
+        opacity: .65;
+        text-transform: uppercase;
+        text-align: left;
+    }
+</style>

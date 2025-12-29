@@ -1,0 +1,146 @@
+﻿@page "/empresa"
+@using HsqvLogistica.Integrations.Clients.Interfaces
+@using HsqvLogistica.Integrations.Models
+@using MudBlazor
+
+@inject IEmpresaApiClient _empresaApi
+@inject ISnackbar _snackBar
+@inject NavigationManager _navigationManager
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+
+    <MudPaper Elevation="4" Class="pa-6 rounded-lg">
+
+        <MudText Typo="Typo.h5" GutterBottom="true">
+            Datos Empresa
+        </MudText>
+
+        <MudGrid Spacing="3">
+
+            <!-- Empresa -->
+            <MudItem xs="12">
+                <MudTextField Label="Empresa"
+                              @bind-Value="_empresa.Empresa1"
+                              Variant="Variant.Outlined"
+                              ReadOnly="true"
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@Icons.Material.Filled.Business" />
+            </MudItem>
+
+            <!-- Documento / Teléfono / Correo -->
+            <MudItem xs="12" sm="4">
+                <MudTextField Label="Documento"
+                              @bind-Value="_empresa.NroDoc"
+                              Variant="Variant.Outlined"
+                              ReadOnly="true"
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@Icons.Material.Filled.Badge" />
+            </MudItem>
+
+            <MudItem xs="12" sm="4">
+                <MudTextField Label="Teléfono"
+                              @bind-Value="_empresa.Telefono"
+                              Variant="Variant.Outlined"
+                              ReadOnly="true"
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@Icons.Material.Filled.Phone" />
+            </MudItem>
+
+            <MudItem xs="12" sm="4">
+                <MudTextField Label="Correo"
+                              @bind-Value="_empresa.Correo"
+                              Variant="Variant.Outlined"
+                              ReadOnly="true"
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@Icons.Material.Filled.Email" />
+            </MudItem>
+
+            <!-- Dirección / Distrito -->
+            <MudItem xs="12" sm="8">
+                <MudTextField Label="Dirección"
+                              @bind-Value="_empresa.Direccion"
+                              Variant="Variant.Outlined"
+                              ReadOnly="true"
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@Icons.Material.Filled.LocationOn" />
+            </MudItem>
+
+            <MudItem xs="12" sm="4">
+                <MudTextField Label="Distrito"
+                              @bind-Value="_empresa.Distrito"
+                              Variant="Variant.Outlined"
+                              ReadOnly="true" />
+            </MudItem>
+
+            <!-- Provincia / Departamento / País / Moneda -->
+            <MudItem xs="12" sm="3">
+                <MudTextField Label="Provincia"
+                              @bind-Value="_empresa.Provincia"
+                              Variant="Variant.Outlined"
+                              ReadOnly="true" />
+            </MudItem>
+
+            <MudItem xs="12" sm="3">
+                <MudTextField Label="Departamento"
+                              @bind-Value="_empresa.Dpto"
+                              Variant="Variant.Outlined"
+                              ReadOnly="true" />
+            </MudItem>
+
+            <MudItem xs="12" sm="3">
+                <MudTextField Label="País"
+                              @bind-Value="_empresa.Pais"
+                              Variant="Variant.Outlined"
+                              ReadOnly="true" />
+            </MudItem>
+
+            <MudItem xs="12" sm="3">
+                <MudTextField Label="Moneda"
+                              @bind-Value="_empresa.Moneda"
+                              Variant="Variant.Outlined"
+                              ReadOnly="true" />
+            </MudItem>
+
+        </MudGrid>
+
+    </MudPaper>
+
+    <MudPaper Elevation="0" Class="mt-6 pa-3">
+        <MudStack Direction="Row"
+                  Spacing="1"
+                  Justify="Justify.FlexStart"
+                  AlignItems="AlignItems.Center"
+                  Style="width: fit-content;">
+
+            <MudButton Color="Color.Error"
+                       Variant="Variant.Filled"
+                       Style="width:auto"
+                       OnClick="Cerrar">
+                Cerrar
+            </MudButton>
+
+        </MudStack>
+    </MudPaper>
+
+</MudContainer>
+
+@code {
+    EmpresaDto _empresa = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var data = await _empresaApi.GetEmpresaAsync();
+            if (data != null)
+                _empresa = data;
+        }
+        catch
+        {
+            _snackBar.Add("Error cargando datos de empresa", Severity.Error);
+        }
+    }
+
+    void Cerrar()
+        => _navigationManager.NavigateTo("/page/dashboard");
+}

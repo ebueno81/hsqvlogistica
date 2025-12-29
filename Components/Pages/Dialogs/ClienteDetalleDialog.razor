@@ -1,0 +1,68 @@
+﻿@using HsqvLogistica.Integrations.Models
+@using HsqvLogistica.Integrations.Models.Clientes
+@using MudBlazor
+
+<MudDialog>
+
+    <DialogContent>
+
+        <MudText Typo="Typo.h6" Class="mb-3">
+            @Cliente.NombresApellidos
+        </MudText>
+
+        <MudGrid Spacing="2">
+
+            <MudItem xs="12" sm="6">
+                <MudText><b>Documento:</b> @Cliente.NroDoc</MudText>
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudText><b>Celular:</b> @Cliente.Celular</MudText>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudText><b>Dirección:</b> @Cliente.DireccionGral</MudText>
+            </MudItem>
+
+            <MudItem xs="12" sm="4">
+                <MudText><b>Distrito:</b> @Cliente.Distrito</MudText>
+            </MudItem>
+
+            <MudItem xs="12" sm="4">
+                <MudText><b>Provincia:</b> @Cliente.Provincia</MudText>
+            </MudItem>
+
+            <MudItem xs="12" sm="4">
+                <MudText><b>Departamento:</b> @Cliente.Dpto</MudText>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudText><b>Correo:</b> @Cliente.Correo</MudText>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudText><b>Contacto:</b> @Cliente.Detalles</MudText>
+            </MudItem>
+
+        </MudGrid>
+
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Close" Color="Color.Primary">
+            Cerrar
+        </MudButton>
+    </DialogActions>
+
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public ClienteDetalleDto Cliente { get; set; } = default!;
+
+    void Close() => MudDialog.Close();
+}

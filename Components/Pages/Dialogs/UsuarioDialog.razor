@@ -1,0 +1,175 @@
+﻿@using HsqvLogistica.Models.DTOs.Usuarios
+@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
+
+<MudDialog>
+
+    <DialogContent>
+
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+            @(_isEditMode ? "Editar usuario" : "Registrar nuevo usuario")
+        </MudText>
+
+        <MudForm @ref="_form">
+
+            <MudTextField Label="Usuario"
+                          @bind-Value="_usuario"
+                          Disabled="@_isEditMode"
+                          Required />
+
+            <MudTextField Label="Nombres"
+                          @bind-Value="_nombres"
+                          Required />
+
+            <MudTextField Label="Correo"
+                          @bind-Value="_correo"
+                          Required />
+
+            <MudSelect T="int"
+                       Label="Tipo de usuario"
+                       @bind-Value="_idTipo"
+                       Required
+                       Dense>
+
+                @foreach (var tipo in TiposUsuario)
+                {
+                    <MudSelectItem Value="@tipo.Id">
+                        @tipo.Descripcion
+                    </MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudDivider Class="my-3" />
+
+            @if (!_isEditMode)
+            {
+                <!-- CREAR -->
+                <MudTextField Label="Clave"
+                              @bind-Value="_clave"
+                              InputType="InputType.Password"
+                              Required />
+
+                <MudTextField Label="Confirmar clave"
+                              @bind-Value="_confirmarClave"
+                              InputType="InputType.Password"
+                              Required
+                              Error="@_claveError"
+                              ErrorText="Las claves no coinciden" />
+            }
+            else
+            {
+                <!-- EDITAR -->
+                <MudTextField Label="Nueva clave (opcional)"
+                              @bind-Value="_clave"
+                              InputType="InputType.Password"
+                              HelperText="Dejar vacío si no desea cambiarla" />
+            }
+
+        </MudForm>
+
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   OnClick="Save">
+            @(_isEditMode ? "Actualizar" : "Guardar")
+        </MudButton>
+    </DialogActions>
+
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public UsuarioDto? Usuario { get; set; }
+
+    [Inject]
+    public IUsuarioService UsuarioService { get; set; } = default!;
+
+    [Inject]
+    public ITipoUsuarioService TipoUsuarioService { get; set; } = default!;
+
+    private MudForm? _form;
+    private bool _isEditMode;
+    private bool _claveError;
+
+    private string _usuario = string.Empty;
+    private string _nombres = string.Empty;
+    private string _correo = string.Empty;
+    private int _idTipo;
+    private string _clave = string.Empty;
+    private string _confirmarClave = string.Empty;
+
+    private List<TipoUsuarioLookupDto> TiposUsuario = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        TiposUsuario = (await TipoUsuarioService.GetLookupAsync()).ToList();
+
+        if (Usuario != null)
+        {
+            _isEditMode = true;
+            _usuario = Usuario.Usuario!;
+            _nombres = Usuario.Nombres!;
+            _correo = Usuario.Correo!;
+
+            _idTipo = TiposUsuario
+            .FirstOrDefault(t => t.Id == Usuario.IdTipo)?.Id ?? 0;
+        }
+    }
+
+    private async Task Save()
+    {
+        if (_form is null) return;
+
+        _claveError = false;
+
+        await _form.Validate();
+        if (!_form.IsValid) return;
+
+        // 🔐 Validación de clave
+        if (!_isEditMode)
+        {
+            if (_clave != _confirmarClave)
+            {
+                _claveError = true;
+                return;
+            }
+        }
+
+        if (_isEditMode && Usuario != null)
+        {
+            await UsuarioService.UpdateAsync(
+                Usuario.Id,
+                new UsuarioUpdateDto
+                {
+                    Nombres = _nombres,
+                    Correo = _correo,
+                    IdTipo = _idTipo,
+                    Clave = string.IsNullOrWhiteSpace(_clave) ? null : _clave
+                });
+        }
+        else
+        {
+            await UsuarioService.CreateAsync(
+                new UsuarioCreateDto
+                {
+                    Usuario = _usuario,
+                    Nombres = _nombres,
+                    Correo = _correo,
+                    Clave = _clave,
+                    IdTipo = _idTipo
+                });
+        }
+
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}
