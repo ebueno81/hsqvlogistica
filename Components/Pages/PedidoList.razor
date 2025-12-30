@@ -1,0 +1,80 @@
+﻿@page "/pedidos"
+
+@using HsqvLogistica.Models.DTOs.Pedidos
+@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
+
+@inject IPedidoService PedidoService
+@inject NavigationManager Navigation
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+
+    <MudStack Direction="Row"
+              Justify="Justify.SpaceBetween"
+              AlignItems="AlignItems.Center"
+              Class="mb-4">
+
+        <MudText Typo="Typo.h5">Pedidos</MudText>
+
+        <MudButton Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="@(() => Navigation.NavigateTo("/pedidos/nuevo"))">
+            Nuevo Pedido
+        </MudButton>
+
+    </MudStack>
+
+    <MudPaper Elevation="2" Class="pa-4">
+
+        <MudTable Items="_pedidos"
+                  Dense
+                  Hover
+                  Striped
+                  Loading="_loading">
+
+            <HeaderContent>
+                <MudTh>#</MudTh>
+                <MudTh>Cliente</MudTh>
+                <MudTh>Fecha</MudTh>
+                <MudTh>Estado</MudTh>
+                <MudTh Align="Right"></MudTh>
+            </HeaderContent>
+
+            <RowTemplate Context="row">
+
+                <MudTd>@row.Id</MudTd>
+                <MudTd>@row.Cliente</MudTd>
+                <MudTd>@row.FechaEntrega?.ToString("dd/MM/yyyy")</MudTd>
+
+                <MudTd>
+                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled">
+                        @row.Estado
+                    </MudChip>
+                </MudTd>
+
+                <MudTd Align="Align.Right">
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                   Color="Color.Primary"
+                                   OnClick="@(() => Navigation.NavigateTo($"/pedidos/ver/{row.Id}"))" />
+                </MudTd>
+
+            </RowTemplate>
+
+        </MudTable>
+
+    </MudPaper>
+
+</MudContainer>
+
+@code {
+
+    List<PedidoDto> _pedidos = new();
+    bool _loading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loading = true;
+        _pedidos = (await PedidoService.GetAllAsync()).ToList();
+        _loading = false;
+    }
+}

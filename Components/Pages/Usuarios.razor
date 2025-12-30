@@ -34,6 +34,7 @@
                 <MudTh>Nombres</MudTh>
                 <MudTh>Correo</MudTh>
                 <MudTh>Tipo</MudTh>
+                <MudTh>Estado</MudTh>
                 <MudTh Align="Right"></MudTh>
             </HeaderContent>
 
@@ -42,23 +43,33 @@
                 <MudTd>@row.Nombres</MudTd>
                 <MudTd>@row.Correo</MudTd>
                 <MudTd>@row.TipoUsuario</MudTd>
+                <MudTd>
+                    <MudChip T="string"
+                             Color="@(row.Activo ? Color.Success : Color.Error)"
+                             Variant="Variant.Filled"
+                             Size="Size.Small">
+                        @(row.Activo ? "Activo" : "Inactivo")
+                    </MudChip>
+                </MudTd>
 
                 <MudTd Align="Align.Right">
 
                     <!-- Editar -->
                     <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                    Color="Color.Primary"
-                                   Disabled="@(row.Activo == false)"
+                                   Disabled="@(!row.Activo)"
                                    OnClick="@(() => OpenEditDialog(row))" />
 
+
                     <!-- Activar / Desactivar -->
-                    <MudIconButton Icon="@(row.Activo == true
-                                                          ? Icons.Material.Filled.Block   // desactivar
-                                                          : Icons.Material.Filled.CheckCircle)" // activar
-                                   Color="@(row.Activo == true
-                                                          ? Color.Error
-                                                          : Color.Success)"
+                    <MudIconButton Icon="@(row.Activo
+                                           ? Icons.Material.Filled.Close
+                                           : Icons.Material.Filled.Restore)"
+                                   Color="@(row.Activo
+                                           ? Color.Error
+                                           : Color.Success)"
                                    OnClick="@(() => ConfirmChangeStatus(row))" />
+
 
                 </MudTd>
 
@@ -134,7 +145,7 @@
 
     async Task ChangeStatus(UsuarioDto usuario)
     {
-        var nuevoEstado = !usuario.Activo.GetValueOrDefault();
+        var nuevoEstado = !usuario.Activo;
 
         var ok = await UsuarioService.ChangeStatusAsync(usuario.Id, nuevoEstado);
 

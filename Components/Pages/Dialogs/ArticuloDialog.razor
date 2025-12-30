@@ -7,29 +7,45 @@
 
     <DialogContent>
 
-        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+        <MudText Typo="Typo.body2"
+                 Color="Color.Secondary"
+                 Class="mb-4">
             Complete los datos del artículo
         </MudText>
 
         <MudForm @ref="_form">
 
+            <!-- Código -->
             <MudTextField Label="Código"
                           @bind-Value="_codigo"
                           Disabled="@_isEditMode"
-                          Required />
+                          Required
+                          Variant="Variant.Outlined"
+                          Color="Color.Primary"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.QrCode" />
 
+            <!-- Descripción -->
             <MudTextField Label="Descripción"
                           @bind-Value="_descripcion"
-                          Required />
+                          Required
+                          Variant="Variant.Outlined"
+                          Color="Color.Primary"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Description" />
 
-            <!-- 🔍 COMBO BUSCABLE -->
+            <!-- Línea -->
             <MudSelect T="int"
                        Label="Línea"
                        @bind-Value="_idLinea"
-                       Required="true"
-                       Searchable="true"
-                       Dense="true"
-                       Clearable="true">
+                       Required
+                       Dense
+                       Searchable
+                       Clearable
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Adornment="Adornment.Start"
+                       AdornmentIcon="@Icons.Material.Filled.Category">
 
                 @foreach (var linea in Lineas)
                 {
@@ -39,34 +55,69 @@
                 }
             </MudSelect>
 
+            <!-- Detalles -->
             <MudTextField Label="Detalles"
-                          @bind-Value="_detalles"/>
+                          @bind-Value="_detalles"
+                          Lines="3"
+                          Variant="Variant.Outlined"
+                          Color="Color.Primary"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Notes" />
 
-            <!-- 🖼️ RUTA IMAGEN -->
+            <!-- Ruta Imagen -->
             <MudTextField Label="Ruta de imagen"
                           @bind-Value="_rutaImagen"
                           Placeholder="/images/productos/ejemplo.png"
+                          Variant="Variant.Outlined"
+                          Color="Color.Primary"
                           Adornment="Adornment.Start"
                           AdornmentIcon="@Icons.Material.Filled.Image" />
 
-            <MudNumericField T="int" Label="Stock" @bind-Value="_stock" />
-            <MudNumericField T="decimal" Label="Precio MN" @bind-Value="_precioMn" />
-            <MudNumericField T="decimal" Label="Precio US" @bind-Value="_precioUs" />
+            <MudDivider Class="my-3" />
+
+            <!-- Stock -->
+            <MudNumericField T="int"
+                             Label="Stock"
+                             @bind-Value="_stock"
+                             Variant="Variant.Outlined"
+                             Color="Color.Primary"
+                             Adornment="Adornment.Start"
+                             AdornmentIcon="@Icons.Material.Filled.Inventory" />
+
+            <!-- Precio MN -->
+            <MudNumericField T="decimal"
+                             Label="Precio MN"
+                             @bind-Value="_precioMn"
+                             Variant="Variant.Outlined"
+                             Color="Color.Primary"
+                             Adornment="Adornment.Start"
+                             AdornmentIcon="@Icons.Material.Filled.AttachMoney" />
+
+            <!-- Precio US -->
+            <MudNumericField T="decimal"
+                             Label="Precio US"
+                             @bind-Value="_precioUs"
+                             Variant="Variant.Outlined"
+                             Color="Color.Primary"
+                             Adornment="Adornment.Start"
+                             AdornmentIcon="@Icons.Material.Filled.CurrencyExchange" />
 
         </MudForm>
-
 
     </DialogContent>
 
     <DialogActions>
-        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Variant="Variant.Text"
+                   Color="Color.Default"
+                   OnClick="Cancel">
+            Cancelar
+        </MudButton>
 
         <MudButton Color="Color.Primary"
                    Variant="Variant.Filled"
                    OnClick="Save">
             @(_isEditMode ? "Actualizar" : "Guardar")
         </MudButton>
-
     </DialogActions>
 
 </MudDialog>
@@ -108,6 +159,7 @@
             _precioUs = Articulo.PrecioUs ?? 0;
             _idLinea = Articulo.IdLinea ?? 0; 
             _rutaImagen = Articulo.RutaImagen ?? "";
+            _detalles = Articulo.Detalles ?? "";
         }
     }
 

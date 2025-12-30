@@ -7,4 +7,5 @@ public class ClienteLookupDto
     public string? NroDoc { get; set; }
     public string? Celular { get; set; }
     public string? Distrito { get; set; }
+    public int? IdVendedor { get; set; }
 }

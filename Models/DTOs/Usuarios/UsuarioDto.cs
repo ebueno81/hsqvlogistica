@@ -7,7 +7,8 @@ public class UsuarioDto
     public string? Nombres { get; set; }
     public string? Correo { get; set; }
 
-    public int? IdTipo { get; set; }
-    public bool? Activo { get; set; }
+    public int IdTipo { get; set; }
+    public bool Activo { get; set; }  
     public string? TipoUsuario { get; set; }
 }
+

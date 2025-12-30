@@ -9,4 +9,5 @@ public interface IArticuloService
     Task<ArticuloDto> CreateAsync(ArticuloCreateDto dto);
     Task<bool> UpdateAsync(int id, ArticuloUpdateDto dto);
     Task<bool> ChangeStatusAsync(int id, bool activo, string usuarioModifica);
+    Task<IEnumerable<ArticuloLookupDto>> SearchLookupAsync(string filtro);
 }

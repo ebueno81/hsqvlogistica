@@ -1,0 +1,197 @@
+﻿@page "/pedidos/nuevo"
+@page "/pedidos/ver/{Id:int}"
+
+@using HsqvLogistica.Components.Pages.Components
+@using HsqvLogistica.Models.DTOs.Pedidos
+@using HsqvLogistica.Models.DTOs.Clientes
+@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
+
+@inject IPedidoService PedidoService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+
+    <MudPaper Elevation="2" Class="pa-5">
+
+        <MudText Typo="Typo.h5" Class="mb-4">
+            @_title
+        </MudText>
+
+        <!-- ================= DATOS GENERALES ================= -->
+        <MudGrid Spacing="3">
+
+            @if (Id > 0)
+            {
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Cliente"
+                                  @bind-Value="_cliente"
+                                  Disabled="true"
+                                  Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.DashboardCustomize" />
+                </MudItem>
+            }
+            else
+            {
+                <MudItem xs="12" md="6">
+                    <HsqvLogistica.Components.Pages.Components.ClienteAutoComplete Disabled="@IsReadOnly"
+                                                                                   OnClienteSelected="OnClienteSelected" />
+                </MudItem>
+            }
+          
+            <MudItem xs="12" md="6">
+                <MudTextField Label="Dirección"
+                              @bind-Value="_direccion"
+                              Disabled="true"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.LocationOn" />
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudDatePicker Label="Fecha de entrega"
+                               @bind-Date="_fechaEntrega"
+                               Disabled="IsReadOnly"
+                               Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12" md="8">
+                <MudTextField Label="Observación"
+                              @bind-Value="_observacion"
+                              Disabled="IsReadOnly"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Notes" />
+            </MudItem>
+
+        </MudGrid>
+
+        <MudDivider Class="my-5" />
+
+        <!-- ================= DETALLE ================= -->
+        <PedidoDetalleGrid @ref="_detalleGrid"
+                           ReadOnly="IsReadOnly" />
+
+        <MudDivider Class="my-5" />
+
+        <!-- ================= ACCIONES ================= -->
+        <MudStack Direction="Row" Spacing="2" Justify="Justify.FlexStart">
+
+            <MudButton Variant="Variant.Text"
+                       OnClick="@(() => Navigation.NavigateTo("/pedidos"))">
+                Volver
+            </MudButton>
+
+            @if (_mode == PedidoMode.Create)
+            {
+                <MudButton Color="Color.Primary"
+                           Variant="Variant.Filled"
+                           OnClick="GuardarPedido">
+                    Guardar Pedido
+                </MudButton>
+            }
+
+        </MudStack>
+
+    </MudPaper>
+
+</MudContainer>
+
+@code {
+
+    [Parameter] public int? Id { get; set; }
+
+    PedidoMode _mode;
+    string _title = "";
+
+    int? _idCliente;
+    int? _idVendedor;
+    string _direccion = string.Empty;
+    string _cliente = string.Empty;
+    DateTime? _fechaEntrega;
+    string _observacion = string.Empty;
+
+    PedidoDetalleGrid? _detalleGrid;
+
+    bool IsReadOnly => _mode == PedidoMode.View;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id.HasValue)
+        {
+            _mode = PedidoMode.View;
+            _title = "Detalle del Pedido";
+            await CargarPedido(Id.Value);
+        }
+        else
+        {
+            _mode = PedidoMode.Create;
+            _title = "Nuevo Pedido";
+            _fechaEntrega = DateTime.Today;
+        }
+    }
+
+    async Task CargarPedido(int id)
+    {
+        var pedido = await PedidoService.GetByIdAsync(id);
+
+        _idCliente = pedido.IdCliente;
+        _cliente = pedido.Cliente ?? "";
+        _idVendedor = pedido.IdVendedor;
+        _direccion = pedido.Direccion ?? "";
+        _fechaEntrega = pedido.FechaEntrega?.ToDateTime(TimeOnly.MinValue);
+        _observacion = pedido.Detalles ?? "";
+
+        _detalleGrid?.SetDetalles(pedido.Detalle);
+        StateHasChanged();
+    }
+
+    void OnClienteSelected(ClientePedidoDto cliente)
+    {
+        _idCliente = cliente.IdCliente;
+        _cliente = cliente.Nombre;
+        _idVendedor = cliente.IdVendedor;
+        _direccion = cliente.Direccion ?? "";
+    }
+
+    async Task GuardarPedido()
+    {
+        if (_idCliente is null || _fechaEntrega is null)
+        {
+            Snackbar.Add("Debe seleccionar cliente y fecha", Severity.Warning);
+            return;
+        }
+
+        var detalles = _detalleGrid?.GetDetalles() ?? new();
+
+        if (!detalles.Any())
+        {
+            Snackbar.Add("Debe ingresar al menos un artículo", Severity.Warning);
+            return;
+        }
+
+        await PedidoService.CreateAsync(new PedidoCreateDto
+        {
+            IdCliente = (int)_idCliente,
+            Cliente = _cliente,
+            IdVendedor = (int)_idVendedor,
+            FechaEntrega = DateOnly.FromDateTime(_fechaEntrega.Value),
+            Direccion = _direccion,
+            Detalles = _observacion,
+            IdEmpServ = 1,
+            UsuaCreacion = "admin",
+            DetallesPedido = detalles
+        });
+
+        Snackbar.Add("Pedido registrado correctamente", Severity.Success);
+        Navigation.NavigateTo("/pedidos");
+    }
+
+    enum PedidoMode
+    {
+        Create,
+        View
+    }
+}

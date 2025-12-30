@@ -13,7 +13,8 @@ public static class ArticuloMapper
             Stock = entity.Stock,
             PrecioMn = entity.PrecioMn,
             PrecioUs = entity.PrecioUs,
-            Activo = entity.Activo
+            Activo = entity.Activo,
+            Detalles = entity.Detalles
         };
 
     public static Articulo ToEntity(ArticuloCreateDto dto)
@@ -26,6 +27,7 @@ public static class ArticuloMapper
             PrecioMn = dto.PrecioMn,
             PrecioUs = dto.PrecioUs,
             Activo = true,
-            FechaCreacion = DateTime.Now
+            FechaCreacion = DateTime.Now,
+            Detalles = dto.Detalles
         };
 }

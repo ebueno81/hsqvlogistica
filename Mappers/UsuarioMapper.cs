@@ -11,9 +11,9 @@ public static class UsuarioMapper
         Usuario = entity.Usuario1,
         Nombres = entity.Nombres,
         Correo = entity.Correo,
-        IdTipo = entity.IdTipo,
+        IdTipo = entity.IdTipo ?? 0,
         TipoUsuario = entity.IdTipoNavigation?.Descripcion,
-        Activo = entity.Activo
+        Activo = (bool)entity.Activo
     };
 
     public static Usuario ToEntity(UsuarioCreateDto dto) => new()

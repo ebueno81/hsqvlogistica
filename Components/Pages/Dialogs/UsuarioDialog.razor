@@ -7,7 +7,7 @@
     <DialogContent>
 
         <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
-            @(_isEditMode ? "Editar usuario" : "Registrar nuevo usuario")
+            Complete los datos del usuario
         </MudText>
 
         <MudForm @ref="_form">
@@ -15,21 +15,37 @@
             <MudTextField Label="Usuario"
                           @bind-Value="_usuario"
                           Disabled="@_isEditMode"
-                          Required />
+                          Required
+                          Variant="Variant.Outlined"
+                          Color="Color.Primary"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Person" />
 
-            <MudTextField Label="Nombres"
-                          @bind-Value="_nombres"
-                          Required />
+           <MudTextField Label="Nombres"
+              @bind-Value="_nombres"
+              Required
+              Variant="Variant.Outlined"
+              Color="Color.Primary"
+              Adornment="Adornment.Start"
+              AdornmentIcon="@Icons.Material.Filled.Badge" />
 
             <MudTextField Label="Correo"
                           @bind-Value="_correo"
-                          Required />
+                          Required
+                          Variant="Variant.Outlined"
+                          Color="Color.Primary"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Email" />
 
             <MudSelect T="int"
                        Label="Tipo de usuario"
                        @bind-Value="_idTipo"
                        Required
-                       Dense>
+                       Dense
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Adornment="Adornment.Start"
+                       AdornmentIcon="@Icons.Material.Filled.Security">
 
                 @foreach (var tipo in TiposUsuario)
                 {
@@ -47,14 +63,22 @@
                 <MudTextField Label="Clave"
                               @bind-Value="_clave"
                               InputType="InputType.Password"
-                              Required />
+                              Required
+                              Variant="Variant.Outlined"
+                              Color="Color.Primary"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Lock" />
 
                 <MudTextField Label="Confirmar clave"
                               @bind-Value="_confirmarClave"
                               InputType="InputType.Password"
                               Required
+                              Variant="Variant.Outlined"
+                              Color="Color.Primary"
                               Error="@_claveError"
-                              ErrorText="Las claves no coinciden" />
+                              ErrorText="Las claves no coinciden"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.LockReset" />
             }
             else
             {
@@ -62,7 +86,11 @@
                 <MudTextField Label="Nueva clave (opcional)"
                               @bind-Value="_clave"
                               InputType="InputType.Password"
-                              HelperText="Dejar vacío si no desea cambiarla" />
+                              Variant="Variant.Outlined"
+                              Color="Color.Primary"
+                              HelperText="Dejar vacío si no desea cambiarla"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.VpnKey" />
             }
 
         </MudForm>
@@ -95,20 +123,20 @@
     [Inject]
     public ITipoUsuarioService TipoUsuarioService { get; set; } = default!;
 
-    private MudForm? _form;
-    private bool _isEditMode;
-    private bool _claveError;
+    MudForm? _form;
+    bool _isEditMode;
+    bool _claveError;
 
-    private string _usuario = string.Empty;
-    private string _nombres = string.Empty;
-    private string _correo = string.Empty;
-    private int _idTipo;
-    private string _clave = string.Empty;
-    private string _confirmarClave = string.Empty;
+    string _usuario = string.Empty;
+    string _nombres = string.Empty;
+    string _correo = string.Empty;
+    int _idTipo=1;
+    string _clave = string.Empty;
+    string _confirmarClave = string.Empty;
 
-    private List<TipoUsuarioLookupDto> TiposUsuario = new();
+    List<TipoUsuarioLookupDto> TiposUsuario = new();
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         TiposUsuario = (await TipoUsuarioService.GetLookupAsync()).ToList();
 
@@ -119,12 +147,12 @@
             _nombres = Usuario.Nombres!;
             _correo = Usuario.Correo!;
 
-            _idTipo = TiposUsuario
-            .FirstOrDefault(t => t.Id == Usuario.IdTipo)?.Id ?? 0;
+            _idTipo = Usuario.IdTipo;
+            StateHasChanged();
         }
     }
 
-    private async Task Save()
+    async Task Save()
     {
         if (_form is null) return;
 
@@ -171,5 +199,5 @@
         MudDialog.Close(DialogResult.Ok(true));
     }
 
-    private void Cancel() => MudDialog.Cancel();
+    void Cancel() => MudDialog.Cancel();
 }

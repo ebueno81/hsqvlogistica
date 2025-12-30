@@ -1,0 +1,131 @@
+﻿@using HsqvLogistica.Models.DTOs.Pedidos
+@using HsqvLogistica.Models.DTOs.Articulos
+@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
+
+@inject IArticuloService ArticuloService
+
+<MudPaper Elevation="1" Class="pa-4">
+
+    <MudStack Direction="Row" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+        <MudText Typo="Typo.h6">Detalle del Pedido</MudText>
+
+        @if (!ReadOnly)
+        {
+            <MudButton StartIcon="@Icons.Material.Filled.Add"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       OnClick="AgregarFila">
+                Agregar artículo
+            </MudButton>
+        }
+    </MudStack>
+
+    <MudTable Items="_detalles"
+              Dense
+              Hover
+              Striped
+              Class="mt-3">
+
+        <HeaderContent>
+            <MudTh>Artículo</MudTh>
+            <MudTh>Cantidad</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+
+        <RowTemplate Context="row">
+
+            <MudTd>
+                <MudAutocomplete T="ArticuloLookupDto"
+                                 Dense
+                                 Variant="Variant.Outlined"
+                                 Disabled="@ReadOnly"
+                                 SearchFunc="BuscarArticulos"
+                                 ToStringFunc="@(a => a?.Descripcion)"
+                                 MinCharacters="2"
+                                 Clearable
+                                 Value="row.ArticuloObj"
+                                 ValueChanged="@(a => SeleccionarArticulo(row, a))"
+                                 Placeholder="Buscar artículo..." />
+            </MudTd>
+
+            <MudTd>
+                <MudNumericField T="int"
+                                 @bind-Value="row.Cantidad"
+                                 Disabled="ReadOnly"
+                                 Min="1"
+                                 Variant="Variant.Outlined"
+                                 Dense />
+            </MudTd>
+
+            <MudTd Align="Align.Right">
+                @if (!ReadOnly)
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                   Color="Color.Error"
+                                   OnClick="@(() => QuitarFila(row))" />
+                }
+            </MudTd>
+
+        </RowTemplate>
+
+        <NoRecordsContent>
+            <MudText Color="Color.Secondary">
+                No hay artículos agregados
+            </MudText>
+        </NoRecordsContent>
+
+    </MudTable>
+
+</MudPaper>
+
+@code {
+
+    [Parameter] public bool ReadOnly { get; set; }
+
+    List<PedidoDetalleDto> _detalles = new();
+
+    async Task<IEnumerable<ArticuloLookupDto>> BuscarArticulos(string value, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value.Length < 2)
+            return Enumerable.Empty<ArticuloLookupDto>();
+
+        return await ArticuloService.SearchLookupAsync(value);
+    }
+
+    void SeleccionarArticulo(PedidoDetalleDto row, ArticuloLookupDto? articulo)
+    {
+        if (articulo == null) return;
+
+        row.IdArticulo = articulo.Id;
+        row.Articulo = articulo.Descripcion;
+        row.ArticuloObj = articulo;
+    }
+
+
+    /* ================= API PUBLICA ================= */
+
+    public void SetDetalles(List<PedidoDetalleDto> detalles)
+    {
+        _detalles = detalles ?? new();
+        StateHasChanged();
+    }
+
+    public List<PedidoDetalleDto> GetDetalles()
+        => _detalles;
+
+    /* ================= ACCIONES ================= */
+
+    void AgregarFila()
+    {
+        _detalles.Add(new PedidoDetalleDto
+        {
+            Cantidad = 1
+        });
+    }
+
+    void QuitarFila(PedidoDetalleDto detalle)
+    {
+        _detalles.Remove(detalle);
+    }
+}

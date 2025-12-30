@@ -6,50 +6,104 @@
 
     <DialogContent>
 
-        <MudText Typo="Typo.h6" Class="mb-3">
-            @Cliente.NombresApellidos
-        </MudText>
+        <!-- 🧑 CABECERA -->
+        <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
+            <MudIcon Icon="@Icons.Material.Filled.Person"
+                     Size="Size.Large"
+                     Color="Color.Primary" />
 
+            <MudText Typo="Typo.h6" Color="Color.Primary">
+                @Cliente.NombresApellidos
+            </MudText>
+        </MudStack>
+
+        <MudDivider Class="mb-3" />
+
+        <!-- 📋 DATOS -->
         <MudGrid Spacing="2">
 
             <MudItem xs="12" sm="6">
-                <MudText><b>Documento:</b> @Cliente.NroDoc</MudText>
+                <MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.Badge"
+                             Color="Color.Tertiary"
+                             Class="me-2" />
+                    <b>Documento:</b> @Cliente.NroDoc
+                </MudText>
             </MudItem>
 
             <MudItem xs="12" sm="6">
-                <MudText><b>Celular:</b> @Cliente.Celular</MudText>
+                <MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.PhoneAndroid"
+                             Color="Color.Tertiary"
+                             Class="me-2" />
+                    <b>Celular:</b> @Cliente.Celular
+                </MudText>
             </MudItem>
 
             <MudItem xs="12">
-                <MudText><b>Dirección:</b> @Cliente.DireccionGral</MudText>
+                <MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.Home"
+                             Color="Color.Tertiary"
+                             Class="me-2" />
+                    <b>Dirección:</b> @Cliente.DireccionGral
+                </MudText>
             </MudItem>
 
             <MudItem xs="12" sm="4">
-                <MudText><b>Distrito:</b> @Cliente.Distrito</MudText>
+                <MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.LocationCity"
+                             Color="Color.Tertiary"
+                             Class="me-2" />
+                    <b>Distrito:</b> @Cliente.Distrito
+                </MudText>
             </MudItem>
 
             <MudItem xs="12" sm="4">
-                <MudText><b>Provincia:</b> @Cliente.Provincia</MudText>
+                <MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.Map"
+                             Color="Color.Tertiary"
+                             Class="me-2" />
+                    <b>Provincia:</b> @Cliente.Provincia
+                </MudText>
             </MudItem>
 
             <MudItem xs="12" sm="4">
-                <MudText><b>Departamento:</b> @Cliente.Dpto</MudText>
+                <MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.Public"
+                             Color="Color.Tertiary"
+                             Class="me-2" />
+                    <b>Departamento:</b> @Cliente.Dpto
+                </MudText>
             </MudItem>
 
             <MudItem xs="12">
-                <MudText><b>Correo:</b> @Cliente.Correo</MudText>
+                <MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.Email"
+                             Color="Color.Tertiary"
+                             Class="me-2" />
+                    <b>Correo:</b> @Cliente.Correo
+                </MudText>
             </MudItem>
 
             <MudItem xs="12">
-                <MudText><b>Contacto:</b> @Cliente.Detalles</MudText>
+                <MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.ContactMail"
+                             Color="Color.Tertiary"
+                             Class="me-2" />
+                    <b>Contacto:</b> @Cliente.Detalles
+                </MudText>
             </MudItem>
 
         </MudGrid>
 
     </DialogContent>
 
+    <!-- 🔘 ACCIONES -->
     <DialogActions>
-        <MudButton OnClick="Close" Color="Color.Primary">
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Close"
+                   OnClick="Close">
             Cerrar
         </MudButton>
     </DialogActions>

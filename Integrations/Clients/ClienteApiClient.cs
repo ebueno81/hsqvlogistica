@@ -1,6 +1,7 @@
 ﻿using HsqvLogistica.Integrations.Clients.Interfaces;
 using HsqvLogistica.Integrations.Models;
 using HsqvLogistica.Integrations.Models.Clientes;
+using HsqvLogistica.Models.DTOs.Clientes;
 
 namespace HsqvLogistica.Integrations.Clients;
 
@@ -38,7 +39,8 @@ public class ClienteApiClient : IClienteApiClient
                 NombresApellidos = c.NombresApellidos,
                 NroDoc = c.NroDoc,
                 Celular = c.Celular,
-                Distrito = c.Distrito
+                Distrito = c.Distrito,
+                IdVendedor = c.IdVendedor
             })
             .ToList() ?? new();
     }
@@ -57,7 +59,8 @@ public class ClienteApiClient : IClienteApiClient
             NombresApellidos = c.NombresApellidos,
             NroDoc = c.NroDoc,
             Celular = c.Celular,
-            Distrito = c.Distrito
+            Distrito = c.Distrito,
+            IdVendedor = c.IdVendedor
         };
     }
 
@@ -78,4 +81,28 @@ public class ClienteApiClient : IClienteApiClient
             )
             .ToList();
     }
+
+    public async Task<List<ClientePedidoDto>> SearchForPedidoAsync(string filtro)
+    {
+        var clientes = await GetClientesAsync();
+
+        return clientes
+            .Where(c =>
+                (!string.IsNullOrWhiteSpace(c.NombresApellidos) &&
+                 c.NombresApellidos.Contains(filtro, StringComparison.OrdinalIgnoreCase))
+                ||
+                (!string.IsNullOrWhiteSpace(c.NroDoc) &&
+                 c.NroDoc.Contains(filtro, StringComparison.OrdinalIgnoreCase))
+            )
+            .Select(c => new ClientePedidoDto
+            {
+                IdCliente = c.IdCliente,
+                Nombre = c.NombresApellidos!,
+                Documento = c.NroDoc,
+                Direccion = $"{c.Distrito}",
+                IdVendedor = c.IdVendedor
+            })
+            .ToList();
+    }
+
 }

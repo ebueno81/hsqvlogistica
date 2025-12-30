@@ -25,6 +25,7 @@ public class ArticuloRepository : IArticuloRepository
                 IdLinea = a.IdLinea,
                 LineaDescripcion = a.IdLineaNavigation!.Descripcion,
 
+                Detalles = a.Detalles,
                 Descripcion = a.Descripcion,
                 Stock = a.Stock,
                 PrecioMn = a.PrecioMn,
@@ -49,4 +50,15 @@ public class ArticuloRepository : IArticuloRepository
 
     public async Task SaveChangesAsync()
         => await _context.SaveChangesAsync();
+
+    public async Task<IEnumerable<Articulo>> SearchAsync(string filtro)
+    {
+        return await _context.Articulos
+            .Where(a =>
+                a.Descripcion!.Contains(filtro) ||
+                a.Codigo!.Contains(filtro))
+            .AsNoTracking()
+            .Take(20)
+            .ToListAsync();
+    }
 }

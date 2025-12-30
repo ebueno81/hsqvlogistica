@@ -1,0 +1,45 @@
+﻿@using HsqvLogistica.Integrations.Clients.Interfaces
+@using HsqvLogistica.Models.DTOs.Clientes
+@using MudBlazor
+
+@inject IClienteApiClient ClienteApiClient
+
+<MudAutocomplete T="ClientePedidoDto"
+                 Label="Cliente"
+                 Disabled="Disabled"
+                 SearchFunc="BuscarClientes"
+                 ToStringFunc="@(c => c?.Nombre)"
+                 MinCharacters="3"
+                 Dense
+                 Clearable="false"
+                 Variant="Variant.Outlined"
+                 Adornment="Adornment.Start"
+                 AdornmentIcon="@Icons.Material.Filled.PersonSearch"
+                 Value="Value"
+                 ValueChanged="OnValueChanged" />
+
+
+@code {
+
+    [Parameter] public bool Disabled { get; set; }
+
+    [Parameter] public ClientePedidoDto? Value { get; set; }
+
+    [Parameter] public EventCallback<ClientePedidoDto> OnClienteSelected { get; set; }
+
+    async Task<IEnumerable<ClientePedidoDto>> BuscarClientes(
+    string value,
+    CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value.Length < 3)
+            return Enumerable.Empty<ClientePedidoDto>();
+
+        return await ClienteApiClient.SearchForPedidoAsync(value);
+    }
+
+    async Task OnValueChanged(ClientePedidoDto? cliente)
+    {
+        if (cliente != null)
+            await OnClienteSelected.InvokeAsync(cliente);
+    }
+}

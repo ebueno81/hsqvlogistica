@@ -68,4 +68,15 @@ public class ArticuloService : IArticuloService
 
         return true;
     }
+
+    public async Task<IEnumerable<ArticuloLookupDto>> SearchLookupAsync(string filtro)
+    {
+        return (await _repository.SearchAsync(filtro))
+            .Select(a => new ArticuloLookupDto
+            {
+                Id = a.Id,
+                Descripcion = a.Descripcion
+            });
+    }
+
 }

@@ -17,5 +17,6 @@
         public string? Correo { get; set; }
         public string? DireccionGral { get; set; }
         public string? Detalles { get; set; }
+        public int? IdVendedor { get; set; }
     }
 }

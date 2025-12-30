@@ -6,6 +6,7 @@ public class ArticuloDto
     public string? Codigo { get; set; }
     public int? IdLinea { get; set; }
     public string? LineaDescripcion { get; set; }
+    public string? Detalles { get; set; }
     public string? Descripcion { get; set; }
     public int? Stock { get; set; }
     public decimal? PrecioMn { get; set; }

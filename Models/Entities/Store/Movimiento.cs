@@ -16,6 +16,9 @@ public partial class Movimiento
 
     public int? IdCliente { get; set; }
 
+    [StringLength(300)]
+    public string? Cliente { get; set; }
+
     public int? IdAlmacen { get; set; }
 
     public int? IdMotivo { get; set; }

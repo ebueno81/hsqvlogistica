@@ -18,6 +18,9 @@ public partial class Pedido
 
     public DateOnly? FechaEntrega { get; set; }
 
+    [StringLength(300)]
+    public string? Cliente { get; set; }
+
     [StringLength(500)]
     [Unicode(false)]
     public string? Detalles { get; set; }
