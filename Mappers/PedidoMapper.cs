@@ -15,7 +15,7 @@ public static class PedidoMapper
             Detalles = dto.Detalles,
             Direccion = dto.Direccion,
             IdEmpServ = dto.IdEmpServ,
-            Estado = 1,
+            Estado = 0,
             Activo = true,
             UsuaCreacion = dto.UsuaCreacion,
             FechaCreacion = DateTime.Now
@@ -32,6 +32,15 @@ public static class PedidoMapper
             Detalles = entity.Detalles,
             Direccion = entity.Direccion,
             Estado = entity.Estado,
-            Activo = entity.Activo
+            Activo = entity.Activo,
+
+             Detalle = entity.PedidoDetalles
+            .Select(d => new PedidoDetalleDto
+            {
+                IdArticulo = d.IdArticulo,
+                Articulo = d.IdArticuloNavigation?.Descripcion, // 👈
+                Cantidad = (decimal)d.Cantidad
+            })
+            .ToList()
         };
 }

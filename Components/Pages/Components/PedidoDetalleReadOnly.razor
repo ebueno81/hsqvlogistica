@@ -1,0 +1,38 @@
+﻿@using HsqvLogistica.Models.DTOs.Pedidos
+@using MudBlazor
+
+<MudPaper Elevation="1" Class="pa-4">
+
+    <MudText Typo="Typo.h6" Class="mb-2">
+        Detalle del Pedido
+    </MudText>
+
+    <MudTable Items="Detalles"
+              Dense
+              Hover
+              Striped>
+
+        <HeaderContent>
+            <MudTh>Artículo</MudTh>
+            <MudTh Align="Right">Cantidad</MudTh>
+        </HeaderContent>
+
+        <RowTemplate Context="row">
+            <MudTd>@row.Articulo</MudTd>
+            <MudTd Align="Align.Right">@row.Cantidad</MudTd>
+        </RowTemplate>
+
+        <NoRecordsContent>
+            <MudText Color="Color.Secondary">
+                No hay artículos registrados
+            </MudText>
+        </NoRecordsContent>
+
+    </MudTable>
+
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired]
+    public List<PedidoDetalleDto> Detalles { get; set; } = new();
+}

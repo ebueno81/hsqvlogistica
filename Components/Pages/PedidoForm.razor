@@ -30,7 +30,7 @@
                                   Disabled="true"
                                   Variant="Variant.Outlined"
                                   Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.DashboardCustomize" />
+                                  AdornmentIcon="@Icons.Material.Filled.Business" />
                 </MudItem>
             }
             else
@@ -71,15 +71,22 @@
         <MudDivider Class="my-5" />
 
         <!-- ================= DETALLE ================= -->
-        <PedidoDetalleGrid @ref="_detalleGrid"
-                           ReadOnly="IsReadOnly" />
+        @if (_mode == PedidoMode.View)
+        {
+            <PedidoDetalleReadOnly Detalles="_detallesView" />
+        }
+        else
+        {
+            <PedidoDetalleGrid @ref="_detalleGrid"
+                                ReadOnly="false" />
+        }
 
         <MudDivider Class="my-5" />
 
         <!-- ================= ACCIONES ================= -->
         <MudStack Direction="Row" Spacing="2" Justify="Justify.FlexStart">
 
-            <MudButton Variant="Variant.Text"
+            <MudButton Variant="Variant.Filled" Color="Color.Tertiary"
                        OnClick="@(() => Navigation.NavigateTo("/pedidos"))">
                 Volver
             </MudButton>
@@ -114,6 +121,7 @@
     string _observacion = string.Empty;
 
     PedidoDetalleGrid? _detalleGrid;
+    List<PedidoDetalleDto> _detallesView = new();
 
     bool IsReadOnly => _mode == PedidoMode.View;
 
@@ -144,7 +152,7 @@
         _fechaEntrega = pedido.FechaEntrega?.ToDateTime(TimeOnly.MinValue);
         _observacion = pedido.Detalles ?? "";
 
-        _detalleGrid?.SetDetalles(pedido.Detalle);
+        _detallesView = pedido.Detalle ?? new();
         StateHasChanged();
     }
 
