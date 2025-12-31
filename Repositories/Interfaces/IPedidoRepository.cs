@@ -1,4 +1,5 @@
-﻿using HsqvLogistica.Models.Entities.Store;
+﻿using HsqvLogistica.Models.DTOs.Pedidos;
+using HsqvLogistica.Models.Entities.Store;
 
 namespace HsqvLogistica.Repositories.Interfaces;
 
@@ -11,4 +12,7 @@ public interface IPedidoRepository
     Task SaveChangesAsync();
 
     Task<bool> ChangeStatusAsync(int id, bool activo);
+    Task<PedidoPagedResultDto> SearchAsync(PedidoFilterDto filter,
+            CancellationToken cancellationToken);
+   
 }

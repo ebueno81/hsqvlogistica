@@ -95,8 +95,9 @@
             {
                 <MudButton Color="Color.Primary"
                            Variant="Variant.Filled"
+                           Disabled="_saving"
                            OnClick="GuardarPedido">
-                    Guardar Pedido
+                    @(_saving ? "Guardando..." : "Guardar Pedido")
                 </MudButton>
             }
 
@@ -119,6 +120,7 @@
     string _cliente = string.Empty;
     DateTime? _fechaEntrega;
     string _observacion = string.Empty;
+    bool _saving = false;
 
     PedidoDetalleGrid? _detalleGrid;
     List<PedidoDetalleDto> _detallesView = new();
@@ -166,35 +168,50 @@
 
     async Task GuardarPedido()
     {
-        if (_idCliente is null || _fechaEntrega is null)
+        if (_saving) return; // 🔒 evita doble submit
+
+        _saving = true;
+
+        try
         {
-            Snackbar.Add("Debe seleccionar cliente y fecha", Severity.Warning);
-            return;
+            if (_idCliente is null || _fechaEntrega is null)
+            {
+                Snackbar.Add("Debe seleccionar cliente y fecha", Severity.Warning);
+                return;
+            }
+
+            var detalles = _detalleGrid?.GetDetalles() ?? new();
+
+            if (!detalles.Any())
+            {
+                Snackbar.Add("Debe ingresar al menos un artículo", Severity.Warning);
+                return;
+            }
+
+            await PedidoService.CreateAsync(new PedidoCreateDto
+            {
+                IdCliente = (int)_idCliente,
+                Cliente = _cliente,
+                IdVendedor = (int)_idVendedor,
+                FechaEntrega = DateOnly.FromDateTime(_fechaEntrega.Value),
+                Direccion = _direccion,
+                Detalles = _observacion,
+                IdEmpServ = 1,
+                UsuaCreacion = "admin",
+                DetallesPedido = detalles
+            });
+
+            Snackbar.Add("Pedido registrado correctamente", Severity.Success);
+            Navigation.NavigateTo("/pedidos");
         }
-
-        var detalles = _detalleGrid?.GetDetalles() ?? new();
-
-        if (!detalles.Any())
+        catch (Exception ex)
         {
-            Snackbar.Add("Debe ingresar al menos un artículo", Severity.Warning);
-            return;
+            Snackbar.Add("Error al registrar el pedido", Severity.Error);
         }
-
-        await PedidoService.CreateAsync(new PedidoCreateDto
+        finally
         {
-            IdCliente = (int)_idCliente,
-            Cliente = _cliente,
-            IdVendedor = (int)_idVendedor,
-            FechaEntrega = DateOnly.FromDateTime(_fechaEntrega.Value),
-            Direccion = _direccion,
-            Detalles = _observacion,
-            IdEmpServ = 1,
-            UsuaCreacion = "admin",
-            DetallesPedido = detalles
-        });
-
-        Snackbar.Add("Pedido registrado correctamente", Severity.Success);
-        Navigation.NavigateTo("/pedidos");
+            _saving = false;
+        }
     }
 
     enum PedidoMode

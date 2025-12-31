@@ -1,14 +1,18 @@
 ﻿@page "/pedidos"
 
+@using HsqvLogistica.Components.Pages.Dialogs
 @using HsqvLogistica.Models.DTOs.Pedidos
 @using HsqvLogistica.Services.Interfaces
 @using MudBlazor
 
 @inject IPedidoService PedidoService
 @inject NavigationManager Navigation
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
 
+    <!-- ================= CABECERA ================= -->
     <MudStack Direction="Row"
               Justify="Justify.SpaceBetween"
               AlignItems="AlignItems.Center"
@@ -24,13 +28,54 @@
 
     </MudStack>
 
+    <!-- ================= FILTROS ================= -->
+    <MudPaper Elevation="1" Class="pa-4 mb-4">
+
+        <MudGrid Spacing="3">
+
+            <MudItem xs="12" md="4">
+                <MudTextField Label="Cliente"
+                              @bind-Value="_cliente"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search" />
+            </MudItem>
+
+            <MudItem xs="12" md="3">
+                <MudDatePicker Label="Desde"
+                               @bind-Date="_fechaDesde"
+                               Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12" md="3">
+                <MudDatePicker Label="Hasta"
+                               @bind-Date="_fechaHasta"
+                               Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12" md="2" Class="d-flex align-end">
+                <MudButton Color="Color.Primary"
+                           Variant="Variant.Filled"
+                           OnClick="Buscar">
+                    Buscar
+                </MudButton>
+            </MudItem>
+
+        </MudGrid>
+
+    </MudPaper>
+
+    <!-- ================= TABLA ================= -->
     <MudPaper Elevation="2" Class="pa-4">
 
-        <MudTable Items="_pedidos"
+        <MudTable T="PedidoDto"
+                  @ref="_table"
+                  ServerData="LoadServerData"
                   Dense
                   Hover
                   Striped
-                  Loading="_loading">
+                  Loading="_loading"
+                  RowsPerPage="10">
 
             <HeaderContent>
                 <MudTh>#</MudTh>
@@ -65,14 +110,27 @@
                     </MudChip>
                 </MudTd>
 
-
                 <MudTd Align="Align.Right">
                     <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                    Color="Color.Primary"
                                    OnClick="@(() => Navigation.NavigateTo($"/pedidos/ver/{row.Id}"))" />
+                    <!-- Aprobar (solo Pendiente + Activo) -->
+                    @if (row.Estado == 0 && row.Activo==true)
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
+                                       Color="Color.Success"
+                                       Title="Aprobar pedido"
+                                       OnClick="@(() => ConfirmarAprobacion(row))" />
+                    }
                 </MudTd>
 
             </RowTemplate>
+
+            <NoRecordsContent>
+                <MudText Color="Color.Secondary">
+                    No se encontraron pedidos
+                </MudText>
+            </NoRecordsContent>
 
         </MudTable>
 
@@ -80,15 +138,94 @@
 
 </MudContainer>
 
+
 @code {
 
-    List<PedidoDto> _pedidos = new();
-    bool _loading;
+    string? _cliente;
+    DateTime? _fechaDesde;
+    DateTime? _fechaHasta;
 
-    protected override async Task OnInitializedAsync()
+    bool _loading;
+    MudTable<PedidoDto>? _table;
+
+    async Task<TableData<PedidoDto>> LoadServerData(
+    TableState state,
+    CancellationToken cancellationToken)
     {
+        if (_loading)
+        {
+            return new TableData<PedidoDto>
+            {
+                Items = new List<PedidoDto>(),
+                TotalItems = 0
+            };
+        }
+
         _loading = true;
-        _pedidos = (await PedidoService.GetAllAsync()).ToList();
-        _loading = false;
+
+        try
+        {
+            var result = await PedidoService.SearchAsync(new PedidoFilterDto
+            {
+                Cliente = _cliente,
+                FechaDesde = _fechaDesde.HasValue
+                    ? DateOnly.FromDateTime(_fechaDesde.Value)
+                    : null,
+                FechaHasta = _fechaHasta.HasValue
+                    ? DateOnly.FromDateTime(_fechaHasta.Value)
+                    : null,
+                Page = state.Page,
+                PageSize = state.PageSize
+            }, cancellationToken);
+
+            return new TableData<PedidoDto>
+            {
+                Items = result.Items,
+                TotalItems = result.TotalItems
+            };
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    async Task Buscar()
+    {
+        if (_loading) return;
+
+        if (_table is not null)
+        {
+            _table.NavigateTo(0);
+            await _table.ReloadServerData();
+        }
+    }
+
+    async Task ConfirmarAprobacion(PedidoDto pedido)
+    {
+        var options = new DialogOptions
+        {
+            CloseButton = true,   // 👈 MUESTRA LA ❌
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        bool? result = await DialogService.ShowMessageBox(
+            title: "Confirmar aprobación",
+            message: $"¿Desea aprobar el pedido #{pedido.Id}?",
+            yesText: "Aprobar",
+            options: options,
+            cancelText: "Cancelar");
+
+        if (result == true)
+        {
+            Snackbar.Add(
+                "Acción de aprobar (solo mensaje por ahora)",
+                Severity.Info,
+                options =>
+                {
+                    options.CloseAfterNavigation = true;
+                });
+        }
     }
 }

@@ -46,4 +46,12 @@ public class PedidoService : IPedidoService
 
     public async Task<bool> ChangeStatusAsync(int id, bool activo)
         => await _pedidoRepo.ChangeStatusAsync(id, activo);
+
+    public async Task<PedidoPagedResultDto> SearchAsync(
+    PedidoFilterDto filter,
+    CancellationToken cancellationToken)
+    {
+        return await _pedidoRepo.SearchAsync(filter, cancellationToken);
+    }
+
 }

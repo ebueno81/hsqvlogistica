@@ -25,7 +25,7 @@
 
     [Parameter] public ClientePedidoDto? Value { get; set; }
 
-    [Parameter] public EventCallback<ClientePedidoDto> OnClienteSelected { get; set; }
+    [Parameter] public EventCallback<ClientePedidoDto?> ValueChanged { get; set; }
 
     async Task<IEnumerable<ClientePedidoDto>> BuscarClientes(
     string value,
@@ -39,7 +39,7 @@
 
     async Task OnValueChanged(ClientePedidoDto? cliente)
     {
-        if (cliente != null)
-            await OnClienteSelected.InvokeAsync(cliente);
+        Value = cliente;
+        await ValueChanged.InvokeAsync(cliente);
     }
 }

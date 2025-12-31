@@ -1,0 +1,160 @@
+﻿@page "/kardex"
+
+@using HsqvLogistica.Models.DTOs.Movimientos
+@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
+
+@inject IMovimientoService MovimientoService
+@inject NavigationManager Navigation
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+
+    <!-- CABECERA -->
+    <MudStack Direction="Row"
+              Justify="Justify.SpaceBetween"
+              AlignItems="AlignItems.Center"
+              Class="mb-4">
+
+        <MudText Typo="Typo.h5">Movimientos de Kardex</MudText>
+
+        <MudButton Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="@(() => Navigation.NavigateTo("/kardex/nuevo"))">
+            Nuevo Movimiento
+        </MudButton>
+
+    </MudStack>
+
+    <!-- FILTROS -->
+    <MudPaper Class="pa-4 mb-4">
+
+        <MudGrid Spacing="3">
+
+            <MudItem xs="12" md="3">
+                <MudTextField Label="Cliente"
+                              @bind-Value="_cliente"
+                              Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12" md="3">
+                <MudSelect T="string"
+                           Label="Tipo Movimiento"
+                           @bind-Value="_tipo">
+                    <MudSelectItem Value="@("TOD")">Todos</MudSelectItem>
+                    <MudSelectItem Value="@("ING")">Entrada</MudSelectItem>
+                    <MudSelectItem Value=@("SAL")">Salida</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+
+            <MudItem xs="12" md="2">
+                <MudDatePicker Label="Desde" @bind-Date="_fechaDesde" />
+            </MudItem>
+
+            <MudItem xs="12" md="2">
+                <MudDatePicker Label="Hasta" @bind-Date="_fechaHasta" />
+            </MudItem>
+
+            <MudItem xs="12" md="2" Class="d-flex align-end">
+                <MudButton OnClick="Buscar" Color="Color.Primary">
+                    Buscar
+                </MudButton>
+            </MudItem>
+
+        </MudGrid>
+
+    </MudPaper>
+
+    <!-- TABLA -->
+    <MudTable T="MovimientoDto"
+              @ref="_table"
+              ServerData="LoadServerData"
+              RowsPerPage="10"
+              Dense
+              Hover
+              Striped>
+
+        <HeaderContent>
+            <MudTh>#</MudTh>
+            <MudTh>Tipo</MudTh>
+            <MudTh>Cliente</MudTh>
+            <MudTh>Fecha</MudTh>
+            <MudTh>Guía</MudTh>
+            <MudTh>Motivo</MudTh>
+            <MudTh>Acciones</MudTh>
+        </HeaderContent>
+
+        <RowTemplate Context="row">
+
+            <MudTd>@row.Id</MudTd>
+
+            <MudTd>
+                <MudChip T="string"
+                         Color="@(row.Tipo == "ING" ? Color.Info : Color.Warning)"
+                         Variant="Variant.Filled"
+                         Size="Size.Small">
+                    @(row.Tipo == "ING" ? "Entrada" : "Salida")
+                </MudChip>
+            </MudTd>
+
+            <MudTd>@row.Cliente</MudTd>
+
+            <MudTd>@row.Fecha.ToString("dd/MM/yyyy")</MudTd>
+
+            <MudTd>@($"{row.SerieGuia}-{row.NroGuia}")</MudTd>
+
+            <MudTd>@row.Motivo</MudTd>
+
+            <MudTd Align="Align.Right">
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                               Color="Color.Primary"
+                               OnClick="@(() => Navigation.NavigateTo($"/kardex/ver/{row.Id}"))" />
+            </MudTd>
+        </RowTemplate>
+
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+
+</MudContainer>
+
+@code {
+
+    string? _tipo; // ING / SAL
+    string? _cliente;
+    DateTime? _fechaDesde;
+    DateTime? _fechaHasta;
+
+    MudTable<MovimientoDto>? _table;
+
+    async Task<TableData<MovimientoDto>> LoadServerData(
+        TableState state,
+        CancellationToken cancellationToken)
+    {
+        var result = await MovimientoService.SearchAsync(new MovimientoFilterDto
+        {
+            Tipo = _tipo,
+            Cliente = _cliente,
+            FechaDesde = _fechaDesde.HasValue
+                ? DateOnly.FromDateTime(_fechaDesde.Value)
+                : null,
+            FechaHasta = _fechaHasta.HasValue
+                ? DateOnly.FromDateTime(_fechaHasta.Value)
+                : null,
+            Page = state.Page,
+            PageSize = state.PageSize
+        }, cancellationToken);
+
+        return new TableData<MovimientoDto>
+        {
+            Items = result.Items,
+            TotalItems = result.TotalItems
+        };
+    }
+
+    async Task Buscar()
+    {
+        _table?.NavigateTo(0);
+        await _table!.ReloadServerData();
+    }
+}

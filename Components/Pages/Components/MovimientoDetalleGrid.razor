@@ -1,0 +1,129 @@
+﻿@using HsqvLogistica.Models.DTOs.Articulos
+@using HsqvLogistica.Models.DTOs.Movimientos
+@using HsqvLogistica.Components.Pages.Components
+@using MudBlazor
+
+<MudPaper Class="pa-4">
+
+    <MudStack Direction="Row"
+              Justify="Justify.SpaceBetween"
+              AlignItems="AlignItems.Center"
+              Class="mb-2">
+
+        <MudText Typo="Typo.h6">Detalle de Artículos</MudText>
+
+        @if (!ReadOnly)
+        {
+            <MudButton Color="Color.Primary"
+                       Variant="Variant.Outlined"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="AgregarDetalle">
+                Agregar
+            </MudButton>
+        }
+    </MudStack>
+
+    <MudTable Items="_detalles"
+              Dense
+              Hover
+              Striped>
+
+        <HeaderContent>
+            <MudTh>Artículo</MudTh>
+            <MudTh>Cantidad</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+
+        <RowTemplate Context="row">
+
+            <MudTd>
+                @if (ReadOnly)
+                {
+                    <MudText>@row.Articulo</MudText>
+                }
+                else
+                {
+                    <ArticuloAutoComplete @key="row.RowKey"
+                                          OnArticuloSelected="art => OnArticuloSelected(row, art)" />
+                }
+            </MudTd>
+
+            <MudTd>
+                @if (ReadOnly)
+                {
+                    <MudText>@row.Cantidad</MudText>
+                }
+                else
+                {
+                    <MudNumericField T="decimal"
+                                     @bind-Value="row.Cantidad"
+                                     Min="1"
+                                     Immediate="true" />
+                }
+            </MudTd>
+
+            <MudTd Align="Align.Right">
+                @if (!ReadOnly)
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                   Color="Color.Error"
+                                   OnClick="@(() => EliminarDetalle(row))" />
+                }
+            </MudTd>
+
+        </RowTemplate>
+
+        <NoRecordsContent>
+            <MudText Color="Color.Secondary">
+                No hay artículos agregados
+            </MudText>
+        </NoRecordsContent>
+
+    </MudTable>
+
+</MudPaper>
+
+@code {
+
+    [Parameter] public bool ReadOnly { get; set; } = false;
+
+    List<MovimientoDetalleDto> _detalles = new();
+
+    // =====================
+    // Métodos públicos
+    // =====================
+
+    public List<MovimientoDetalleDto> GetDetalles()
+        => _detalles;
+
+    public void SetDetalles(List<MovimientoDetalleDto> detalles)
+    {
+        _detalles = detalles ?? new();
+        StateHasChanged();
+    }
+
+    // =====================
+    // Acciones
+    // =====================
+
+    void AgregarDetalle()
+    {
+        _detalles.Add(new MovimientoDetalleDto
+        {
+            Cantidad = 1
+        });
+    }
+
+    void EliminarDetalle(MovimientoDetalleDto detalle)
+    {
+        _detalles.Remove(detalle);
+    }
+
+    void OnArticuloSelected(
+        MovimientoDetalleDto detalle,
+        ArticuloLookupDto articulo)
+    {
+        detalle.IdArticulo = articulo.Id;
+        detalle.Articulo = articulo.Descripcion;
+    }
+}

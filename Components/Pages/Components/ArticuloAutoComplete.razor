@@ -1,0 +1,43 @@
+﻿@using HsqvLogistica.Models.DTOs.Articulos
+@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
+
+@inject IArticuloService ArticuloService
+
+<MudAutocomplete T="ArticuloLookupDto"
+                 Label="Artículo"
+                 Dense="true"
+                 Clearable="true"
+                 ResetValueOnEmptyText="true"
+                 SearchFunc="Buscar"
+                 ToStringFunc="a => a?.Descripcion"
+                 ValueChanged="OnSelected"
+                 MinCharacters="2"
+                 Adornment="Adornment.Start"
+                 AdornmentIcon="@Icons.Material.Filled.Inventory">
+
+</MudAutocomplete>
+
+@code {
+
+    [Parameter]
+    public EventCallback<ArticuloLookupDto> OnArticuloSelected { get; set; }
+
+    ArticuloLookupDto? _selected;
+
+    async Task<IEnumerable<ArticuloLookupDto>> Buscar(
+    string text,
+    CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(text) || text.Length < 2)
+            return Enumerable.Empty<ArticuloLookupDto>();
+
+        return await ArticuloService.SearchLookupAsync(text);
+    }
+
+    async Task OnSelected(ArticuloLookupDto? articulo)
+    {
+        if (articulo is not null)
+            await OnArticuloSelected.InvokeAsync(articulo);
+    }
+}

@@ -42,6 +42,8 @@ builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<ITipoUsuarioService, TipoUsuarioService>();
 builder.Services.AddScoped<IPedidoRepository, PedidoRepository>();
 builder.Services.AddScoped<IPedidoService, PedidoService>();
+builder.Services.AddScoped<IMovimientoRepository, MovimientoRepository>();
+builder.Services.AddScoped<IMovimientoService, MovimientoService>();
 
 // Controllers (API)
 builder.Services.AddControllers();

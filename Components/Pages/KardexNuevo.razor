@@ -1,0 +1,359 @@
+﻿@page "/kardex/nuevo"
+
+@using HsqvLogistica.Components.Pages.Components
+@using HsqvLogistica.Models.DTOs.Movimientos
+@using HsqvLogistica.Models.DTOs.Motivos
+@using HsqvLogistica.Models.DTOs.Clientes
+@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
+
+@inject IMovimientoService MovimientoService
+@inject IPedidoService PedidoService
+@inject IMotivoService MotivoService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+
+    <MudPaper Class="pa-5">
+
+        <MudText Typo="Typo.h5" Class="mb-4">
+            Nuevo Movimiento
+        </MudText>
+
+        <MudGrid Spacing="3">
+            <MudItem xs="12" sm="4" md="3">
+                <MudDatePicker Label="Fecha Entrega"
+                               @bind-Date="_fechaEntrega"
+                               Color="Color.Info"
+                               Dense="true"
+                               Variant="Variant.Outlined" />
+            </MudItem>
+            <!-- TIPO MOVIMIENTO -->
+            <MudItem xs="12" sm="6" md="3">
+                <MudSelect T="string"
+                           Label="Tipo Movimiento"
+                           @bind-Value="_tipoMovimiento"
+                           @bind-Value:after="OnTipoMovimientoChanged">
+
+                    <MudSelectItem Value="@("")">Seleccione</MudSelectItem>
+                    <MudSelectItem Value="@("ING")">Ingreso</MudSelectItem>
+                    <MudSelectItem Value="@("SAL")">Salida</MudSelectItem>
+
+                </MudSelect>
+            </MudItem>
+            <!-- MOTIVO -->
+            @if (_motivosFiltrados.Any())
+            {
+                <MudItem xs="12" sm="6" md="3">
+                    <MudSelect T="int"
+                               Label="Motivo"
+                               @bind-Value="_idMotivo"
+                               @bind-Value:after="OnMotivoChanged"
+                               Immediate="true">
+
+
+                        @foreach (var motivo in _motivosFiltrados)
+                        {
+                            <MudSelectItem Value="@motivo.Id">
+                                @motivo.Descripcion
+                            </MudSelectItem>
+                        }
+
+                    </MudSelect>
+                </MudItem>
+            }
+        </MudGrid>
+
+        <MudDivider Class="my-4" />
+
+        @if (_tipoMovimiento == "SAL" && _idMotivo == 1)
+        {
+            <MudGrid Spacing="3">
+
+                <MudItem xs="12" sm="6" md="3">
+                    <MudTextField Label="Número de Pedido"
+                                  @bind-Value="_nroPedido"
+                                  Adornment="Adornment.End"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  OnAdornmentClick="BuscarPedido"
+                                  Immediate="true" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6" md="5">
+                    <MudTextField Label="Cliente"
+                                  Value="_cliente"
+                                  Disabled="true"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Person" />
+                </MudItem>
+
+            </MudGrid>
+        }
+
+        @if (_tipoMovimiento == "ING" || (_tipoMovimiento == "SAL" && _idMotivo != 1))
+        {
+            <ClienteAutoComplete Value="_clienteSeleccionado"
+                                 ValueChanged="OnClienteChanged" />
+
+        }
+
+        <MudDivider Class="my-4" />
+
+        <MovimientoDetalleGrid @ref="_detalleGrid"
+                               ReadOnly="@(_tipoMovimiento == "SAL" && _idMotivo == 1)"
+                               @key="@($"{_tipoMovimiento}-{_idMotivo}")" />
+
+        <MudDivider Class="my-4" />
+
+        <MudGrid Spacing="3">
+
+            <MudItem xs="12" md="3">
+                <MudTextField Label="Serie Guía"
+                              @bind-Value="_serieGuia"
+                              MaxLength="5"
+                              Counter="5"
+                              Immediate="true" />
+            </MudItem>
+
+            <MudItem xs="12" md="3">
+                <MudTextField Label="Número Guía"
+                              @bind-Value="_nroGuia"
+                              MaxLength="10"
+                              Counter="10"
+                              Immediate="true" />
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudTextField Label="Observación"
+                              @bind-Value="_observacion" />
+            </MudItem>
+
+        </MudGrid>
+
+        <MudStack Direction="Row" Spacing="2" Class="mt-4">
+
+            <MudButton Color="Color.Primary"
+                       Disabled="_saving"
+                       OnClick="Guardar">
+                @(_saving ? "Guardando..." : "Guardar")
+            </MudButton>
+
+            <MudButton Color="Color.Default"
+                       OnClick="@(() => Navigation.NavigateTo("/kardex"))">
+                Cancelar
+            </MudButton>
+
+        </MudStack>
+
+    </MudPaper>
+
+</MudContainer>
+
+@code {
+    string _tipoMovimiento = ""; // ING | SAL
+
+    List<MotivoDto> _motivos = new();
+    List<MotivoDto> _motivosFiltrados = new();
+    ClientePedidoDto? _clienteSeleccionado;
+
+    int _idMotivo=0;
+
+    int? _idPedido;
+    string? _nroPedido;
+
+    int? _idCliente;
+    string? _cliente;
+
+    string? _serieGuia="0000";
+    string? _nroGuia="00000000";
+    string? _observacion;
+    DateTime? _fechaEntrega;
+    bool _saving = false;
+
+    MovimientoDetalleGrid? _detalleGrid;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _fechaEntrega = DateTime.Today;
+
+        _motivos = (await MotivoService.GetAllAsync())
+            .Where(m => m.Activo == true)
+            .ToList();
+    }
+
+    void OnTipoMovimientoChanged()
+    {
+        _idMotivo = 0;
+        _idPedido = null;
+        _nroPedido = null;
+        
+        _motivosFiltrados = _motivos
+            .Where(m => m.TipoMov == _tipoMovimiento)
+            .ToList();
+    }
+
+    async Task BuscarPedido()
+    {
+        if (string.IsNullOrWhiteSpace(_nroPedido))
+        {
+            Snackbar.Add("Ingrese el número de pedido", Severity.Warning);
+            return;
+        }
+
+        var pedido = await PedidoService.GetByIdAsync(int.Parse(_nroPedido));
+
+        _idPedido = pedido.Id;
+        _idCliente = pedido.IdCliente;
+        _cliente = pedido.Cliente;
+
+        _detalleGrid?.SetDetalles(
+            pedido.Detalle.Select(d => new MovimientoDetalleDto
+            {
+                IdArticulo = (int)d.IdArticulo,
+                Articulo = d.Articulo,
+                Cantidad = d.Cantidad
+            }).ToList()
+        );
+    }
+
+    void OnClienteChanged(ClientePedidoDto? cliente)
+    {
+        _clienteSeleccionado = cliente;
+
+        _idCliente = cliente?.IdCliente;
+        _cliente = cliente?.Nombre;
+    }
+
+    async Task Guardar()
+    {
+        if (_saving) return; // 🔒 evita doble submit
+
+        _saving = true;
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(_tipoMovimiento))
+            {
+                Snackbar.Add("Debe seleccionar el tipo de movimiento", Severity.Warning);
+                return;
+            }
+
+            if (_idMotivo == 0)
+            {
+                Snackbar.Add("Debe seleccionar un motivo", Severity.Warning);
+                return;
+            }
+
+            if (_tipoMovimiento == "SAL" && _idMotivo == 1 && string.IsNullOrWhiteSpace(_nroPedido))
+            {
+                Snackbar.Add("Debe ingresar el número de pedido", Severity.Warning);
+                return;
+            }
+
+            if ((_tipoMovimiento == "ING" || _idMotivo != 1) && _idCliente is null)
+            {
+                Snackbar.Add("Debe seleccionar un cliente", Severity.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(_serieGuia) || _serieGuia.Length <= 2)
+            {
+                Snackbar.Add("La serie de guía debe tener exactamente 5 caracteres", Severity.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(_nroGuia) || _nroGuia.Length == 0)
+            {
+                Snackbar.Add("El número de guía debe tener exactamente mas de 1 caracter", Severity.Warning);
+                return;
+            }
+
+            var detalles = _detalleGrid?.GetDetalles() ?? new();
+
+            if (!detalles.Any())
+            {
+                Snackbar.Add("Debe ingresar al menos un artículo", Severity.Warning);
+                return;
+            }
+
+            if (TieneArticulosRepetidos(detalles))
+            {
+                Snackbar.Add("Existen artículos repetidos. Debe consolidar las cantidades.", Severity.Warning);
+                return;
+            }
+
+            if (TieneArticulosVacios(detalles))
+            {
+                Snackbar.Add("Existen filas sin artículo seleccionado", Severity.Warning);
+                return;
+            }
+
+            if (TieneCantidadesInvalidas(detalles))
+            {
+                Snackbar.Add("Existen artículos con cantidad inválida", Severity.Warning);
+                return;
+            }
+
+            var dto = new MovimientoCreateDto
+            {
+                Tipo = _tipoMovimiento,
+                IdMotivo = _idMotivo,
+                IdPedido = _idPedido,
+                IdCliente = _idCliente,
+                IdAlmacen = 1,
+                Fecha = _fechaEntrega.HasValue
+                    ? DateOnly.FromDateTime(_fechaEntrega.Value)
+                    : null,
+                Cliente = _cliente,
+                SerieGuia = _serieGuia,
+                NroGuia = _nroGuia,
+                Detalles = _observacion,
+                DetallesMovimiento = detalles,
+                UsuaCreacion = "admin"
+            };
+
+            await MovimientoService.CreateAsync(dto);
+
+            Snackbar.Add("Movimiento registrado correctamente", Severity.Success);
+            Navigation.NavigateTo("/kardex");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error al registrar el movimiento", Severity.Error);
+        }
+        finally
+        {
+            _saving = false; // 🔓 siempre libera
+        }
+    }
+
+    bool TieneArticulosRepetidos(List<MovimientoDetalleDto> detalles)
+    {
+        return detalles
+       .Where(d => d.IdArticulo > 0)  
+       .GroupBy(d => d.IdArticulo)
+       .Any(g => g.Count() > 1);
+    }
+
+    bool TieneArticulosVacios(List<MovimientoDetalleDto> detalles)
+    {
+        return detalles.Any(d => d.IdArticulo <= 0);
+    }
+
+    bool TieneCantidadesInvalidas(List<MovimientoDetalleDto> detalles)
+    {
+        return detalles.Any(d => d.Cantidad <= 0);
+    }
+
+    void OnMotivoChanged()
+    {
+        if (_tipoMovimiento == "SAL" && _idMotivo == 1)
+        {
+            _idCliente = null;
+            _cliente = null;
+            _detalleGrid?.SetDetalles(new());
+        }
+    }
+
+}

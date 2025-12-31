@@ -10,4 +10,6 @@ public interface IPedidoService
     Task<int> CreateAsync(PedidoCreateDto dto);
 
     Task<bool> ChangeStatusAsync(int id, bool activo);
+    Task<PedidoPagedResultDto> SearchAsync(PedidoFilterDto filter, CancellationToken cancellationToken);
+
 }

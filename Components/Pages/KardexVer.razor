@@ -1,0 +1,155 @@
+﻿@page "/kardex/ver/{Id:int}"
+
+@using HsqvLogistica.Models.DTOs.Movimientos
+@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
+@using HsqvLogistica.Components.Pages.Components
+
+@inject IMovimientoService MovimientoService
+@inject NavigationManager Navigation
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-6">
+
+    <MudPaper Elevation="3" Class="pa-6 rounded-lg">
+
+        <!-- ================= HEADER ================= -->
+        <MudStack Direction="Row"
+                  AlignItems="AlignItems.Center"
+                  Justify="Justify.SpaceBetween"
+                  Class="mb-4">
+
+            <MudStack>
+                <MudText Typo="Typo.h5">
+                    🧾 Detalle de Movimiento Kardex
+                </MudText>
+
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Código: @_movimiento?.Id
+                </MudText>
+            </MudStack>
+
+            @if (_movimiento != null)
+            {
+                <MudChip T="string"
+                         Color="@(_movimiento.Tipo == "ING" ? Color.Info : Color.Warning)"
+                         Variant="Variant.Filled"
+                         Size="Size.Medium">
+                    @(_movimiento.Tipo == "ING" ? "Ingreso" : "Salida")
+                </MudChip>
+            }
+        </MudStack>
+
+        <MudDivider Class="my-4" />
+
+        @if (_loading)
+        {
+            <MudProgressCircular Indeterminate Size="Size.Large" />
+        }
+        else if (_movimiento != null)
+        {
+            <!-- ================= DATOS GENERALES ================= -->
+            <MudText Typo="Typo.subtitle1" Class="mb-2">
+                📌 Datos Generales
+            </MudText>
+
+            <MudGrid Spacing="3">
+
+                <MudItem xs="12" md="3">
+                    <MudTextField Label="Fecha"
+                                  Value="@_movimiento.Fecha.ToString("dd/MM/yyyy")"
+                                  ReadOnly />
+                </MudItem>
+
+                <MudItem xs="12" md="3">
+                    <MudTextField Label="Motivo"
+                                  Value="@_movimiento.Motivo"
+                                  ReadOnly />
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Cliente"
+                                  Value="@_movimiento.Cliente"
+                                  ReadOnly />
+                </MudItem>
+
+                <MudItem xs="12" md="3">
+                    <MudTextField Label="Serie Guía"
+                                  Value="@_movimiento.SerieGuia"
+                                  ReadOnly />
+                </MudItem>
+
+                <MudItem xs="12" md="3">
+                    <MudTextField Label="Número Guía"
+                                  Value="@_movimiento.NroGuia"
+                                  ReadOnly />
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Observación"
+                                  Value="@_movimiento.Observacion"
+                                  ReadOnly/>
+                </MudItem>
+
+            </MudGrid>
+
+            <MudDivider Class="my-5" />
+
+            <!-- ================= DETALLE ================= -->
+            <MudText Typo="Typo.subtitle1" Class="mb-2">
+                📦 Detalle de Artículos
+            </MudText>
+
+            @if (_loading)
+            {
+                <MudProgressCircular Indeterminate />
+            }
+            else if (_movimiento is not null)
+            {
+                <MudDivider Class="my-4" />
+
+                <MovimientoDetalleGrid ReadOnly="true"
+                                       @ref="_detalleGrid" />
+            }
+
+        }
+
+        <MudDivider Class="my-5" />
+
+        <!-- ================= ACCIONES ================= -->
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.ArrowBack"
+                   OnClick="@(() => Navigation.NavigateTo("/kardex"))">
+            Volver
+        </MudButton>
+
+    </MudPaper>
+
+</MudContainer>
+
+@code {
+
+    [Parameter] public int Id { get; set; }
+
+    MovimientoDto? _movimiento;
+    MovimientoDetalleGrid? _detalleGrid;
+
+    bool _loading = true;
+    bool _detalleCargado = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _movimiento = await MovimientoService.GetByIdAsync(Id);
+        _loading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_detalleCargado && _movimiento != null && _detalleGrid != null)
+        {
+            _detalleGrid.SetDetalles(_movimiento.Detalles ?? new());
+            _detalleCargado = true;
+            StateHasChanged();
+        }
+    }
+}
