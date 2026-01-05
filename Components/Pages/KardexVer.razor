@@ -47,6 +47,30 @@
         }
         else if (_movimiento != null)
         {
+            @if (_movimiento?.IdPedido != null)
+            {
+                <MudAlert Severity="Severity.Info"
+                          Variant="Variant.Outlined"
+                          Dense
+                          Class="mb-4">
+
+                    <MudStack Direction="Row" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.ReceiptLong" />
+                        <MudText Typo="Typo.subtitle2">
+                            Pedido asociado:
+                        </MudText>
+
+                        <MudChip T="int"
+                                 Color="Color.Secondary"
+                                 Variant="Variant.Outlined"
+                                 Size="Size.Small">
+                            Codigo #@_movimiento.IdPedido
+                        </MudChip>
+                    </MudStack>
+
+                </MudAlert>
+            }
+
             <!-- ================= DATOS GENERALES ================= -->
             <MudText Typo="Typo.subtitle1" Class="mb-2">
                 📌 Datos Generales

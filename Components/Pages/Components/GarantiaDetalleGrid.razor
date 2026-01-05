@@ -1,0 +1,122 @@
+﻿@using HsqvLogistica.Models.DTOs.Articulos
+@using HsqvLogistica.Models.DTOs.Garantia
+@using HsqvLogistica.Models.DTOs.Garantias
+@using MudBlazor
+
+<MudTable Items="_detalles"
+          Dense
+          Hover
+          Bordered
+          Elevation="0">
+
+    <HeaderContent>
+        <MudTh Style="width:40%">Artículo</MudTh>
+        <MudTh Style="width:15%">Cantidad</MudTh>
+        <MudTh>Observación</MudTh>
+        @if (!ReadOnly)
+        {
+            <MudTh Style="width:5%"></MudTh>
+        }
+    </HeaderContent>
+
+    <RowTemplate Context="row">
+
+        <!-- ARTÍCULO -->
+        <MudTd>
+            @if (ReadOnly)
+            {
+                <MudText Typo="Typo.body2">
+                    @row.Articulo
+                </MudText>
+            }
+            else
+            {
+                <ArticuloAutoComplete OnArticuloSelected="a => OnArticulo(row, a)" />
+            }
+        </MudTd>
+
+        <!-- CANTIDAD -->
+        <MudTd>
+            <MudNumericField T="decimal"
+                             @bind-Value="row.Cantidad"
+                             Min="1"
+                             Disabled="ReadOnly"
+                             Variant="Variant.Text"
+                             Dense />
+        </MudTd>
+
+        <!-- OBSERVACIÓN -->
+        <MudTd>
+            <MudTextField @bind-Value="row.Detalles"
+                          Disabled="ReadOnly"
+                          Variant="Variant.Text"
+                          Dense />
+        </MudTd>
+
+        <!-- ELIMINAR -->
+        @if (!ReadOnly)
+        {
+            <MudTd Align="Align.Center">
+                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                               Color="Color.Error"
+                               Size="Size.Small"
+                               OnClick="@(() => Eliminar(row))" />
+            </MudTd>
+        }
+
+    </RowTemplate>
+
+</MudTable>
+
+@if (!ReadOnly)
+{
+    <MudButton StartIcon="@Icons.Material.Filled.Add"
+               Variant="Variant.Outlined"
+               Color="Color.Primary"
+               Class="mt-3"
+               OnClick="AgregarFila">
+        Agregar artículo
+    </MudButton>
+}
+
+@code {
+
+    // ===================== PARAMS =====================
+    [Parameter] public bool ReadOnly { get; set; } = false;
+
+    // ===================== STATE =====================
+    List<GarantiaDetalleDto> _detalles = new();
+
+    // ===================== PUBLIC API =====================
+    public List<GarantiaDetalleDto> GetDetalles()
+        => _detalles;
+
+    public void SetDetalles(List<GarantiaDetalleDto> detalles)
+    {
+        _detalles = detalles;
+        StateHasChanged();
+    }
+
+    // ===================== ACCIONES =====================
+    void AgregarFila()
+    {
+        _detalles.Add(new GarantiaDetalleDto
+        {
+            Cantidad = 1
+        });
+    }
+
+    void Eliminar(GarantiaDetalleDto row)
+    {
+        _detalles.Remove(row);
+    }
+
+    void OnArticulo(GarantiaDetalleDto row, ArticuloLookupDto? articulo)
+    {
+        if (articulo == null)
+            return;
+
+        row.IdArticulo = articulo.Id;
+        row.Articulo = articulo.Descripcion;
+    }
+}

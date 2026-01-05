@@ -62,6 +62,7 @@ namespace HsqvLogistica.Services
                 Tipo = entity.IdMotivoNavigation?.TipoMov,
 
                 IdMotivo = entity.IdMotivo ?? 0,
+                IdPedido = entity.IdPedido,
                 Motivo = entity.IdMotivoNavigation?.Descripcion,
 
                 IdCliente = entity.IdCliente,

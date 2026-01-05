@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,7 +11,17 @@ public partial class Garantium
 
     public int IdCliente { get; set; }
 
+    [StringLength(300)]
+    public string? Cliente { get; set; }
+
     public int IdEmpServ { get; set; }
+
+    [StringLength(200)]
+    public string? EmpServ { get; set; }
+
+    public DateOnly? FechaDespacho { get; set; }
+
+    public DateOnly? FechaEntrega { get; set; }
 
     [StringLength(10)]
     public string? NroSerie { get; set; }

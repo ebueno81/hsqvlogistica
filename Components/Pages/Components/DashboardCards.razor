@@ -1,0 +1,42 @@
+﻿@using HsqvLogistica.Models.DTOs.Dashboard
+@using MudBlazor
+
+<MudGrid Spacing="3">
+
+    <MudItem xs="12" sm="6" md="3">
+        <DashboardCard Title="Total Artículos"
+                       Value="@Resumen?.TotalArticulos"
+                       Icon="@Icons.Material.Filled.Inventory"
+                       Color="Color.Primary"
+                       Delta="+12%" />
+    </MudItem>
+
+    <MudItem xs="12" sm="6" md="3">
+        <DashboardCard Title="Stock Total"
+                       Value="@Resumen?.StockTotal"
+                       Icon="@Icons.Material.Filled.Warehouse"
+                       Color="Color.Success"
+                       Delta="-3%" />
+    </MudItem>
+
+    <MudItem xs="12" sm="6" md="3">
+        <DashboardCard Title="Pedidos Activos"
+                       Value="@Resumen?.PedidosActivos"
+                       Icon="@Icons.Material.Filled.LocalShipping"
+                       Color="Color.Warning"
+                       Delta="+8%" />
+    </MudItem>
+
+    <MudItem xs="12" sm="6" md="3">
+        <DashboardCard Title="Garantías"
+                       Value="@Resumen?.Garantias"
+                       Icon="@Icons.Material.Filled.Shield"
+                       Color="Color.Info"
+                       Delta="-15%" />
+    </MudItem>
+
+</MudGrid>
+
+@code {
+    [Parameter] public DashboardSummaryDto? Resumen { get; set; }
+}

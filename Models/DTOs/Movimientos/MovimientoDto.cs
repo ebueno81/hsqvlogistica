@@ -6,6 +6,7 @@
         public string Tipo { get; set; } = default!;
         public string Motivo { get; set; } = default!;
         public int IdMotivo { get; set; }
+        public int? IdPedido { get; set; }
 
         public int? IdCliente { get; set; }
         public string? Cliente { get; set; }

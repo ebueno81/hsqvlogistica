@@ -1,0 +1,134 @@
+﻿@page "/garantias/ver/{Id:int}"
+
+@using HsqvLogistica.Models.DTOs.Garantias
+@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
+@using HsqvLogistica.Components.Pages.Components
+
+@inject IGarantiaService GarantiaService
+@inject NavigationManager Navigation
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-6">
+
+    <MudPaper Elevation="3" Class="pa-6 rounded-lg">
+
+        <!-- HEADER -->
+        <MudStack Direction="Row" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudStack>
+                <MudText Typo="Typo.h5">🛡️ Detalle de Garantía</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Código #@_garantia?.Id
+                </MudText>
+            </MudStack>
+
+            @if (_garantia != null)
+            {
+                <MudChip T="string"
+                         Color="@(_garantia.Estado ? Color.Success : Color.Warning)"
+                         Variant="Variant.Filled">
+                    @(_garantia.Estado ? "Cerrado" : "Pendiente")
+                </MudChip>
+            }
+        </MudStack>
+
+        <MudDivider Class="my-4" />
+
+        @if (_loading)
+        {
+            <MudProgressCircular Indeterminate />
+        }
+        else if (_garantia != null)
+        {
+            <!-- DATOS -->
+            <MudGrid Spacing="3">
+
+                <MudItem xs="12" md="3">
+                    <MudTextField Label="Cliente"
+                                  Value="@_garantia.Cliente"
+                                  ReadOnly />
+                </MudItem>
+
+                <MudItem xs="12" md="3">
+                    <MudTextField Label="Empresa Transporte"
+                                  Value="@_garantia.EmpresaServicio"
+                                  ReadOnly />
+                </MudItem>
+
+                <MudItem xs="12" md="3">
+                    <MudTextField Label="Nro. Serie"
+                                  Value="@_garantia.NroSerie"
+                                  ReadOnly />
+                </MudItem>
+
+                <MudItem xs="12" md="3">
+                    <MudTextField Label="Nro. Guía"
+                                  Value="@_garantia.NroGuia"
+                                  ReadOnly />
+                </MudItem>
+
+                <MudItem xs="12" md="3">
+                    <MudTextField Label="Fecha Despacho"
+                                  Value="@_garantia.FechaDespacho?.ToString("dd/MM/yyyy")"
+                                  ReadOnly />
+                </MudItem>
+
+                <MudItem xs="12" md="3">
+                    <MudTextField Label="Fecha Entrega"
+                                  Value="@_garantia.FechaEntrega?.ToString("dd/MM/yyyy")"
+                                  ReadOnly />
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Observaciones"
+                                  Value="@_garantia.Detalles"
+                                  ReadOnly />
+                </MudItem>
+
+            </MudGrid>
+
+            <MudDivider Class="my-5" />
+
+            <!-- DETALLE -->
+            <MudText Typo="Typo.subtitle1">📦 Artículos</MudText>
+
+            <GarantiaDetalleGrid ReadOnly="true"
+                                 @ref="_detalleGrid" />
+        }
+
+        <MudDivider Class="my-5" />
+
+        <MudButton StartIcon="@Icons.Material.Filled.ArrowBack"
+                   OnClick="@(() => Navigation.NavigateTo("/garantias"))">
+            Volver
+        </MudButton>
+
+    </MudPaper>
+
+</MudContainer>
+
+@code {
+
+    [Parameter] public int Id { get; set; }
+
+    GarantiaDto? _garantia;
+    GarantiaDetalleGrid? _detalleGrid;
+    bool _loading = true;
+    bool _detalleCargado = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _garantia = await GarantiaService.GetByIdAsync(Id);
+        _loading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_detalleCargado &&
+            _garantia != null &&
+            _detalleGrid != null)
+        {
+            _detalleGrid.SetDetalles(_garantia.DetallesGarantia ?? new());
+            _detalleCargado = true;
+        }
+    }
+}

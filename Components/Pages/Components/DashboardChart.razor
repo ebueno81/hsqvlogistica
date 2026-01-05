@@ -1,0 +1,89 @@
+﻿@using HsqvLogistica.Models.DTOs.Dashboard
+@using MudBlazor
+
+@using ChartJs.Blazor
+@using ChartJs.Blazor.BarChart
+@using ChartJs.Blazor.Common
+@using ChartJs.Blazor.Common.Axes
+@using ChartJs.Blazor.Common.Axes.Ticks
+@using ChartJs.Blazor.Util
+
+<MudPaper Elevation="3"
+          Class="pa-6"
+          Style="background: linear-gradient(135deg, #f8f9fc, #ffffff); border-radius: 14px;">
+
+    <!-- HEADER -->
+    <div class="d-flex align-center mb-4">
+        <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Size="Size.Medium" Class="mr-3">
+            <MudIcon Icon="@Icons.Material.Filled.BarChart" />
+        </MudAvatar>
+
+        <div>
+            <MudText Typo="Typo.h6">Movimientos Mensuales</MudText>
+            <MudText Typo="Typo.caption">Últimos 6 meses</MudText>
+        </div>
+    </div>
+
+    <!-- CHART -->
+    <div style="height:320px;">
+        <ChartJsBlazor Config="_config" />
+    </div>
+
+</MudPaper>
+
+@code {
+
+    [Parameter] public List<MonthlyMovementDto> Movimientos { get; set; } = new();
+
+    private BarConfig _config = new();
+
+    protected override void OnParametersSet()
+    {
+        if (!Movimientos.Any())
+            return;
+
+        _config = new BarConfig
+        {
+            Options = new BarOptions
+            {
+                Responsive = true,
+                MaintainAspectRatio = false,
+                Scales = new Scales
+                {
+                    XAxes = new List<CartesianAxis>
+                    {
+                        new CategoryAxis
+                        {
+                            BarPercentage = 0.9,
+                            CategoryPercentage = 0.8
+                        }
+                    },
+                    YAxes = new List<CartesianAxis>
+                    {
+                        new LinearCartesianAxis
+                        {
+                            Ticks = new LinearCartesianTicks
+                            {
+                                BeginAtZero = true
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        foreach (var mes in Movimientos.Select(x => x.Mes))
+            _config.Data.Labels.Add(mes);
+
+        var dataset = new BarDataset
+        {
+            Label = "Movimientos",
+            BackgroundColor = ColorUtil.ColorHexString(63, 81, 181)
+        };
+
+        foreach (var value in Movimientos.Select(x => x.Total))
+            dataset.Add(value);
+
+        _config.Data.Datasets.Add(dataset);
+    }
+}

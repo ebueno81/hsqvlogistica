@@ -1,0 +1,51 @@
+﻿@page "/dashboard"
+
+@using HsqvLogistica.Models.DTOs.Dashboard
+@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
+@using HsqvLogistica.Components.Pages.Components
+
+@inject IDashboardService DashboardService
+
+<MudPaper Class="pa-6" Elevation="0" Square="true">
+
+    <!-- HEADER -->
+    <MudText Typo="Typo.h5" Class="mb-1">
+        Dashboard Principal
+    </MudText>
+
+    <MudText Typo="Typo.subtitle2" Color="Color.Info" Class="mb-5">
+        Resumen general del sistema
+    </MudText>
+
+    <!-- CARDS -->
+    @if (_resumen is not null)
+    {
+        <DashboardCards Resumen="_resumen" />
+    }
+    <br />
+    @if (_loading)
+    {
+        <MudProgressCircular Indeterminate />
+    }
+    else
+    {
+        <DashboardChart Movimientos="_movimientos" />
+    }
+
+</MudPaper>
+
+@code {
+
+    private bool _loading = true;
+
+    private DashboardSummaryDto? _resumen;
+    private List<MonthlyMovementDto> _movimientos = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _resumen = await DashboardService.GetSummaryAsync();
+        _movimientos = await DashboardService.GetMonthlyMovementsAsync();
+        _loading = false;
+    }
+}

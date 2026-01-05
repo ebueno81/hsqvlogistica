@@ -94,3 +94,8 @@ main {
         right: 0.75rem;
         top: 0.5rem;
     }
+.app-background {
+    background-color: #f5f6fa; /* gris tipo dashboard */
+    min-height: 100vh;
+    padding: 24px;
+}

@@ -28,12 +28,17 @@
     <!-- FILTROS -->
     <MudPaper Class="pa-4 mb-4">
 
-        <MudGrid Spacing="3">
+        <MudGrid Spacing="2" AlignItems="AlignItems.End">
 
             <MudItem xs="12" md="3">
                 <MudTextField Label="Cliente"
                               @bind-Value="_cliente"
-                              Variant="Variant.Outlined" />
+                              Variant="Variant.Outlined"
+                              Dense="true"
+                              Margin="Margin.Dense"
+                              Style="max-width: 300px; height: 40px;"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.PersonSearch" />
             </MudItem>
 
             <MudItem xs="12" md="3">

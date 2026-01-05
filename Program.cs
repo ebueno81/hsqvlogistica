@@ -3,6 +3,7 @@ using HsqvLogistica.Data;
 using HsqvLogistica.Integrations.Auth;
 using HsqvLogistica.Integrations.Clients;
 using HsqvLogistica.Integrations.Clients.Interfaces;
+using HsqvLogistica.Mappers;
 using HsqvLogistica.Repositories;
 using HsqvLogistica.Repositories.Interfaces;
 using HsqvLogistica.Services;
@@ -44,6 +45,11 @@ builder.Services.AddScoped<IPedidoRepository, PedidoRepository>();
 builder.Services.AddScoped<IPedidoService, PedidoService>();
 builder.Services.AddScoped<IMovimientoRepository, MovimientoRepository>();
 builder.Services.AddScoped<IMovimientoService, MovimientoService>();
+builder.Services.AddScoped<IGarantiaRepository, GarantiaRepository>();
+builder.Services.AddScoped<IGarantiaService, GarantiaService>();
+builder.Services.AddScoped<GarantiaMapper>();
+builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 // Controllers (API)
 builder.Services.AddControllers();

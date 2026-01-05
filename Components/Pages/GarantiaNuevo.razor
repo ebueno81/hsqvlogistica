@@ -1,0 +1,251 @@
+﻿@page "/garantias/nuevo"
+
+@using HsqvLogistica.Components.Pages.Components
+@using HsqvLogistica.Integrations.Models
+@using HsqvLogistica.Models.DTOs.Garantia
+@using HsqvLogistica.Models.DTOs.Garantias
+@using HsqvLogistica.Models.DTOs.Clientes
+@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
+
+@inject IGarantiaService GarantiaService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+
+    <MudPaper Elevation="3" Class="pa-6 rounded-lg">
+
+        <!-- ================= HEADER ================= -->
+        <MudText Typo="Typo.h5" Class="mb-4">
+            📦 Nueva Garantía
+        </MudText>
+
+        <!-- ================= CABECERA ================= -->
+        <MudGrid Spacing="3">
+
+            <MudItem xs="12" md="6">
+                <ClienteAutoComplete Value="_clienteSeleccionado"
+                                     ValueChanged="OnClienteChanged" />
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <EmpresaServicioSelect Value="_empServSeleccionado"
+                                       ValueChanged="OnEmpServChanged" />
+            </MudItem>
+
+            <MudItem xs="12" md="3">
+                <MudDatePicker Label="Fecha Despacho"
+                               @bind-Date="_fechaDespacho"
+                               Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12" md="3">
+                <MudDatePicker Label="Fecha Entrega"
+                               @bind-Date="_fechaEntrega"
+                               Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12" md="3">
+                <MudTextField Label="Número de Serie"
+                              @bind-Value="_nroSerie"
+                              Variant="Variant.Outlined"
+                              MaxLength="10"
+                              Counter="10" />
+            </MudItem>
+
+            <MudItem xs="12" md="3">
+                <MudTextField Label="Número de Guía"
+                              @bind-Value="_nroGuia"
+                              Variant="Variant.Outlined"
+                              MaxLength="10"
+                              Counter="10" />
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudTextField Label="Observaciones"
+                              @bind-Value="_detalles"
+                              Variant="Variant.Outlined"
+                              Lines="3" />
+            </MudItem>
+
+        </MudGrid>
+
+        <MudDivider Class="my-5" />
+
+        <!-- ================= DETALLE ================= -->
+        <MudText Typo="Typo.subtitle1" Class="mb-2">
+            🧩 Artículos en Garantía
+        </MudText>
+
+        <GarantiaDetalleGrid @ref="_detalleGrid" />
+
+        <MudDivider Class="my-5" />
+
+        <!-- ================= ACCIONES ================= -->
+        <MudStack Direction="Row" Spacing="2">
+
+            <MudButton Color="Color.Primary"
+                       Disabled="_saving"
+                       OnClick="Guardar">
+                @(_saving ? "Guardando..." : "Guardar Garantía")
+            </MudButton>
+
+            <MudButton Color="Color.Default"
+                       OnClick="@(() => Navigation.NavigateTo("/garantias"))">
+                Cancelar
+            </MudButton>
+
+        </MudStack>
+
+    </MudPaper>
+
+</MudContainer>
+
+@code {
+
+    // ===================== CABECERA =====================
+    ClientePedidoDto? _clienteSeleccionado;
+    EmpServLookupDto? _empServSeleccionado;
+
+    int? _idCliente;
+    int? _idEmpServ;
+    string? _nroSerie;
+    string? _nroGuia;
+
+    DateTime? _fechaDespacho;
+    DateTime? _fechaEntrega;
+    string? _detalles;
+
+    bool _saving = false;
+
+    GarantiaDetalleGrid? _detalleGrid;
+
+    protected override void OnInitialized()
+    {
+        var hoy = DateTime.Today;
+        _fechaDespacho = hoy;
+        _fechaEntrega = hoy;
+        _nroGuia="00000000";
+        _nroSerie = "0000";
+    }
+
+    // ===================== EVENTOS =====================
+    void OnClienteChanged(ClientePedidoDto? cliente)
+    {
+        _clienteSeleccionado = cliente;
+        _idCliente = cliente?.IdCliente;
+    }
+
+    void OnEmpServChanged(EmpServLookupDto? emp)
+    {
+        _empServSeleccionado = emp;
+        _idEmpServ = emp?.IdEmpServ;
+    }
+
+    // ===================== GUARDAR =====================
+    async Task Guardar()
+    {
+        if (_saving) return;
+        _saving = true;
+
+        try
+        {
+            // -------- VALIDACIONES --------
+            if (_idCliente is null)
+            {
+                Snackbar.Add("Debe seleccionar un cliente", Severity.Warning);
+                return;
+            }
+
+            if (_idEmpServ is null)
+            {
+                Snackbar.Add("Debe seleccionar la empresa de transporte", Severity.Warning);
+                return;
+            }
+
+            var detalles = _detalleGrid?.GetDetalles() ?? new();
+
+            if (!detalles.Any())
+            {
+                Snackbar.Add("Debe agregar al menos un artículo", Severity.Warning);
+                return;
+            }
+
+            if (TieneArticulosVacios(detalles))
+            {
+                Snackbar.Add("Existen artículos sin seleccionar", Severity.Warning);
+                return;
+            }
+
+            if (TieneCantidadesInvalidas(detalles))
+            {
+                Snackbar.Add("Existen artículos con cantidad inválida", Severity.Warning);
+                return;
+            }
+
+            if (TieneArticulosRepetidos(detalles))
+            {
+                Snackbar.Add("Existen artículos repetidos en el detalle", Severity.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(_nroSerie))
+            {
+                Snackbar.Add("Debe ingresar el número de serie", Severity.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(_nroGuia))
+            {
+                Snackbar.Add("Debe ingresar el número de guía", Severity.Warning);
+                return;
+            }
+
+            // -------- DTO --------
+            var dto = new GarantiaCreateDto
+            {
+                IdCliente = _idCliente.Value,
+                IdEmpServ = _idEmpServ.Value,
+                FechaDespacho = _fechaDespacho.HasValue
+                ? DateOnly.FromDateTime(_fechaDespacho.Value)
+                : null,
+                        FechaEntrega = _fechaEntrega.HasValue
+                ? DateOnly.FromDateTime(_fechaEntrega.Value)
+                : null,
+                Cliente = _clienteSeleccionado.Nombre,
+                EmpServ = _empServSeleccionado.Empresa,
+                NroSerie=_nroSerie,
+                NroGuia = _nroGuia,
+                Detalles = _detalles,
+                GarantiaDetalles = detalles,   // 👈 nombre correcto
+                UsuaCreacion = "admin"
+            };
+
+            await GarantiaService.CreateAsync(dto);
+
+            Snackbar.Add("Garantía registrada correctamente", Severity.Success);
+            Navigation.NavigateTo("/garantias");
+        }
+        catch
+        {
+            Snackbar.Add("Error al registrar la garantía", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    // ===================== VALIDADORES =====================
+    bool TieneArticulosVacios(List<GarantiaDetalleDto> detalles)
+        => detalles.Any(d => d.IdArticulo <= 0);
+
+    bool TieneCantidadesInvalidas(List<GarantiaDetalleDto> detalles)
+        => detalles.Any(d => d.Cantidad <= 0);
+
+    bool TieneArticulosRepetidos(List<GarantiaDetalleDto> detalles)
+        => detalles
+            .GroupBy(d => d.IdArticulo)
+            .Any(g => g.Count() > 1);
+}

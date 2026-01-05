@@ -1,0 +1,204 @@
+﻿@page "/garantias/editar/{Id:int}"
+
+@using HsqvLogistica.Models.DTOs.Garantias
+@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
+@using HsqvLogistica.Components.Pages.Components
+
+@inject IGarantiaService GarantiaService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-6">
+
+    <MudPaper Elevation="3" Class="pa-6 rounded-lg">
+
+        <!-- HEADER -->
+        <MudStack Direction="Row" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudStack>
+                <MudText Typo="Typo.h5">🛡️ Detalle de Garantía</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Código #@_garantia?.Id
+                </MudText>
+            </MudStack>
+
+            @if (_garantia != null)
+            {
+                <MudChip T="string"
+                         Color="@(_garantia.Estado ? Color.Success : Color.Warning)"
+                         Variant="Variant.Filled">
+                    @(_garantia.Estado ? "Cerrado" : "Pendiente")
+                </MudChip>
+            }
+        </MudStack>
+
+        <MudDivider Class="my-4" />
+
+        @if (_loading)
+        {
+            <MudProgressCircular Indeterminate />
+        }
+        else if (_garantia != null)
+        {
+            <!-- DATOS -->
+            <MudGrid Spacing="3">
+
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Cliente"
+                                  Value="@_garantia.Cliente"
+                                  ReadOnly />
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Empresa Transporte"
+                                  Value="@_garantia.EmpresaServicio"
+                                  ReadOnly />
+                </MudItem>
+
+                <MudItem xs="12" md="3">
+                    <MudDatePicker Label="Fecha Despacho"
+                                   @bind-Date="_fechaDespacho"
+                                   Disabled="_esCerrada"
+                                   Variant="Variant.Outlined" />
+                </MudItem>
+
+                <MudItem xs="12" md="3">
+                    <MudDatePicker Label="Fecha Entrega"
+                                   @bind-Date="_fechaEntrega"
+                                   Disabled="_esCerrada"
+                                   Variant="Variant.Outlined" />
+                </MudItem>
+
+                <MudItem xs="12" md="3">
+                    <MudTextField Label="Nro. Serie"
+                                  @bind-Value="_nroSerie"
+                                  Disabled="_esCerrada"
+                                  Variant="Variant.Outlined"
+                                  MaxLength="10" />
+                </MudItem>
+
+                <MudItem xs="12" md="3">
+                    <MudTextField Label="Nro. Guía"
+                                  @bind-Value="_nroGuia"
+                                  Disabled="_esCerrada"
+                                  Variant="Variant.Outlined"
+                                  MaxLength="10" />
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Observaciones"
+                                  @bind-Value="_observaciones"
+                                  Disabled="_esCerrada"
+                                  Variant="Variant.Outlined"
+                                  Lines="3" />
+                </MudItem>
+
+            </MudGrid>
+
+            <MudDivider Class="my-5" />
+
+            <!-- DETALLE -->
+            <MudText Typo="Typo.subtitle1">📦 Artículos</MudText>
+
+            <GarantiaDetalleGrid ReadOnly="true"
+                                 @ref="_detalleGrid" />
+        }
+
+        <MudDivider Class="my-5" />
+
+        @if (!_esCerrada)
+        {
+            <MudButton Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Save"
+                       OnClick="GuardarCambios">
+                Guardar cambios
+            </MudButton>
+        }
+
+        <MudButton StartIcon="@Icons.Material.Filled.ArrowBack"
+                   OnClick="@(() => Navigation.NavigateTo("/garantias"))">
+            Volver
+        </MudButton>
+
+    </MudPaper>
+
+</MudContainer>
+
+@code {
+
+    [Parameter] public int Id { get; set; }
+
+    GarantiaDto? _garantia;
+    GarantiaDetalleGrid? _detalleGrid;
+    bool _loading = true;
+    bool _detalleCargado = false;
+
+    DateTime? _fechaDespacho;
+    DateTime? _fechaEntrega;
+    string? _nroSerie;
+    string? _nroGuia;
+    string? _observaciones;
+
+    bool _esCerrada => _garantia?.Estado == true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _garantia = await GarantiaService.GetByIdAsync(Id);
+
+        if (_garantia != null)
+        {
+            _fechaDespacho = _garantia.FechaDespacho?.ToDateTime(TimeOnly.MinValue);
+            _fechaEntrega = _garantia.FechaEntrega?.ToDateTime(TimeOnly.MinValue);
+            _nroSerie = _garantia.NroSerie;
+            _nroGuia = _garantia.NroGuia;
+            _observaciones = _garantia.Detalles;
+        }
+
+        _loading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_detalleCargado &&
+            _garantia != null &&
+            _detalleGrid != null)
+        {
+            _detalleGrid.SetDetalles(_garantia.DetallesGarantia ?? new());
+            _detalleCargado = true;
+
+            StateHasChanged(); 
+        }
+    }
+
+    async Task GuardarCambios()
+    {
+        try
+        {
+            await GarantiaService.UpdateAsync(
+                _garantia!.Id,
+                new GarantiaUpdateDto
+                {
+                    FechaDespacho = _fechaDespacho.HasValue
+                        ? DateOnly.FromDateTime(_fechaDespacho.Value)
+                        : null,
+
+                    FechaEntrega = _fechaEntrega.HasValue
+                        ? DateOnly.FromDateTime(_fechaEntrega.Value)
+                        : null,
+
+                    NroSerie = _nroSerie,
+                    NroGuia = _nroGuia,
+                    Detalles = _observaciones,
+                    UsuaModifica = "admin"
+                }
+            );
+
+            Snackbar.Add("Garantía actualizada correctamente", Severity.Success);
+            Navigation.NavigateTo("/garantias");
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Error al actualizar la garantía", Severity.Error);
+        }
+    }
+}

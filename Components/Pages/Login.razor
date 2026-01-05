@@ -15,12 +15,12 @@
 
         <MudText Typo="Typo.h5" Align="Align.Center" Class="title">Sign In</MudText>
         <MudText Typo="Typo.body2" Align="Align.Center" Class="subtitle">
-            Login with your Credentials.
+            Ingresa con tus Credenciales.
         </MudText>
 
         <MudText Typo="Typo.body2" Align="Align.Center" Class="register-line">
-            Don't have an account?
-            <MudLink Href="#" Underline="Underline.Always">Register here</MudLink>
+            ¿No tienes cuenta?
+            <MudLink Href="#" Underline="Underline.Always">Solicitalo aquí</MudLink>
         </MudText>
 
         <MudDivider Class="my-4" />
@@ -62,11 +62,11 @@
             </MudButton>
 
             <MudText Typo="Typo.caption" Class="helper-title mt-6">
-                FILL ADMINISTRATOR CREDENTIALS
+                REGISTRA TUS CREDENCIALES
             </MudText>
 
             <MudText Typo="Typo.caption" Class="helper-title mt-2">
-                FILL BASIC USER CREDENTIALS
+                SOLICITA TUS CREDENCIALES
             </MudText>
         </MudForm>
 
@@ -88,7 +88,7 @@
         if (!_form.IsValid) return;
 
         // TODO: autenticar y navegar
-        Nav.NavigateTo("/home", forceLoad: true);
+        Nav.NavigateTo("/dashboard", forceLoad: true);
     }
 
     private sealed class LoginModel

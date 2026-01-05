@@ -51,15 +51,12 @@
                                @bind-Value="_idMotivo"
                                @bind-Value:after="OnMotivoChanged"
                                Immediate="true">
-
-
                         @foreach (var motivo in _motivosFiltrados)
                         {
                             <MudSelectItem Value="@motivo.Id">
                                 @motivo.Descripcion
                             </MudSelectItem>
                         }
-
                     </MudSelect>
                 </MudItem>
             }
@@ -77,7 +74,8 @@
                                   Adornment="Adornment.End"
                                   AdornmentIcon="@Icons.Material.Filled.Search"
                                   OnAdornmentClick="BuscarPedido"
-                                  Immediate="true" />
+                                  Immediate="true"
+                                  OnKeyDown="OnPedidoKeyDown" />
                 </MudItem>
 
                 <MudItem xs="12" sm="6" md="5">
@@ -195,26 +193,50 @@
 
     async Task BuscarPedido()
     {
-        if (string.IsNullOrWhiteSpace(_nroPedido))
+        try
         {
-            Snackbar.Add("Ingrese el número de pedido", Severity.Warning);
-            return;
-        }
-
-        var pedido = await PedidoService.GetByIdAsync(int.Parse(_nroPedido));
-
-        _idPedido = pedido.Id;
-        _idCliente = pedido.IdCliente;
-        _cliente = pedido.Cliente;
-
-        _detalleGrid?.SetDetalles(
-            pedido.Detalle.Select(d => new MovimientoDetalleDto
+            if (string.IsNullOrWhiteSpace(_nroPedido))
             {
-                IdArticulo = (int)d.IdArticulo,
-                Articulo = d.Articulo,
-                Cantidad = d.Cantidad
-            }).ToList()
-        );
+                Snackbar.Add("Ingrese el número de pedido", Severity.Warning);
+                return;
+            }
+
+            if (!int.TryParse(_nroPedido, out var pedidoId))
+            {
+                Snackbar.Add("Número de pedido inválido", Severity.Warning);
+                return;
+            }
+
+            var pedido = await PedidoService.GetByIdAsync(pedidoId);
+
+            if (pedido == null)
+            {
+                Snackbar.Add("Pedido no encontrado", Severity.Warning);
+                return;
+            }
+
+            // 🔒 Bloquea cliente manual
+            _clienteSeleccionado = null;
+
+            _idPedido = pedido.Id;
+            _idCliente = pedido.IdCliente;
+            _cliente = pedido.Cliente;
+
+            _detalleGrid?.SetDetalles(
+                pedido.Detalle.Select(d => new MovimientoDetalleDto
+                {
+                    IdArticulo = d.IdArticulo ?? 0,
+                    Articulo = d.Articulo,
+                    Cantidad = d.Cantidad
+                }).ToList()
+            );
+
+            Snackbar.Add("Pedido cargado correctamente", Severity.Success);
+        }
+        catch
+        {
+            Snackbar.Add("Error al buscar el pedido", Severity.Error);
+        }
     }
 
     void OnClienteChanged(ClientePedidoDto? cliente)
@@ -295,6 +317,15 @@
                 return;
             }
 
+            if (_tipoMovimiento == "SAL" && _idMotivo == 1)
+            {
+                if (_idPedido is null)
+                {
+                    Snackbar.Add("Debe buscar y cargar un pedido válido", Severity.Warning);
+                    return;
+                }
+            }
+
             var dto = new MovimientoCreateDto
             {
                 Tipo = _tipoMovimiento,
@@ -352,8 +383,19 @@
         {
             _idCliente = null;
             _cliente = null;
-            _detalleGrid?.SetDetalles(new());
+            if (_tipoMovimiento == "SAL" && _idMotivo == 1)
+            {
+                _clienteSeleccionado = null;
+                _idCliente = null;
+                _cliente = null;
+                _detalleGrid?.SetDetalles(new());
+            }
         }
     }
 
+    void OnPedidoKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            _ = BuscarPedido();
+    }
 }

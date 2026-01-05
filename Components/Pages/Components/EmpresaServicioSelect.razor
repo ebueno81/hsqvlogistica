@@ -1,0 +1,53 @@
+﻿@using HsqvLogistica.Integrations.Clients.Interfaces
+@using HsqvLogistica.Integrations.Models
+@using MudBlazor
+
+@inject IEmpServApiClient EmpServApiClient
+
+<MudAutocomplete T="EmpServLookupDto"
+                 Label="Empresa de Transporte"
+                 Dense="true"
+                 Clearable="true"
+                 MinCharacters="0"
+                 SearchFunc="Buscar"
+                 ToStringFunc="@(e => e == null ? string.Empty : e.Empresa)"
+                 Value="Value"
+                 ValueChanged="OnValueChanged"
+                 Variant="Variant.Outlined"
+                 Adornment="Adornment.Start"
+                 AdornmentIcon="@Icons.Material.Filled.LocalShipping" />
+
+@code {
+
+    [Parameter] public EmpServLookupDto? Value { get; set; }
+
+    [Parameter] public EventCallback<EmpServLookupDto?> ValueChanged { get; set; }
+
+    List<EmpServLookupDto> _empresas = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _empresas = await EmpServApiClient.GetAllAsync();
+    }
+
+    Task<IEnumerable<EmpServLookupDto>> Buscar(
+        string text,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return Task.FromResult(_empresas.AsEnumerable());
+
+        return Task.FromResult(
+            _empresas.Where(e =>
+                e.Empresa!.Contains(text, StringComparison.OrdinalIgnoreCase) ||
+                e.Nombres!.Contains(text, StringComparison.OrdinalIgnoreCase)
+            ).AsEnumerable()
+        );
+    }
+
+    async Task OnValueChanged(EmpServLookupDto? value)
+    {
+        Value = value;
+        await ValueChanged.InvokeAsync(value);
+    }
+}

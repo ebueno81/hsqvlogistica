@@ -1,0 +1,52 @@
+﻿@using MudBlazor
+
+<MudPaper Elevation="3"
+          Class="pa-4 d-flex align-center justify-space-between"
+          Style="@GetCardBackground()">
+
+    <div>
+        <MudText Typo="Typo.subtitle2" Color="Color.Default">
+            @Title
+        </MudText>
+
+        <MudText Typo="Typo.h4" Class="fw-bold">
+            @Value
+        </MudText>
+
+        <MudText Typo="Typo.caption"
+                 Color="@GetDeltaColor()">
+            @Delta vs mes anterior
+        </MudText>
+    </div>
+
+    <MudAvatar Color="@Color"
+               Variant="Variant.Filled"
+               Size="Size.Large"
+               Class="dashboard-icon">
+        <MudIcon Icon="@Icon" />
+    </MudAvatar>
+
+</MudPaper>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public object? Value { get; set; }
+    [Parameter] public string Icon { get; set; } = "";
+    [Parameter] public Color Color { get; set; }
+    [Parameter] public string Delta { get; set; } = "";
+
+    private Color GetDeltaColor()
+        => Delta.StartsWith("-") ? Color.Error : Color.Success;
+
+    private string GetCardBackground()
+    {
+        return Color switch
+        {
+            Color.Primary => "background: linear-gradient(135deg, #eef2ff, #ffffff);",
+            Color.Success => "background: linear-gradient(135deg, #e8f8f0, #ffffff);",
+            Color.Warning => "background: linear-gradient(135deg, #fff4e5, #ffffff);",
+            Color.Info => "background: linear-gradient(135deg, #e6f2ff, #ffffff);",
+            _ => "background-color: var(--mud-palette-surface);"
+        };
+    }
+}

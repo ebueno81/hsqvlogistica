@@ -1,0 +1,250 @@
+﻿@page "/garantias"
+
+@using HsqvLogistica.Models.DTOs.Garantias
+@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
+
+@inject IGarantiaService GarantiaService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+<!-- ================= HEADER ================= -->
+<MudStack Direction="Row"
+          Justify="Justify.SpaceBetween"
+          AlignItems="AlignItems.Center"
+          Class="mb-4">
+
+    <MudText Typo="Typo.h5">📦 Garantías</MudText>
+
+    <MudButton Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.Add"
+               OnClick="@(() => Navigation.NavigateTo("/garantias/nuevo"))">
+        Nueva Garantía
+    </MudButton>
+</MudStack>
+
+<!-- ================= FILTROS ================= -->
+<MudPaper Class="pa-4 mb-4">
+    <MudGrid Spacing="2" AlignItems="AlignItems.End">
+
+        <MudItem xs="12" md="2">
+            <MudSelect T="bool?"
+                       Dense
+                       Variant="Variant.Outlined"
+                       Placeholder="Estado"
+                       Style="width: 150px;"
+                       Value="_estado"
+                       ValueChanged="@(v => _estado = v)">
+                <MudSelectItem T="bool?" Value="@(null)">Todos</MudSelectItem>
+                <MudSelectItem T="bool?" Value="false">Pendiente</MudSelectItem>
+                <MudSelectItem T="bool?" Value="true">Cerrado</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+
+        <MudItem xs="12" md="3">
+            <MudTextField Label="Cliente"
+                          @bind-Value="_cliente"
+                          Dense
+                          Variant="Variant.Outlined"
+                          Adornment="Adornment.Start"
+                          Style="max-width: 300px; height: 40px;"
+                          AdornmentIcon="@Icons.Material.Filled.PersonSearch" />
+        </MudItem>
+
+        <MudItem xs="12" md="2">
+            <MudDatePicker Label="Desde" @bind-Date="_fechaDesde" Dense />
+        </MudItem>
+
+        <MudItem xs="12" md="2">
+            <MudDatePicker Label="Hasta" @bind-Date="_fechaHasta" Dense />
+        </MudItem>
+
+        <MudItem xs="12" md="2" Class="d-flex align-end">
+            <MudButton Color="Color.Primary" OnClick="Buscar">
+                Buscar
+            </MudButton>
+        </MudItem>
+
+    </MudGrid>
+</MudPaper>
+
+<!-- ================= TABLA ================= -->
+<MudTable T="GarantiaDto"
+          @ref="_table"
+          ServerData="LoadServerData"
+          RowsPerPage="10"
+          Dense
+          Hover
+          Striped>
+
+    <HeaderContent>
+        <MudTh>#</MudTh>
+        <MudTh>Cliente</MudTh>
+        <MudTh>Transporte</MudTh>
+        <MudTh>Despacho</MudTh>
+        <MudTh>Entrega</MudTh>
+        <MudTh>Estado</MudTh>
+        <MudTh>Vigencia</MudTh>   @* 👈 NUEVA *@
+        <MudTh Align="Align.Right">Acciones</MudTh>
+    </HeaderContent>
+
+    <RowTemplate Context="row">
+
+        <MudTd>@row.Id</MudTd>
+        <MudTd>@row.Cliente</MudTd>
+        <MudTd>@row.EmpresaServicio</MudTd>
+        <MudTd>@row.FechaDespacho?.ToString("dd/MM/yyyy")</MudTd>
+        <MudTd>@row.FechaEntrega?.ToString("dd/MM/yyyy")</MudTd>
+
+        <MudTd>
+            <MudChip T="string"
+                     Color="@(row.Estado ? Color.Success : Color.Warning)"
+                     Size="Size.Small">
+                @(row.Estado ? "Cerrado" : "Pendiente")
+            </MudChip>
+        </MudTd>
+
+        <!-- VIGENCIA -->
+        <MudTd>
+            @if (row.Activo == true)
+            {
+                <MudChip T="string"
+                         Color="Color.Success"
+                         Variant="Variant.Filled"
+                         Size="Size.Small">
+                    Activo
+                </MudChip>
+            }
+            else
+            {
+                <MudChip T="string"
+                         Color="Color.Error"
+                         Variant="Variant.Filled"
+                         Size="Size.Small">
+                    Anulado
+                </MudChip>
+            }
+        </MudTd>
+        
+        <MudTd>
+            <!-- VER -->
+            <MudTooltip Text="Ver">
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                               Color="Color.Primary"
+                               Size="Size.Small"
+                               OnClick="@(() => Ver(row.Id))" />
+            </MudTooltip>
+            @if (!row.Estado && row.Activo == true)
+            {
+                <!-- EDITAR -->
+                <MudTooltip Text="Editar">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                   Color="Color.Info"
+                                   Size="Size.Small"
+                                   OnClick="@(() => Editar(row.Id))" />
+                </MudTooltip>
+
+                <!-- CERRAR -->
+                <MudTooltip Text="Cerrar">
+                    <MudIconButton Icon="@Icons.Material.Filled.DoneAll"
+                                   Color="Color.Success"
+                                   Size="Size.Small"
+                                   OnClick="@(() => ConfirmarCierre(row.Id))" />
+                </MudTooltip>
+
+                <!-- ANULAR -->
+                <MudTooltip Text="Anular">
+                    <MudIconButton Icon="@Icons.Material.Filled.Block"
+                                   Color="Color.Error"
+                                   Size="Size.Small"
+                                   OnClick="@(() => ConfirmarAnular(row.Id))" />
+                </MudTooltip>
+            }
+        </MudTd>
+    </RowTemplate>
+
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+
+</MudTable>
+</MudContainer>
+@code {
+
+    string? _cliente;
+    bool? _estado;
+    DateTime? _fechaDesde;
+    DateTime? _fechaHasta;
+
+    MudTable<GarantiaDto>? _table;
+
+    async Task<TableData<GarantiaDto>> LoadServerData(
+        TableState state,
+        CancellationToken cancellationToken)
+    {
+        var result = await GarantiaService.SearchAsync(
+            new GarantiaFilterDto
+            {
+                Cliente = _cliente,
+                Estado = _estado,
+                FechaDesde = _fechaDesde.HasValue
+                    ? DateOnly.FromDateTime(_fechaDesde.Value)
+                    : null,
+                FechaHasta = _fechaHasta.HasValue
+                    ? DateOnly.FromDateTime(_fechaHasta.Value)
+                    : null,
+                Page = state.Page,
+                PageSize = state.PageSize
+            });
+
+        return new TableData<GarantiaDto>
+        {
+            Items = result.Items,
+            TotalItems = result.TotalItems
+        };
+        StateHasChanged();
+    }
+
+    void Ver(int id) => Navigation.NavigateTo($"/garantias/ver/{id}");
+    void Editar(int id) => Navigation.NavigateTo($"/garantias/editar/{id}");
+
+    async Task ConfirmarCierre(int id)
+    {
+        bool? ok = await DialogService.ShowMessageBox(
+            "Cerrar Garantía",
+            "¿Está seguro de cerrar esta garantía? No podrá modificarse luego.",
+            yesText: "Sí, cerrar",
+            cancelText: "Cancelar");
+
+        if (ok == true)
+        {
+            await GarantiaService.CloseAsync(id, "admin");
+            Snackbar.Add("Garantía cerrada correctamente", Severity.Success);
+            await _table!.ReloadServerData();
+        }
+    }
+
+    async Task Buscar()
+    {
+        _table?.NavigateTo(0);
+        await _table!.ReloadServerData();
+    }
+
+    async Task ConfirmarAnular(int id)
+    {
+        bool? ok = await DialogService.ShowMessageBox(
+            "Anular Garantía",
+            "¿Está seguro de anular esta garantía? Esta acción no se puede deshacer.",
+            yesText: "Sí, anular",
+            cancelText: "Cancelar");
+
+        if (ok == true)
+        {
+            await GarantiaService.AnularAsync(id, "admin");
+            Snackbar.Add("Garantía anulada correctamente", Severity.Warning);
+            await _table!.ReloadServerData();
+        }
+    }
+}
