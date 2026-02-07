@@ -21,3 +21,21 @@ target/
 # Archivos temporales
 *.tmp
 *.swp
+/Models/Actum.cs
+/Models/Area.cs
+/Models/Categorium.cs
+/Models/Creacion.cs
+/Models/DbQhseContext.cs
+/Models/Empresa.cs
+/Models/IncludeTableList.cs
+/Models/Inspeccion.cs
+/Models/InspeccionDet.cs
+/Models/MnModulo.cs
+/Models/Plantilla.cs
+/Models/PlantillaDet.cs
+/Models/SubCategorium.cs
+/Models/TpoInspeccion.cs
+/Models/TpoUsuario.cs
+/Models/Trabajador.cs
+/Models/UsuaPermiso.cs
+/Models/Usuario.cs
