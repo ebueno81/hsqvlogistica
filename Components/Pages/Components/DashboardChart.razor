@@ -1,20 +1,16 @@
 ﻿@using HsqvLogistica.Models.DTOs.Dashboard
 @using MudBlazor
 
-@using ChartJs.Blazor
-@using ChartJs.Blazor.BarChart
-@using ChartJs.Blazor.Common
-@using ChartJs.Blazor.Common.Axes
-@using ChartJs.Blazor.Common.Axes.Ticks
-@using ChartJs.Blazor.Util
-
 <MudPaper Elevation="3"
           Class="pa-6"
           Style="background: linear-gradient(135deg, #f8f9fc, #ffffff); border-radius: 14px;">
 
     <!-- HEADER -->
     <div class="d-flex align-center mb-4">
-        <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Size="Size.Medium" Class="mr-3">
+        <MudAvatar Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   Size="Size.Medium"
+                   Class="mr-3">
             <MudIcon Icon="@Icons.Material.Filled.BarChart" />
         </MudAvatar>
 
@@ -24,66 +20,48 @@
         </div>
     </div>
 
-    <!-- CHART -->
-    <div style="height:320px;">
-        <ChartJsBlazor Config="_config" />
-    </div>
+    <!-- CONTENT -->
+    @if (Movimientos == null || !Movimientos.Any())
+    {
+        <MudText Color="Color.Secondary">
+            No hay información para mostrar
+        </MudText>
+    }
+    else
+    {
+        <MudChart ChartType="ChartType.Bar"
+                  Labels="@_labels"
+                  Data="@_data"
+                  Height="320px"
+                  Class="mt-2" />
+    }
 
 </MudPaper>
 
 @code {
 
-    [Parameter] public List<MonthlyMovementDto> Movimientos { get; set; } = new();
+    [Parameter]
+    public List<MonthlyMovementDto> Movimientos { get; set; } = new();
 
-    private BarConfig _config = new();
+    private string[] _labels = Array.Empty<string>();
+    private double[][] _data = Array.Empty<double[]>();
 
     protected override void OnParametersSet()
     {
-        if (!Movimientos.Any())
+        if (Movimientos == null || !Movimientos.Any())
             return;
 
-        _config = new BarConfig
+        // Eje X
+        _labels = Movimientos
+            .Select(x => x.Mes)
+            .ToArray();
+
+        // Serie de datos
+        _data = new[]
         {
-            Options = new BarOptions
-            {
-                Responsive = true,
-                MaintainAspectRatio = false,
-                Scales = new Scales
-                {
-                    XAxes = new List<CartesianAxis>
-                    {
-                        new CategoryAxis
-                        {
-                            BarPercentage = 0.9,
-                            CategoryPercentage = 0.8
-                        }
-                    },
-                    YAxes = new List<CartesianAxis>
-                    {
-                        new LinearCartesianAxis
-                        {
-                            Ticks = new LinearCartesianTicks
-                            {
-                                BeginAtZero = true
-                            }
-                        }
-                    }
-                }
-            }
+            Movimientos
+                .Select(x => (double)x.Total)
+                .ToArray()
         };
-
-        foreach (var mes in Movimientos.Select(x => x.Mes))
-            _config.Data.Labels.Add(mes);
-
-        var dataset = new BarDataset
-        {
-            Label = "Movimientos",
-            BackgroundColor = ColorUtil.ColorHexString(63, 81, 181)
-        };
-
-        foreach (var value in Movimientos.Select(x => x.Total))
-            dataset.Add(value);
-
-        _config.Data.Datasets.Add(dataset);
     }
 }
