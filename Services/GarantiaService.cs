@@ -139,8 +139,7 @@ public class GarantiaService : IGarantiaService
         var entity = await _repository.GetByIdAsync(id);
         if (entity == null) return;
 
-        if (entity.Estado)
-            throw new InvalidOperationException("No se puede anular una garantía cerrada");
+        if (!entity.Estado) return;
 
         entity.Activo = false;
         entity.UsuaModifica = usuario;

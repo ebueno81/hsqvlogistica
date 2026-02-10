@@ -1,4 +1,4 @@
-html, body {
+﻿html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
@@ -96,5 +96,45 @@ h1:focus {
     background-color: #f5f6fa; /* similar a imagen 2 */
     min-height: 100vh;
     padding: 24px;
+}
+
+/* =========================
+   CARD HEADERS – ESTILO PRO
+   ========================= */
+
+.card-header-soft {
+    border-radius: 12px 12px 0 0;
+    padding: 10px 12px;
+    margin: -12px -12px 12px -12px; /* integra header con card */
+}
+
+/* ===== Variantes de color suaves ===== */
+
+/* Kardex – Azul */
+.card-kardex {
+    background: linear-gradient( 135deg, rgba(33, 150, 243, 0.12), rgba(33, 150, 243, 0.04) );
+    border-left: 4px solid #2196f3;
+}
+
+/* Stock – Verde */
+.card-stock {
+    background: linear-gradient( 135deg, rgba(76, 175, 80, 0.12), rgba(76, 175, 80, 0.04) );
+    border-left: 4px solid #4caf50;
+}
+
+/* Garantías – Rosado/Morado */
+.card-garantia {
+    background: linear-gradient( 135deg, rgba(233, 30, 99, 0.12), rgba(233, 30, 99, 0.04) );
+    border-left: 4px solid #e91e63;
+}
+
+/* Ajuste fino del texto del header */
+.card-header-soft .mud-text {
+    font-weight: 600;
+}
+
+/* Avatar más integrado */
+.card-header-soft .mud-avatar {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
 }
 

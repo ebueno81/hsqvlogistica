@@ -108,25 +108,30 @@
 
         <!-- VIGENCIA -->
         <MudTd>
-            @if (row.Activo == true)
+            @if (row.Activo)
             {
-                <MudChip T="string"
-                         Color="Color.Success"
-                         Variant="Variant.Filled"
-                         Size="Size.Small">
-                    Activo
-                </MudChip>
+                <MudTooltip Text="Anular garantía">
+                    <MudChip T="string"
+                                Color="Color.Success"
+                                Variant="Variant.Filled"
+                                Size="Size.Small"
+                                Clickable="true"
+                                Style="cursor:pointer;"
+                                OnClick="@(() => ConfirmarAnular(row.Id))">
+                        Activo
+                    </MudChip>
+                </MudTooltip>
             }
             else
             {
                 <MudChip T="string"
-                         Color="Color.Error"
-                         Variant="Variant.Filled"
-                         Size="Size.Small">
+                            Color="Color.Error"
+                            Variant="Variant.Filled"
+                            Size="Size.Small">
                     Anulado
                 </MudChip>
             }
-        </MudTd>
+            </MudTd>
         
         <MudTd>
             <!-- VER -->

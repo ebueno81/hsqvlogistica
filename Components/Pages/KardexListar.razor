@@ -6,6 +6,8 @@
 
 @inject IMovimientoService MovimientoService
 @inject NavigationManager Navigation
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
 
@@ -113,6 +115,13 @@
                 <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                Color="Color.Primary"
                                OnClick="@(() => Navigation.NavigateTo($"/kardex/ver/{row.Id}"))" />
+                @if (row.Activo == true)
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.Block"
+                                   Color="Color.Error"
+                                   Title="Anular movimiento"
+                                   OnClick="@(() => ConfirmarAnulacion(row))" />
+                }
             </MudTd>
         </RowTemplate>
 
@@ -155,6 +164,39 @@
             Items = result.Items,
             TotalItems = result.TotalItems
         };
+    }
+
+    async Task ConfirmarAnulacion(MovimientoDto movimiento)
+    {
+        var options = new DialogOptions
+        {
+            CloseButton = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        bool? result = await DialogService.ShowMessageBox(
+            title: "Confirmar anulación",
+            message: $"¿Está seguro que desea anular el movimiento #{movimiento.Id}?",
+            yesText: "Anular",
+            cancelText: "Cancelar",
+            options: options
+        );
+
+        if (result == true)
+        {
+            // 🔴 Aquí luego irá tu backend
+            // await MovimientoService.AnularAsync(movimiento.Id);
+
+            Snackbar.Add(
+                $"Movimiento #{movimiento.Id} anulado correctamente",
+                Severity.Success
+            );
+
+            // 🔄 refrescar tabla
+            _table?.NavigateTo(0);
+            await _table!.ReloadServerData();
+        }
     }
 
     async Task Buscar()

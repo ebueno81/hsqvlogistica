@@ -22,7 +22,8 @@
 
         <MudButton Color="Color.Primary"
                    StartIcon="@Icons.Material.Filled.Add"
-                   OnClick="@(() => Navigation.NavigateTo("/pedidos/nuevo"))">
+                   OnClick="GoNuevoPedido"
+                   Disabled="@_isNavigating">
             Nuevo Pedido
         </MudButton>
 
@@ -105,7 +106,10 @@
                     <MudChip T="string"
                              Color="@(row.Activo == true ? Color.Success : Color.Error)"
                              Variant="Variant.Filled"
-                             Size="Size.Small">
+                             Size="Size.Small"
+                             Clickable="@(row.Activo == true)"
+                             Style="@(row.Activo == true ? "cursor:pointer;" : "cursor:default;")"
+                             OnClick="@(row.Activo == true ? (() => ConfirmarAnulacion(row)) : null)">
                         @(row.Activo == true ? "Activo" : "Anulado")
                     </MudChip>
                 </MudTd>
@@ -147,6 +151,18 @@
 
     bool _loading;
     MudTable<PedidoDto>? _table;
+
+    private bool _isNavigating = false;
+
+    private void GoNuevoPedido()
+    {
+        if (_isNavigating)
+            return;
+
+        _isNavigating = true;
+
+        Navigation.NavigateTo("/pedidos/nuevo");
+    }
 
     async Task<TableData<PedidoDto>> LoadServerData(
     TableState state,
@@ -226,6 +242,41 @@
                 {
                     options.CloseAfterNavigation = true;
                 });
+        }
+    }
+
+    async Task ConfirmarAnulacion(PedidoDto pedido)
+    {
+        var options = new DialogOptions
+        {
+            CloseButton = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        bool? result = await DialogService.ShowMessageBox(
+            title: "Confirmar anulación",
+            message: $"¿Está seguro que desea anular el pedido #{pedido.Id}?",
+            yesText: "Anular",
+            cancelText: "Cancelar",
+            options: options);
+
+        if (result == true)
+        {
+            // 🔴 AQUÍ irá luego tu llamada al backend
+            // await PedidoService.AnularAsync(pedido.Id);
+
+            Snackbar.Add(
+                $"Pedido #{pedido.Id} anulado correctamente",
+                Severity.Success,
+                options =>
+                {
+                    options.CloseAfterNavigation = true;
+                });
+
+            // 🔄 Refrescar tabla
+            if (_table is not null)
+                await _table.ReloadServerData();
         }
     }
 }

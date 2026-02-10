@@ -1,0 +1,219 @@
+﻿@page "/reportes"
+@using MudBlazor
+
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-6 px-6">
+
+    <!-- HEADER -->
+    <MudText Typo="Typo.h5" Class="fw-bold mb-1">
+        Reportes del Sistema
+    </MudText>
+    <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Class="mb-5">
+        Generación de reportes y análisis
+    </MudText>
+
+    <MudGrid Spacing="4">
+
+        <!-- =========================
+             Movimientos (Kardex)
+             ========================= -->
+        <MudItem xs="12" md="4">
+            <MudCard Class="report-card">
+
+                <MudCardHeader Style="background-color:#f3f6fd;">
+
+
+                    <CardHeaderAvatar>
+                        <MudAvatar Color="Color.Info" Size="Size.Small">
+                            <MudIcon Icon="@Icons.Material.Filled.SyncAlt" />
+                        </MudAvatar>
+                    </CardHeaderAvatar>
+
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.subtitle1" Class="fw-bold">
+                            Movimientos (Kardex)
+                        </MudText>
+                    </CardHeaderContent>
+
+                </MudCardHeader>
+
+                <MudCardContent>
+                    <MudStack Spacing="1">
+
+                        <MudTextField T="DateTime?"
+                                      Label="Fecha Desde"
+                                      InputType="InputType.Date"
+                                      Dense
+                                      Margin="Margin.Dense" />
+
+                        <MudTextField T="DateTime?"
+                                      Label="Fecha Hasta"
+                                      InputType="InputType.Date"
+                                      Dense
+                                      Margin="Margin.Dense" />
+
+                        <MudSelect T="TipoMovimiento"
+                                   Label="Tipo"
+                                   Dense
+                                   Margin="Margin.Dense"
+                                   @bind-Value="_tipo">
+
+                            <MudSelectItem Value="TipoMovimiento.Todos">Todos</MudSelectItem>
+                            <MudSelectItem Value="TipoMovimiento.Ingreso">Ingreso</MudSelectItem>
+                            <MudSelectItem Value="TipoMovimiento.Salida">Salida</MudSelectItem>
+
+                        </MudSelect>
+
+                    </MudStack>
+                </MudCardContent>
+
+                <MudCardActions>
+                    <MudButton Color="Color.Success"
+                               Variant="Variant.Filled"
+                               StartIcon="@Icons.Material.Filled.FileDownload"
+                               FullWidth>
+                        Exportar Excel
+                    </MudButton>
+                </MudCardActions>
+
+            </MudCard>
+        </MudItem>
+
+        <!-- =========================
+             Reporte de Stock
+             ========================= -->
+        <MudItem xs="12" md="4">
+            <MudCard Class="report-card">
+
+                <MudCardHeader Style="background-color:#f3f6fd;">
+                    <CardHeaderAvatar>
+                        <MudAvatar Color="Color.Success" Size="Size.Small">
+                            <MudIcon Icon="@Icons.Material.Filled.Inventory" />
+                        </MudAvatar>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.subtitle1" Class="fw-bold">
+                            Reporte de Stock
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+
+                <MudCardContent>
+                    <MudStack Spacing="1">
+
+                        <MudSelect T="string"
+                                   Label="Almacén"
+                                   Dense
+                                   Margin="Margin.Dense"
+                                   @bind-Value="_almacen">
+                            <MudSelectItem Value="_almacen">Todos los almacenes</MudSelectItem>
+                        </MudSelect>
+
+                        <MudSelect T="string"
+                                   Label="Línea"
+                                   Dense
+                                   Margin="Margin.Dense"
+                                   @bind-Value="_linea">
+                            <MudSelectItem Value="_linea">Todas las líneas</MudSelectItem>
+                        </MudSelect>
+
+                    </MudStack>
+                </MudCardContent>
+
+                <MudCardActions>
+                    <MudButton Color="Color.Success"
+                               Variant="Variant.Filled"
+                               StartIcon="@Icons.Material.Filled.FileDownload"
+                               FullWidth>
+                        Exportar Excel
+                    </MudButton>
+                </MudCardActions>
+
+            </MudCard>
+        </MudItem>
+
+        <!-- =========================
+             Reporte Garantías
+             ========================= -->
+        <MudItem xs="12" md="4">
+            <MudCard Class="report-card">
+
+                <MudCardHeader Style="background-color:#f3f6fd;">
+                    <CardHeaderAvatar>
+                        <MudAvatar Color="Color.Secondary" Size="Size.Small">
+                            <MudIcon Icon="@Icons.Material.Filled.VerifiedUser" />
+                        </MudAvatar>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.subtitle1" Class="fw-bold">
+                            Reporte Garantías
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+
+                <MudCardContent>
+                    <MudStack Spacing="1">
+
+                        <MudTextField T="DateTime?"
+                                      Label="Fecha Desde"
+                                      InputType="InputType.Date"
+                                      Dense
+                                      Margin="Margin.Dense" />
+
+                        <MudTextField T="DateTime?"
+                                      Label="Fecha Hasta"
+                                      InputType="InputType.Date"
+                                      Dense
+                                      Margin="Margin.Dense" />
+
+                        <MudSelect T="TipoEstadoGarantia"
+                                   Label="Estado"
+                                   Dense
+                                   Margin="Margin.Dense"
+                                   @bind-Value="_tipoEstado">
+
+                            <MudSelectItem Value="TipoEstadoGarantia.Todos">Todos</MudSelectItem>
+                            <MudSelectItem Value="TipoEstadoGarantia.Activo">Activos</MudSelectItem>
+                            <MudSelectItem Value="TipoEstadoGarantia.Vencido">Vencidos</MudSelectItem>
+
+                        </MudSelect>
+
+                    </MudStack>
+                </MudCardContent>
+
+                <MudCardActions>
+                    <MudButton Color="Color.Success"
+                               Variant="Variant.Filled"
+                               StartIcon="@Icons.Material.Filled.FileDownload"
+                               FullWidth>
+                        Exportar Excel
+                    </MudButton>
+                </MudCardActions>
+
+            </MudCard>
+        </MudItem>
+
+    </MudGrid>
+
+</MudContainer>
+
+@code {
+
+    private TipoMovimiento _tipo = TipoMovimiento.Todos;
+    private TipoEstadoGarantia _tipoEstado = TipoEstadoGarantia.Todos;
+    private string _almacen = "Todos";
+    private string _linea = "Todas";
+
+    public enum TipoMovimiento
+    {
+        Todos,
+        Ingreso,
+        Salida
+    }
+
+    public enum TipoEstadoGarantia
+    {
+        Todos,
+        Activo,
+        Vencido
+    }
+}
