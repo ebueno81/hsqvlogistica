@@ -8,6 +8,7 @@
 @inject NavigationManager Navigation
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject IPedidoService PedidoService
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
 
@@ -83,6 +84,7 @@
         <HeaderContent>
             <MudTh>#</MudTh>
             <MudTh>Tipo</MudTh>
+            <MudTh>Pedido</MudTh>
             <MudTh>Cliente</MudTh>
             <MudTh>Fecha</MudTh>
             <MudTh>Guía</MudTh>
@@ -102,6 +104,8 @@
                     @(row.Tipo == "ING" ? "Entrada" : "Salida")
                 </MudChip>
             </MudTd>
+
+            <MudTd>@row.IdPedido</MudTd>
 
             <MudTd>@row.Cliente</MudTd>
 
@@ -168,6 +172,28 @@
 
     async Task ConfirmarAnulacion(MovimientoDto movimiento)
     {
+        if (movimiento.IdPedido.HasValue)
+        {
+            int estadoPedido = await obtenerPedido(movimiento.IdPedido.Value);
+            if (movimiento.IdMotivo == 1 && estadoPedido < 2)
+            {
+                Snackbar.Add(
+                    $"No se puede anular el movimiento #{movimiento.Id} porque el pedido asociado tiene una Devolución.",
+                    Severity.Error
+                );
+                return;
+            }
+
+            if (movimiento.IdMotivo == 2 && estadoPedido < 3) 
+            {
+                Snackbar.Add(
+                    $"No se puede anular el movimiento #{movimiento.Id} porque el pedido asociado no tiene el estado correcto.",
+                    Severity.Error
+                );
+                return;
+            }
+        }
+
         var options = new DialogOptions
         {
             CloseButton = true,
@@ -185,18 +211,44 @@
 
         if (result == true)
         {
-            // 🔴 Aquí luego irá tu backend
-            // await MovimientoService.AnularAsync(movimiento.Id);
+            var actualizado = await MovimientoService.AnularMovimiento(movimiento.Id, "admin");
+            
+            if (movimiento.IdMotivo == 1)
+                await actualizarEstadoPedido(movimiento.IdPedido ?? 0, 1, "admin");
+            
+            if (movimiento.IdMotivo == 2)
+                await actualizarEstadoPedido(movimiento.IdPedido ?? 0, 2, "admin");
 
-            Snackbar.Add(
-                $"Movimiento #{movimiento.Id} anulado correctamente",
-                Severity.Success
-            );
-
-            // 🔄 refrescar tabla
-            _table?.NavigateTo(0);
-            await _table!.ReloadServerData();
+            if (!actualizado)
+            {
+                Snackbar.Add("Se registró el movimiento pero no se pudo actualizar el estado del pedido.", Severity.Warning);
+            }
+            else
+            {
+                Snackbar.Add($"Movimiento #{movimiento.Id} anulado correctamente", Severity.Success);
+                // 🔄 refrescar tabla
+                _table?.NavigateTo(0);
+                await _table!.ReloadServerData();
+            }
         }
+    }
+
+    async Task <int> obtenerPedido(int idPedido)
+    {
+        var pedido = await PedidoService.GetByIdAsync(idPedido);
+        if (pedido != null)
+        {
+            return pedido.Estado.Value;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+    
+    async Task<bool> actualizarEstadoPedido(int idPedido, int estadoPedido, string usuarioModifica)
+    {
+        return await PedidoService.ChangeStatusAsync(idPedido, estadoPedido, usuarioModifica);
     }
 
     async Task Buscar()

@@ -22,7 +22,7 @@ namespace HsqvLogistica.Controllers
             => _service.SearchAsync(filter, cancellationToken);
 
         [HttpPost]
-        public Task<int> Create([FromBody] MovimientoCreateDto dto)
+        public Task<int> Create([FromBody] MovimientoDto dto)
             => _service.CreateAsync(dto);
     }
 }

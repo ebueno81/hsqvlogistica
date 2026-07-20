@@ -34,9 +34,9 @@ public class PedidoController : ControllerBase
     }
 
     [HttpPatch("{id}/estado")]
-    public async Task<IActionResult> ChangeStatus(int id, [FromQuery] bool activo)
+    public async Task<IActionResult> ChangeStatus(int id, [FromQuery] int activo, [FromQuery] string usuarioModifica)
     {
-        var ok = await _service.ChangeStatusAsync(id, activo);
+        var ok = await _service.ChangeStatusAsync(id, activo, usuarioModifica);
         return ok ? Ok() : NotFound();
     }
 }

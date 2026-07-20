@@ -86,11 +86,6 @@
         <!-- ================= ACCIONES ================= -->
         <MudStack Direction="Row" Spacing="2" Justify="Justify.FlexStart">
 
-            <MudButton Variant="Variant.Filled" Color="Color.Tertiary"
-                       OnClick="@(() => Navigation.NavigateTo("/pedidos"))">
-                Volver
-            </MudButton>
-
             @if (_mode == PedidoMode.Create)
             {
                 <MudButton Color="Color.Primary"
@@ -101,6 +96,10 @@
                 </MudButton>
             }
 
+            <MudButton Variant="Variant.Filled" Color="Color.Tertiary"
+                       OnClick="@(() => Navigation.NavigateTo("/pedidos"))">
+                Volver
+            </MudButton>
         </MudStack>
 
     </MudPaper>

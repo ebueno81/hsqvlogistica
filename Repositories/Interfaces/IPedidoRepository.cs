@@ -10,8 +10,8 @@ public interface IPedidoRepository
 
     Task AddAsync(Pedido pedido);
     Task SaveChangesAsync();
-
-    Task<bool> ChangeStatusAsync(int id, bool activo);
+    Task<bool> AnularPedido(int id, string usuarioModifica);
+    Task<bool> ChangeStatusAsync(int id, int activo, string usuarioModifica);
     Task<PedidoPagedResultDto> SearchAsync(PedidoFilterDto filter,
             CancellationToken cancellationToken);
    

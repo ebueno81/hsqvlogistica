@@ -64,7 +64,8 @@
 
         <MudDivider Class="my-4" />
 
-        @if (_tipoMovimiento == "SAL" && _idMotivo == 1)
+        @if ((_tipoMovimiento == "SAL" && _idMotivo == 1) ||
+                (_tipoMovimiento == "ING" && _idMotivo == 2))
         {
             <MudGrid Spacing="3">
 
@@ -89,17 +90,13 @@
             </MudGrid>
         }
 
-        @if (_tipoMovimiento == "ING" || (_tipoMovimiento == "SAL" && _idMotivo != 1))
-        {
-            <ClienteAutoComplete Value="_clienteSeleccionado"
-                                 ValueChanged="OnClienteChanged" />
-
-        }
-
         <MudDivider Class="my-4" />
 
         <MovimientoDetalleGrid @ref="_detalleGrid"
-                               ReadOnly="@(_tipoMovimiento == "SAL" && _idMotivo == 1)"
+                               BloquearArticulos="@(
+                                       (_tipoMovimiento == "SAL" && _idMotivo == 1) ||
+                                       (_tipoMovimiento == "ING" && _idMotivo == 2)
+        )"
                                @key="@($"{_tipoMovimiento}-{_idMotivo}")" />
 
         <MudDivider Class="my-4" />
@@ -185,7 +182,7 @@
         _idMotivo = 0;
         _idPedido = null;
         _nroPedido = null;
-        
+
         _motivosFiltrados = _motivos
             .Where(m => m.TipoMov == _tipoMovimiento)
             .ToList();
@@ -195,6 +192,8 @@
     {
         try
         {
+            LimpiarPedido();
+
             if (string.IsNullOrWhiteSpace(_nroPedido))
             {
                 Snackbar.Add("Ingrese el número de pedido", Severity.Warning);
@@ -215,7 +214,25 @@
                 return;
             }
 
-            // 🔒 Bloquea cliente manual
+            if (pedido.Activo != true)
+            {
+                Snackbar.Add("Pedido se encuentra anulado", Severity.Error);
+                return;
+            }
+
+            if (_tipoMovimiento == "SAL" && (pedido.Estado >= 2 || pedido.Estado == 0))
+            {
+                Snackbar.Add("Pedido ya tiene una salida del kardex o aun no esta Aprobada", Severity.Error);
+                return;
+            }
+
+            if (_tipoMovimiento == "ING" && (pedido.Estado == 3 || pedido.Estado <= 1))
+            {
+                Snackbar.Add("Pedido ya tiene un ingreso en el kardex o aun no tiene el estado correcto", Severity.Error);
+                return;
+            }
+
+            // Pedido válido, se cargan nuevamente los datos
             _clienteSeleccionado = null;
 
             _idPedido = pedido.Id;
@@ -231,12 +248,29 @@
                 }).ToList()
             );
 
+            StateHasChanged();
+
             Snackbar.Add("Pedido cargado correctamente", Severity.Success);
         }
-        catch
+        catch (Exception ex)
         {
-            Snackbar.Add("Error al buscar el pedido", Severity.Error);
+            LimpiarPedido();
+
+            Snackbar.Add($"Error al buscar el pedido: {ex.Message}", Severity.Error);
         }
+    }
+
+    private void LimpiarPedido()
+    {
+        _idPedido = 0;
+        _idCliente = null;
+        _cliente = string.Empty;
+        _clienteSeleccionado = null;
+
+        // Limpia el detalle del grid
+        _detalleGrid?.SetDetalles(new List<MovimientoDetalleDto>());
+
+        StateHasChanged();
     }
 
     void OnClienteChanged(ClientePedidoDto? cliente)
@@ -249,12 +283,15 @@
 
     async Task Guardar()
     {
-        if (_saving) return; // 🔒 evita doble submit
+        if (_saving)
+            return;
 
         _saving = true;
 
         try
         {
+            #region Validaciones
+
             if (string.IsNullOrWhiteSpace(_tipoMovimiento))
             {
                 Snackbar.Add("Debe seleccionar el tipo de movimiento", Severity.Warning);
@@ -267,27 +304,30 @@
                 return;
             }
 
-            if (_tipoMovimiento == "SAL" && _idMotivo == 1 && string.IsNullOrWhiteSpace(_nroPedido))
+            if (_tipoMovimiento == "SAL" &&
+                _idMotivo == 1 &&
+                string.IsNullOrWhiteSpace(_nroPedido))
             {
                 Snackbar.Add("Debe ingresar el número de pedido", Severity.Warning);
                 return;
             }
 
-            if ((_tipoMovimiento == "ING" || _idMotivo != 1) && _idCliente is null)
+            if ((_tipoMovimiento == "ING" || _idMotivo != 1) &&
+                _idCliente is null)
             {
                 Snackbar.Add("Debe seleccionar un cliente", Severity.Warning);
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(_serieGuia) || _serieGuia.Length <= 2)
+            if (string.IsNullOrWhiteSpace(_serieGuia) || _serieGuia.Length <= 3)
             {
-                Snackbar.Add("La serie de guía debe tener exactamente 5 caracteres", Severity.Warning);
+                Snackbar.Add("La serie de guía debe tener exactamente 4 caracteres como mínimo.", Severity.Warning);
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(_nroGuia) || _nroGuia.Length == 0)
+            if (string.IsNullOrWhiteSpace(_nroGuia))
             {
-                Snackbar.Add("El número de guía debe tener exactamente mas de 1 caracter", Severity.Warning);
+                Snackbar.Add("Debe ingresar el número de guía.", Severity.Warning);
                 return;
             }
 
@@ -295,7 +335,7 @@
 
             if (!detalles.Any())
             {
-                Snackbar.Add("Debe ingresar al menos un artículo", Severity.Warning);
+                Snackbar.Add("Debe ingresar al menos un artículo.", Severity.Warning);
                 return;
             }
 
@@ -307,56 +347,92 @@
 
             if (TieneArticulosVacios(detalles))
             {
-                Snackbar.Add("Existen filas sin artículo seleccionado", Severity.Warning);
+                Snackbar.Add("Existen filas sin artículo seleccionado.", Severity.Warning);
                 return;
             }
 
             if (TieneCantidadesInvalidas(detalles))
             {
-                Snackbar.Add("Existen artículos con cantidad inválida", Severity.Warning);
+                Snackbar.Add("Existen artículos con cantidad inválida.", Severity.Warning);
                 return;
             }
 
-            if (_tipoMovimiento == "SAL" && _idMotivo == 1)
+            if (_tipoMovimiento == "SAL" &&
+                _idMotivo == 1 &&
+                _idPedido is null)
             {
-                if (_idPedido is null)
-                {
-                    Snackbar.Add("Debe buscar y cargar un pedido válido", Severity.Warning);
-                    return;
-                }
+                Snackbar.Add("Debe buscar un pedido válido.", Severity.Warning);
+                return;
             }
 
-            var dto = new MovimientoCreateDto
+            #endregion
+
+            var movimiento = new MovimientoDto
             {
                 Tipo = _tipoMovimiento,
                 IdMotivo = _idMotivo,
+
                 IdPedido = _idPedido,
                 IdCliente = _idCliente,
-                IdAlmacen = 1,
-                Fecha = _fechaEntrega.HasValue
-                    ? DateOnly.FromDateTime(_fechaEntrega.Value)
-                    : null,
                 Cliente = _cliente,
+
+                IdAlmacen = 1,
+
+                Fecha = _fechaEntrega.HasValue ? DateOnly.FromDateTime(_fechaEntrega.Value) : default,
+
                 SerieGuia = _serieGuia,
                 NroGuia = _nroGuia,
-                Detalles = _observacion,
-                DetallesMovimiento = detalles,
-                UsuaCreacion = "admin"
+
+                Observacion = _observacion,
+
+                Activo = true,
+
+                Usuario = "admin",
+
+                Detalles = detalles
             };
 
-            await MovimientoService.CreateAsync(dto);
+            var idMovimiento = await MovimientoService.CreateAsync(movimiento);
 
-            Snackbar.Add("Movimiento registrado correctamente", Severity.Success);
+            if (idMovimiento <= 0)
+            {
+                Snackbar.Add("No se pudo registrar el movimiento.", Severity.Error);
+                return;
+            }
+
+            //Actualizar estado del pedido
+            if (_idPedido > 0)
+            {
+                var estadoPedido = _tipoMovimiento == "SAL" ? 1 : 2;
+
+                var actualizado = await actualizarEstadoPedido(
+                    (int)_idPedido,
+                    estadoPedido,
+                    "admin");
+
+                if (actualizado)
+                {
+                    Snackbar.Add("Se registró el movimiento pero no se pudo actualizar el estado del pedido.", Severity.Warning);
+                }
+            }
+
+            Snackbar.Add("Movimiento registrado correctamente.", Severity.Success);
+
             Navigation.NavigateTo("/kardex");
         }
         catch (Exception ex)
         {
-            Snackbar.Add("Error al registrar el movimiento", Severity.Error);
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
         }
         finally
         {
-            _saving = false; // 🔓 siempre libera
+            _saving = false;
         }
+    }
+
+    async Task<bool> actualizarEstadoPedido(int idPedido, int estadoPedido, string usuarioModifica)
+    {
+        return await PedidoService.ChangeStatusAsync(idPedido, estadoPedido, usuarioModifica);
     }
 
     bool TieneArticulosRepetidos(List<MovimientoDetalleDto> detalles)
@@ -377,25 +453,37 @@
         return detalles.Any(d => d.Cantidad <= 0);
     }
 
+    private bool RequierePedido =>
+        (_tipoMovimiento == "SAL" && _idMotivo == 1) ||
+        (_tipoMovimiento == "ING" && _idMotivo == 2);
+
     void OnMotivoChanged()
     {
-        if (_tipoMovimiento == "SAL" && _idMotivo == 1)
+        if (RequierePedido)
         {
+            // El cliente se obtiene desde el pedido
+            _clienteSeleccionado = null;
             _idCliente = null;
             _cliente = null;
-            if (_tipoMovimiento == "SAL" && _idMotivo == 1)
-            {
-                _clienteSeleccionado = null;
-                _idCliente = null;
-                _cliente = null;
-                _detalleGrid?.SetDetalles(new());
-            }
+
+            // Limpia el pedido y el detalle
+            LimpiarPedido();
+        }
+        else
+        {
+            // No requiere pedido, limpiar solamente el número de pedido
+            _nroPedido = string.Empty;
+            _idPedido = null;
+
+            _detalleGrid?.SetDetalles(new());
         }
     }
 
     void OnPedidoKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
+        {
             _ = BuscarPedido();
+        }
     }
 }

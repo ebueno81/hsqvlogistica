@@ -3,6 +3,7 @@ using HsqvLogistica.Models.DTOs.Pedidos;
 using HsqvLogistica.Models.Entities.Store;
 using HsqvLogistica.Repositories.Interfaces;
 using HsqvLogistica.Services.Interfaces;
+using System;
 
 namespace HsqvLogistica.Services;
 
@@ -44,8 +45,8 @@ public class PedidoService : IPedidoService
         return pedido.Id;
     }
 
-    public async Task<bool> ChangeStatusAsync(int id, bool activo)
-        => await _pedidoRepo.ChangeStatusAsync(id, activo);
+    public async Task<bool> ChangeStatusAsync(int id, int activo, string usuarioModifica)
+        => await _pedidoRepo.ChangeStatusAsync(id, activo, usuarioModifica);
 
     public async Task<PedidoPagedResultDto> SearchAsync(
     PedidoFilterDto filter,
@@ -54,4 +55,6 @@ public class PedidoService : IPedidoService
         return await _pedidoRepo.SearchAsync(filter, cancellationToken);
     }
 
+    public async Task<bool> AnularPedido(int id, string usuarioModifica)
+        => await _pedidoRepo.AnularPedido(id, usuarioModifica);
 }

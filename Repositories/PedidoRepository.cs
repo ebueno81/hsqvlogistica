@@ -4,6 +4,8 @@ using HsqvLogistica.Models.DTOs.Pedidos;
 using HsqvLogistica.Models.Entities.Store;
 using HsqvLogistica.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Net.NetworkInformation;
 
 namespace HsqvLogistica.Repositories;
 
@@ -37,16 +39,15 @@ public class PedidoRepository : IPedidoRepository
     public async Task SaveChangesAsync()
         => await _context.SaveChangesAsync();
 
-    public async Task<bool> ChangeStatusAsync(int id, bool activo)
+    public async Task<bool> ChangeStatusAsync(int id, int activo, string usuarioModifica)
     {
-        var pedido = await _context.Pedidos.FindAsync(id);
-        if (pedido == null) return false;
+        var filas = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+        EXEC sp_ActualizarEstadoPedido
+            @Id={id},
+            @Id_Status={activo},
+            @Usuario_Modifica={usuarioModifica}");
 
-        pedido.Activo = activo;
-        pedido.FechaModifica = DateTime.Now;
-
-        await _context.SaveChangesAsync();
-        return true;
+        return filas > 0;
     }
 
     public async Task<PedidoPagedResultDto> SearchAsync(
@@ -100,4 +101,13 @@ public class PedidoRepository : IPedidoRepository
         };
     }
 
+    public async Task<bool> AnularPedido(int id, string usuarioModifica)
+    {
+        var filas = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+        EXEC sp_ActualizarAnularPedido
+            @Id={id},
+            @Usuario_Modifica={usuarioModifica}");
+
+        return filas > 0;
+    }
 }

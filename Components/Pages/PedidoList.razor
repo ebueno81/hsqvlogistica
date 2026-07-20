@@ -95,10 +95,10 @@
 
                 <MudTd>
                     <MudChip T="string"
-                             Color="@(row.Estado == 0 ? Color.Error : Color.Info)"
+                             Color="@GetEstadoColor(row.Estado)"
                              Variant="Variant.Filled"
                              Size="Size.Small">
-                        @(row.Estado == 0 ? "Pendiente" : "Cerrado")
+                        @GetEstadoTexto(row.Estado)
                     </MudChip>
                 </MudTd>
 
@@ -107,9 +107,9 @@
                              Color="@(row.Activo == true ? Color.Success : Color.Error)"
                              Variant="Variant.Filled"
                              Size="Size.Small"
-                             Clickable="@(row.Activo == true)"
-                             Style="@(row.Activo == true ? "cursor:pointer;" : "cursor:default;")"
-                             OnClick="@(row.Activo == true ? (() => ConfirmarAnulacion(row)) : null)">
+                             Clickable="@PuedeAnular(row)"
+                             Style="@(PuedeAnular(row) ? "cursor:pointer;" : "cursor:default;")"
+                             OnClick="@(PuedeAnular(row) ? (() => ConfirmarAnulacion(row)) : null)">
                         @(row.Activo == true ? "Activo" : "Anulado")
                     </MudChip>
                 </MudTd>
@@ -235,14 +235,29 @@
 
         if (result == true)
         {
+            var actualizado = await actualizarEstadoPedido(
+                    pedido.Id,
+                    1,
+                    "admin");
             Snackbar.Add(
-                "Acción de aprobar (solo mensaje por ahora)",
+                "Pedido fue aprobado correctamente",
                 Severity.Info,
                 options =>
                 {
                     options.CloseAfterNavigation = true;
                 });
         }
+    }
+
+    bool PuedeAnular(PedidoDto row)
+    {
+        return row.Activo == true &&
+               (row.Estado == 0 || row.Estado == 1);
+    }
+
+    async Task<bool> actualizarEstadoPedido(int idPedido, int estadoPedido, string usuarioModifica)
+    {
+        return await PedidoService.ChangeStatusAsync(idPedido, estadoPedido, usuarioModifica);
     }
 
     async Task ConfirmarAnulacion(PedidoDto pedido)
@@ -263,9 +278,7 @@
 
         if (result == true)
         {
-            // 🔴 AQUÍ irá luego tu llamada al backend
-            // await PedidoService.AnularAsync(pedido.Id);
-
+            await PedidoService.AnularPedido(pedido.Id, "admin");
             Snackbar.Add(
                 $"Pedido #{pedido.Id} anulado correctamente",
                 Severity.Success,
@@ -278,5 +291,29 @@
             if (_table is not null)
                 await _table.ReloadServerData();
         }
+    }
+
+    string GetEstadoTexto(int? estado)
+    {
+        return estado switch
+        {
+            0 => "Pendiente",
+            1 => "Aprobado",
+            2 => "Despacho",
+            3 => "Cerrado",
+            _ => "Desconocido"
+        };
+    }
+
+    Color GetEstadoColor(int? estado)
+    {
+        return estado switch
+        {
+            0 => Color.Error,      // Rojo
+            1 => Color.Warning,    // Amarillo
+            2 => Color.Info,       // Azul
+            3 => Color.Success,    // Verde
+            _ => Color.Default
+        };
     }
 }

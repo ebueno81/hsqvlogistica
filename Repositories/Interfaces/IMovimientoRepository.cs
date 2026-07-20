@@ -8,7 +8,7 @@ namespace HsqvLogistica.Repositories.Interfaces
         Task<MovimientoPagedResultDto> SearchAsync(
             MovimientoFilterDto filter,
             CancellationToken cancellationToken);
-
+        Task<bool> AnularMovimiento(int id, string usuarioModifica);
         Task<int> CreateAsync(Movimiento movimiento);
         Task<Movimiento?> GetByIdAsync(int id);
     }

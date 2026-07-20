@@ -6,6 +6,7 @@
         public string Tipo { get; set; } = default!;
         public string Motivo { get; set; } = default!;
         public int IdMotivo { get; set; }
+        public int IdAlmacen { get; set; }
         public int? IdPedido { get; set; }
 
         public int? IdCliente { get; set; }
@@ -17,6 +18,8 @@
         public string? NroGuia { get; set; }
         public string? Observacion { get; set; }
         public bool? Activo { get; set; }
+        public string Usuario { get; set; }
+        public int? Estado { get; set; }
 
         public List<MovimientoDetalleDto> Detalles { get; set; } = new();
     }

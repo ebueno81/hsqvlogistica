@@ -1,4 +1,5 @@
-﻿using HsqvLogistica.Models.DTOs.Movimientos;
+﻿using HsqvLogistica.Mappers;
+using HsqvLogistica.Models.DTOs.Movimientos;
 using HsqvLogistica.Models.Entities.Store;
 using HsqvLogistica.Repositories.Interfaces;
 using HsqvLogistica.Services.Interfaces;
@@ -19,33 +20,15 @@ namespace HsqvLogistica.Services
             CancellationToken cancellationToken)
             => _repository.SearchAsync(filter, cancellationToken);
 
-        public async Task<int> CreateAsync(MovimientoCreateDto dto)
+        public async Task<int> CreateAsync(MovimientoDto dto)
         {
-            var movimiento = new Movimiento
-            {
-                IdPedido = dto.IdPedido,
-                IdCliente = dto.IdCliente,
-                Cliente = dto.Cliente,
-                IdMotivo = dto.IdMotivo,
-                Fecha = dto.Fecha,
-                SerieGuia = dto.SerieGuia,
-                NroGuia = dto.NroGuia,
-                Detalles = dto.Detalles,
-                Activo = true,
-                UsuaCreacion = dto.UsuaCreacion,
-                FechaCreacion = DateTime.Now,
-                MovimientoDetalles = dto.DetallesMovimiento.Select(d => new MovimientoDetalle
-                {
-                    IdArticulo = d.IdArticulo,
-                    Cantidad = d.Cantidad,
-                    PrecioMn = d.PrecioMn,
-                    PrecioUs = d.PrecioUs,
-                    Activo = true
-                }).ToList()
-            };
+            var movimiento = MovimientoMapper.ToEntity(dto);
 
             return await _repository.CreateAsync(movimiento);
         }
+
+        public async Task<bool> AnularMovimiento(int id, string usuarioModifica)
+        => await _repository.AnularMovimiento(id, usuarioModifica);
 
         public async Task<MovimientoDto?> GetByIdAsync(int id)
         {

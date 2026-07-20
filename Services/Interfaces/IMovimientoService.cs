@@ -8,7 +8,8 @@ namespace HsqvLogistica.Services.Interfaces
             MovimientoFilterDto filter,
             CancellationToken cancellationToken);
 
-        Task<int> CreateAsync(MovimientoCreateDto dto);
+        Task<int> CreateAsync(MovimientoDto dto);
+        Task<bool> AnularMovimiento(int id, string usuarioModifica);
         Task<MovimientoDto?> GetByIdAsync(int id);
     }
 }

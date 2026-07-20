@@ -42,6 +42,8 @@ namespace HsqvLogistica.Repositories
                 .Select(x => new MovimientoDto
                 {
                     Id = x.Id,
+                    IdPedido = x.IdPedido,
+                    IdMotivo = x.IdMotivo ?? 0,
                     Cliente = x.Cliente,
                     Fecha = (DateOnly)x.Fecha,
                     SerieGuia = x.SerieGuia,
@@ -73,6 +75,24 @@ namespace HsqvLogistica.Repositories
                 .Include(m => m.MovimientoDetalles)
                     .ThenInclude(d => d.IdArticuloNavigation) // ✅ ESTO ES CLAVE
                 .FirstOrDefaultAsync(m => m.Id == id);
+        }
+
+        public async Task<bool> AnularMovimiento(int id, string usuarioModifica)
+        {
+            try
+            {
+                var filas = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+                EXEC sp_ActualizarAnularMovimiento
+                    @Id={id},
+                    @Usuario_Modifica={usuarioModifica}");
+
+                return filas > 0;
+            }
+            catch (Exception ex)
+            {
+                // Manejar la excepción según sea necesario
+                throw new Exception("Error al anular el movimiento.", ex);
+            }
         }
     }
 
