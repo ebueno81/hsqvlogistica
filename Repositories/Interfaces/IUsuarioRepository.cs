@@ -9,4 +9,5 @@ public interface IUsuarioRepository
     Task AddAsync(Usuario usuario);
     Task UpdateAsync(Usuario usuario);
     Task SaveChangesAsync();
+    Task<Usuario?> ValidateUserAsync(string user, string pass);
 }

@@ -1,6 +1,7 @@
 ﻿@page "/kardex/nuevo"
 
 @using HsqvLogistica.Components.Pages.Components
+@using HsqvLogistica.Helpers
 @using HsqvLogistica.Models.DTOs.Movimientos
 @using HsqvLogistica.Models.DTOs.Motivos
 @using HsqvLogistica.Models.DTOs.Clientes
@@ -12,6 +13,7 @@
 @inject IMotivoService MotivoService
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
+@inject IUserSessionService UserSession
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
 
@@ -23,11 +25,10 @@
 
         <MudGrid Spacing="3">
             <MudItem xs="12" sm="4" md="3">
-                <MudDatePicker Label="Fecha Entrega"
+                <MudDatePicker Label="Fecha Entrega"    
                                @bind-Date="_fechaEntrega"
                                Color="Color.Info"
-                               Dense="true"
-                               Variant="Variant.Outlined" />
+                               Dense="true"/>
             </MudItem>
             <!-- TIPO MOVIMIENTO -->
             <MudItem xs="12" sm="6" md="3">
@@ -64,29 +65,34 @@
 
         <MudDivider Class="my-4" />
 
-        @if ((_tipoMovimiento == "SAL" && _idMotivo == 1) ||
-                (_tipoMovimiento == "ING" && _idMotivo == 2))
+        @if (_idMotivo == 1 || _idMotivo == 2 || _idMotivo == 3)
         {
             <MudGrid Spacing="3">
-
-                <MudItem xs="12" sm="6" md="3">
-                    <MudTextField Label="Número de Pedido"
-                                  @bind-Value="_nroPedido"
-                                  Adornment="Adornment.End"
-                                  AdornmentIcon="@Icons.Material.Filled.Search"
-                                  OnAdornmentClick="BuscarPedido"
-                                  Immediate="true"
-                                  OnKeyDown="OnPedidoKeyDown" />
-                </MudItem>
-
-                <MudItem xs="12" sm="6" md="5">
-                    <MudTextField Label="Cliente"
-                                  Value="_cliente"
-                                  Disabled="true"
-                                  Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Person" />
-                </MudItem>
-
+                @if (_idMotivo != 3)
+                {
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudTextField Label="Número de Pedido"
+                                      @bind-Value="_nroPedido"
+                                      Adornment="Adornment.End"
+                                      AdornmentIcon="@Icons.Material.Filled.Search"
+                                      OnAdornmentClick="BuscarPedido"
+                                      Immediate="true"
+                                      OnKeyDown="OnPedidoKeyDown" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="5">
+                        <MudTextField Label="Cliente"
+                                      Value="_cliente"
+                                      Disabled="true"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Person" />
+                    </MudItem>
+                } else
+                {
+                    <MudItem xs="12" md="6">
+                        <HsqvLogistica.Components.Pages.Components.ClienteAutoComplete Disabled="false"
+                                                                                       ValueChanged="OnClienteSelected" />
+                    </MudItem>
+                }
             </MudGrid>
         }
 
@@ -128,13 +134,15 @@
 
         <MudStack Direction="Row" Spacing="2" Class="mt-4">
 
-            <MudButton Color="Color.Primary"
+            <MudButton Color="Color.Info"
+                       Variant="Variant.Filled"
                        Disabled="_saving"
                        OnClick="Guardar">
                 @(_saving ? "Guardando..." : "Guardar")
             </MudButton>
 
             <MudButton Color="Color.Default"
+                       Variant="Variant.Outlined"
                        OnClick="@(() => Navigation.NavigateTo("/kardex"))">
                 Cancelar
             </MudButton>
@@ -159,7 +167,8 @@
 
     int? _idCliente;
     string? _cliente;
-
+    int _idClienteHusqvarna = 149;
+    string _clienteHusqvarna = "HUSQVARNA PERU";
     string? _serieGuia="0000";
     string? _nroGuia="00000000";
     string? _observacion;
@@ -175,6 +184,12 @@
         _motivos = (await MotivoService.GetAllAsync())
             .Where(m => m.Activo == true)
             .ToList();
+    }
+
+    void OnClienteSelected(ClientePedidoDto cliente)
+    {
+        _idCliente = cliente.IdCliente;
+        _cliente = cliente.Nombre;
     }
 
     void OnTipoMovimientoChanged()
@@ -312,8 +327,8 @@
                 return;
             }
 
-            if ((_tipoMovimiento == "ING" || _idMotivo != 1) &&
-                _idCliente is null)
+            // Validamos que solo bloquee cuando sea ingreso por devolucion del cliente
+            if (_tipoMovimiento == "ING" && _idMotivo == 2  && _idCliente is null)
             {
                 Snackbar.Add("Debe seleccionar un cliente", Severity.Warning);
                 return;
@@ -373,21 +388,21 @@
                 IdMotivo = _idMotivo,
 
                 IdPedido = _idPedido,
-                IdCliente = _idCliente,
-                Cliente = _cliente,
+                IdCliente = _idCliente ?? _idClienteHusqvarna,
+                Cliente = string.IsNullOrWhiteSpace(_cliente) ? _clienteHusqvarna : _cliente,
 
                 IdAlmacen = 1,
 
                 Fecha = _fechaEntrega.HasValue ? DateOnly.FromDateTime(_fechaEntrega.Value) : default,
 
-                SerieGuia = _serieGuia,
-                NroGuia = _nroGuia,
+                SerieGuia = TextHelper.Upper(_serieGuia),
+                NroGuia = TextHelper.Upper(_nroGuia),
 
                 Observacion = _observacion,
 
                 Activo = true,
 
-                Usuario = "admin",
+                Usuario = UserSession.UsuarioActual.Usuario,
 
                 Detalles = detalles
             };
@@ -403,12 +418,12 @@
             //Actualizar estado del pedido
             if (_idPedido > 0)
             {
-                var estadoPedido = _tipoMovimiento == "SAL" ? 1 : 2;
+                var estadoPedido = _tipoMovimiento == "SAL" ? 2 : 3;
 
                 var actualizado = await actualizarEstadoPedido(
                     (int)_idPedido,
                     estadoPedido,
-                    "admin");
+                    UserSession.UsuarioActual.Usuario);
 
                 if (actualizado)
                 {

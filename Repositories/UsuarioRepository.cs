@@ -37,4 +37,12 @@ public class UsuarioRepository : IUsuarioRepository
     public async Task SaveChangesAsync() =>
         await _context.SaveChangesAsync();
 
+    public async Task<Usuario?> ValidateUserAsync(string user, string pass)
+    {
+        return await _context.Usuarios
+            .FirstOrDefaultAsync(x =>
+                x.Usuario1 == user &&
+                x.Clave == pass &&
+                x.Activo == true);
+    }
 }

@@ -1,7 +1,9 @@
-﻿@using HsqvLogistica.Models.DTOs.Articulos
+﻿@using HsqvLogistica.Helpers
+@using HsqvLogistica.Models.DTOs.Articulos
 @using HsqvLogistica.Models.DTOs.Lineas
 @using HsqvLogistica.Services.Interfaces
 @using MudBlazor
+@inject IUserSessionService UserSession
 
 <MudDialog>
 
@@ -175,14 +177,14 @@
                 Articulo.Id,
                 new ArticuloUpdateDto
                 {
-                    Descripcion = _descripcion,
+                    Descripcion = TextHelper.Upper(_descripcion),
                     Stock = _stock,
                     PrecioMn = _precioMn,
                     PrecioUs = _precioUs,
                     RutaImagen = _rutaImagen,
                     IdLinea = _idLinea,
                     Detalles = _detalles,
-                    UsuaModifica = "admin"
+                    UsuaModifica = UserSession.UsuarioActual.Usuario
                 });
         }
         else
@@ -191,14 +193,14 @@
                 new ArticuloCreateDto
                 {
                     Codigo = _codigo,
-                    Descripcion = _descripcion,
+                    Descripcion = TextHelper.Upper(_descripcion),
                     Stock = _stock,
                     PrecioMn = _precioMn,
                     PrecioUs = _precioUs,
                     RutaImagen = _rutaImagen,
                     IdLinea = _idLinea,
                     Detalles = _detalles,
-                    UsuaCreacion = "admin"
+                    UsuaCreacion = UserSession.UsuarioActual.Usuario
                 });
         }
 

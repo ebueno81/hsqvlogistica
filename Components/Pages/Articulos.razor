@@ -9,6 +9,7 @@
 @inject ILineaService LineaService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject IUserSessionService UserSession
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
 
@@ -20,13 +21,15 @@
             Mantenimiento · Artículos
         </MudText>
 
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Primary"
+        @if (UserSession.UsuarioActual?.Permisos.PuedeCrearArticulos == true)
+        {
+            <MudButton Variant="Variant.Filled"
+            Color="Color.Primary"
                    StartIcon="@Icons.Material.Filled.Add"
                    OnClick="OpenCreateDialog">
             Nuevo Artículo
         </MudButton>
-
+        }
     </MudStack>
 
     <MudPaper Elevation="2" Class="pa-4">
@@ -186,7 +189,7 @@
             await ArticuloService.ChangeStatusAsync(
                 articulo.Id,
                 !articulo.Activo.GetValueOrDefault(),
-            "admin");
+            UserSession.UsuarioActual.Usuario);
 
             Snackbar.Add("Estado actualizado correctamente",
                 Severity.Success);

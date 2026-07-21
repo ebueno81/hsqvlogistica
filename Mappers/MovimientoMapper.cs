@@ -28,7 +28,8 @@ public static class MovimientoMapper
                 .Select(x => new MovimientoDetalle
                 {
                     IdArticulo = x.IdArticulo,
-                    Cantidad = x.Cantidad
+                    Cantidad = x.Cantidad,
+                    Activo = true
                 })
                 .ToList()
         };

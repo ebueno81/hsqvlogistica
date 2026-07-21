@@ -9,6 +9,7 @@
 @inject NavigationManager Navigation
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject IUserSessionService UserSession
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
 
@@ -19,14 +20,15 @@
               Class="mb-4">
 
         <MudText Typo="Typo.h5">Pedidos</MudText>
-
-        <MudButton Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.Add"
-                   OnClick="GoNuevoPedido"
-                   Disabled="@_isNavigating">
-            Nuevo Pedido
-        </MudButton>
-
+        @if (UserSession.UsuarioActual?.Permisos.PuedeCrearPedidos == true)
+        {
+            <MudButton Color="Color.Primary"
+                StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="GoNuevoPedido"
+                       Disabled="@_isNavigating">
+                Nuevo Pedido
+            </MudButton>
+        }
     </MudStack>
 
     <!-- ================= FILTROS ================= -->
@@ -101,7 +103,8 @@
                         @GetEstadoTexto(row.Estado)
                     </MudChip>
                 </MudTd>
-
+                @if (UserSession.UsuarioActual?.Permisos.PuedeAnularOperaciones == true)
+                {
                 <MudTd>
                     <MudChip T="string"
                              Color="@(row.Activo == true ? Color.Success : Color.Error)"
@@ -113,21 +116,25 @@
                         @(row.Activo == true ? "Activo" : "Anulado")
                     </MudChip>
                 </MudTd>
+                }
 
-                <MudTd Align="Align.Right">
-                    <MudIconButton Icon="@Icons.Material.Filled.Visibility"
-                                   Color="Color.Primary"
-                                   OnClick="@(() => Navigation.NavigateTo($"/pedidos/ver/{row.Id}"))" />
-                    <!-- Aprobar (solo Pendiente + Activo) -->
-                    @if (row.Estado == 0 && row.Activo==true)
-                    {
-                        <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
-                                       Color="Color.Success"
-                                       Title="Aprobar pedido"
-                                       OnClick="@(() => ConfirmarAprobacion(row))" />
-                    }
-                </MudTd>
-
+                @if (UserSession.UsuarioActual?.Permisos.PuedeAprobarPedidos == true)
+                {
+                    <MudTd Align="Align.Right">
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                       Color="Color.Primary"
+                                       OnClick="@(() => Navigation.NavigateTo($"/pedidos/ver/{row.Id}"))" />
+                        <!-- Aprobar (solo Pendiente + Activo) -->
+                        @if (row.Estado == 0 && row.Activo == true)
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
+                                           Color="Color.Success"
+                                           Title="Aprobar pedido"
+                                           OnClick="@(() => ConfirmarAprobacion(row))" />
+                        }
+                    </MudTd>
+                }
+                
             </RowTemplate>
 
             <NoRecordsContent>
@@ -238,7 +245,7 @@
             var actualizado = await actualizarEstadoPedido(
                     pedido.Id,
                     1,
-                    "admin");
+                    UserSession.UsuarioActual.Usuario);
             Snackbar.Add(
                 "Pedido fue aprobado correctamente",
                 Severity.Info,
@@ -278,7 +285,7 @@
 
         if (result == true)
         {
-            await PedidoService.AnularPedido(pedido.Id, "admin");
+            await PedidoService.AnularPedido(pedido.Id, UserSession.UsuarioActual.Usuario);
             Snackbar.Add(
                 $"Pedido #{pedido.Id} anulado correctamente",
                 Severity.Success,

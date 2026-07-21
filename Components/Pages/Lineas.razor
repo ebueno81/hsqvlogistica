@@ -7,6 +7,7 @@
 @inject ILineaService LineaService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject IUserSessionService UserSession
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
 
@@ -18,13 +19,15 @@
         <MudText Typo="Typo.h5">
             Mantenimiento · Líneas
         </MudText>
-
-        <MudButton Variant="Variant.Filled"
-                   StartIcon="@Icons.Material.Filled.Add"
-                   Color="Color.Primary"
-                   OnClick="OpenCreateDialog">
-            Nueva Línea
-        </MudButton>
+        @if (UserSession.UsuarioActual?.Permisos.PuedeCrearMotivos == true)
+        {
+            <MudButton Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       Color="Color.Primary"
+                       OnClick="OpenCreateDialog">
+                Nueva Línea
+            </MudButton>
+        }
     </MudStack>
 
     <MudPaper Elevation="2" Class="pa-4">

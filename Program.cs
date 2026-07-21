@@ -50,6 +50,7 @@ builder.Services.AddScoped<IGarantiaService, GarantiaService>();
 builder.Services.AddScoped<GarantiaMapper>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IUserSessionService, UserSessionService>();
 
 // Controllers (API)
 builder.Services.AddControllers();

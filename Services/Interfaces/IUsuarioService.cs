@@ -9,4 +9,5 @@ public interface IUsuarioService
     Task<UsuarioDto> CreateAsync(UsuarioCreateDto dto);
     Task UpdateAsync(int id, UsuarioUpdateDto dto);
     Task<bool> ChangeStatusAsync(int id, bool activo);
+    Task<UsuarioDto?> ValidateUserAsync(string user, string pass);
 }

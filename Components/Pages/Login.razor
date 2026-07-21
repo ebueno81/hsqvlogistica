@@ -1,8 +1,15 @@
 ﻿@page "/"
 @page "/login"
 @layout EmptyLayout
+
 @inject NavigationManager Nav
+@inject IUsuarioService UsuarioService
+@inject IUserSessionService UserSession
+
 @using HsqvLogistica.Components.Layout
+@using HsqvLogistica.Helpers
+@using HsqvLogistica.Models.DTOs.Usuarios
+@using HsqvLogistica.Services.Interfaces
 @using MudBlazor
 
 <MudContainer MaxWidth="MaxWidth.False" Class="login-page">
@@ -27,7 +34,7 @@
 
         <!-- Form -->
         <MudForm @ref="_form" Model="_model">
-            <MudTextField @bind-Value="_model.Email"
+            <MudTextField @bind-Value="_model.Usuario"
                           Label="E-mail"
                           Variant="Variant.Outlined"
                           Margin="Margin.Dense"
@@ -52,13 +59,27 @@
                 <MudLink Href="#" Underline="Underline.Always">Forgot password?</MudLink>
             </div>
 
+            @if (!string.IsNullOrWhiteSpace(_mensajeError))
+            {
+                <MudAlert Severity="Severity.Error"
+                          Dense="true"
+                          Class="mt-2">
+
+                    @_mensajeError
+
+                </MudAlert>
+            }
+
             <MudButton FullWidth="true"
                        Size="Size.Large"
                        Variant="Variant.Filled"
                        Color="Color.Primary"
                        Class="mt-4"
+                       Disabled="_loading"
                        OnClick="SignIn">
-                SIGN IN
+
+                @(_loading ? "VALIDANDO..." : "SIGN IN")
+
             </MudButton>
 
             <MudText Typo="Typo.caption" Class="helper-title mt-6">
@@ -79,21 +100,60 @@
     private bool _showPassword;
 
     private void TogglePassword() => _showPassword = !_showPassword;
+    private bool _loading;
+    private string? _mensajeError;
 
     private async Task SignIn()
     {
-        if (_form is null) return;
+        if (_form is null)
+            return;
 
         await _form.Validate();
-        if (!_form.IsValid) return;
 
-        // TODO: autenticar y navegar
-        Nav.NavigateTo("/dashboard", forceLoad: true);
+        if (!_form.IsValid)
+            return;
+
+        _loading = true;
+        _mensajeError = null;
+
+        try
+        {
+            var usuario = await UsuarioService.ValidateUserAsync(
+                _model.Usuario!,
+                _model.Password!);
+
+            if (usuario == null)
+            {
+                _mensajeError = "Usuario o contraseña incorrectos.";
+                return;
+            }
+
+            UserSession.IniciarSesion(new UsuarioSesionDto
+            {
+                Id = usuario.Id,
+                Usuario = usuario.Usuario,
+                Nombres = usuario.Nombres,
+                Correo = usuario.Correo,
+                IdTipo = usuario.IdTipo,
+
+                Permisos = PermissionHelper.ObtenerPermisos(usuario.IdTipo)
+            });
+
+            Nav.NavigateTo("/dashboard");
+        }
+        catch
+        {
+            _mensajeError = "Ocurrió un error al intentar iniciar sesión.";
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 
     private sealed class LoginModel
     {
-        public string? Email { get; set; }
+        public string? Usuario { get; set; }
         public string? Password { get; set; }
         public bool RememberMe { get; set; }
     }

@@ -1,7 +1,9 @@
-﻿@using MudBlazor
+﻿@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
 @inherits LayoutComponentBase
 @inject NavigationManager Nav
 @inject IDialogService DialogService
+@inject IUserSessionService UserSession
 
 <MudThemeProvider />
 <MudPopoverProvider />
@@ -19,7 +21,9 @@
 
         <MudSpacer />
 
-        <MudInputLabel>Admin</MudInputLabel>
+        <MudText Typo="Typo.body1">
+            @(UserSession.UsuarioActual?.Usuario ?? "")
+        </MudText>
         <MudIconButton Icon="@Icons.Material.Filled.SupervisedUserCircle" Color="Color.Inherit" />
         <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" OnClick="CerrarSesion" />
     </MudAppBar>
@@ -54,7 +58,11 @@
         );
 
         if (result == true)
-            Nav.NavigateTo("/login", forceLoad: true);
+        {
+            UserSession.CerrarSesion();
+            Nav.NavigateTo("/login");
+        }
+        
     }
 
 }

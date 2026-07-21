@@ -1,4 +1,6 @@
-﻿@using MudBlazor
+﻿@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
+@inject IUserSessionService UserSession
 
 <MudPaper Width="250px" Class="d-inline-flex py-3" Elevation="0">
 
@@ -62,9 +64,13 @@
         <MudNavGroup Title="Configuración"
                      Icon="@Icons.Material.Filled.Settings"
                      Expanded="true">
-            <MudNavLink Href="/usuarios" Icon="@Icons.Material.Filled.ManageAccounts">
-                Usuarios
-            </MudNavLink>
+            @if (UserSession.UsuarioActual?.Permisos.PuedeAdministrarUsuarios == true)
+            {
+                <MudNavLink Href="/usuarios"
+                            Icon="@Icons.Material.Filled.ManageAccounts">
+                    Usuarios
+                </MudNavLink>
+            }
             <MudNavLink Href="/empresa" Icon="@Icons.Material.Filled.Apartment">
                 Empresa
             </MudNavLink>

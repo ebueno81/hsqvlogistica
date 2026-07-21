@@ -8,6 +8,7 @@
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IUserSessionService UserSession
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
 <!-- ================= HEADER ================= -->
@@ -30,26 +31,25 @@
     <MudGrid Spacing="2" AlignItems="AlignItems.End">
 
         <MudItem xs="12" md="2">
-            <MudSelect T="bool?"
-                       Dense
-                       Variant="Variant.Outlined"
-                       Placeholder="Estado"
-                       Style="width: 150px;"
-                       Value="_estado"
-                       ValueChanged="@(v => _estado = v)">
-                <MudSelectItem T="bool?" Value="@(null)">Todos</MudSelectItem>
-                <MudSelectItem T="bool?" Value="false">Pendiente</MudSelectItem>
-                <MudSelectItem T="bool?" Value="true">Cerrado</MudSelectItem>
-            </MudSelect>
+                <MudSelect T="bool?"
+                           Label="Estado"
+                           Dense="true"
+                           Variant="Variant.Text"
+                           Value="_estado"
+                           ValueChanged="@(v => _estado = v)">
+                    <MudSelectItem T="bool?" Value="@(null)">Todos</MudSelectItem>
+                    <MudSelectItem T="bool?" Value="false">Pendiente</MudSelectItem>
+                    <MudSelectItem T="bool?" Value="true">Cerrado</MudSelectItem>
+                </MudSelect>
         </MudItem>
 
         <MudItem xs="12" md="3">
             <MudTextField Label="Cliente"
                           @bind-Value="_cliente"
                           Dense
-                          Variant="Variant.Outlined"
+                          Variant="Variant.Text"
                           Adornment="Adornment.Start"
-                          Style="max-width: 300px; height: 40px;"
+                          
                           AdornmentIcon="@Icons.Material.Filled.PersonSearch" />
         </MudItem>
 
@@ -225,7 +225,7 @@
 
         if (ok == true)
         {
-            await GarantiaService.CloseAsync(id, "admin");
+            await GarantiaService.CloseAsync(id, UserSession.UsuarioActual.Usuario);
             Snackbar.Add("Garantía cerrada correctamente", Severity.Success);
             await _table!.ReloadServerData();
         }
@@ -247,7 +247,7 @@
 
         if (ok == true)
         {
-            await GarantiaService.AnularAsync(id, "admin");
+            await GarantiaService.AnularAsync(id, UserSession.UsuarioActual.Usuario);
             Snackbar.Add("Garantía anulada correctamente", Severity.Warning);
             await _table!.ReloadServerData();
         }

@@ -63,9 +63,26 @@ namespace HsqvLogistica.Repositories
 
         public async Task<int> CreateAsync(Movimiento movimiento)
         {
-            _context.Movimientos.Add(movimiento);
-            await _context.SaveChangesAsync();
-            return movimiento.Id;
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                _context.Movimientos.Add(movimiento);
+
+                await _context.SaveChangesAsync();
+
+                // Actualiza stock
+                await ActualizarStockAsync(movimiento.Id, 1);
+
+                await transaction.CommitAsync();
+
+                return movimiento.Id;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<Movimiento?> GetByIdAsync(int id)
@@ -73,26 +90,40 @@ namespace HsqvLogistica.Repositories
             return await _context.Movimientos
                 .Include(m => m.IdMotivoNavigation)
                 .Include(m => m.MovimientoDetalles)
-                    .ThenInclude(d => d.IdArticuloNavigation) // ✅ ESTO ES CLAVE
+                    .ThenInclude(d => d.IdArticuloNavigation)
                 .FirstOrDefaultAsync(m => m.Id == id);
         }
 
         public async Task<bool> AnularMovimiento(int id, string usuarioModifica)
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
             try
             {
                 var filas = await _context.Database.ExecuteSqlInterpolatedAsync($@"
                 EXEC sp_ActualizarAnularMovimiento
-                    @Id={id},
-                    @Usuario_Modifica={usuarioModifica}");
+                @Id = {id},
+                @Usuario_Modifica = {usuarioModifica}");
 
-                return filas > 0;
+                await ActualizarStockAsync(id, -1);
+               
+                await transaction.CommitAsync();
+
+                return true;
             }
-            catch (Exception ex)
+            catch
             {
-                // Manejar la excepción según sea necesario
-                throw new Exception("Error al anular el movimiento.", ex);
+                await transaction.RollbackAsync();
+                throw;
             }
+        }
+
+        private async Task ActualizarStockAsync(int idMovimiento, int factor)
+        {
+            await _context.Database.ExecuteSqlInterpolatedAsync($@"
+                EXEC usp_ActualizarStockArticulo
+                @IdMovimiento = {idMovimiento},
+                @Factor = {factor}");
         }
     }
 

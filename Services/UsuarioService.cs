@@ -2,6 +2,7 @@
 using HsqvLogistica.Models.DTOs.Usuarios;
 using HsqvLogistica.Repositories.Interfaces;
 using HsqvLogistica.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace HsqvLogistica.Services;
 
@@ -60,4 +61,14 @@ public class UsuarioService : IUsuarioService
 
         return true;
     }
+
+    public async Task<UsuarioDto?> ValidateUserAsync(string user, string pass)
+    {
+        var usuario = await _repository.ValidateUserAsync(user, pass);
+
+        return usuario == null
+            ? null
+            : UsuarioMapper.ToDto(usuario);
+    }
+
 }

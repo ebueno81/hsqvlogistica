@@ -1,4 +1,5 @@
-﻿@using HsqvLogistica.Models.DTOs.Motivos
+﻿@using HsqvLogistica.Helpers
+@using HsqvLogistica.Models.DTOs.Motivos
 @using HsqvLogistica.Services.Interfaces
 @using MudBlazor
 @using System.Net.NetworkInformation
@@ -90,7 +91,7 @@
                 Motivo.Id,
                 new MotivoUpdateDto
                 {
-                    Descripcion = _descripcion,
+                    Descripcion = TextHelper.Upper(_descripcion),
                     TipoMov = _tipoMov
                 });
         }

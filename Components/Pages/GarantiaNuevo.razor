@@ -1,6 +1,7 @@
 ﻿@page "/garantias/nuevo"
 
 @using HsqvLogistica.Components.Pages.Components
+@using HsqvLogistica.Helpers
 @using HsqvLogistica.Integrations.Models
 @using HsqvLogistica.Models.DTOs.Garantia
 @using HsqvLogistica.Models.DTOs.Garantias
@@ -11,6 +12,7 @@
 @inject IGarantiaService GarantiaService
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
+@inject IUserSessionService UserSession
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
 
@@ -85,15 +87,23 @@
         <!-- ================= ACCIONES ================= -->
         <MudStack Direction="Row" Spacing="2">
 
-            <MudButton Color="Color.Primary"
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Info"
+                       StartIcon="@Icons.Material.Filled.Save"
                        Disabled="_saving"
                        OnClick="Guardar">
+
                 @(_saving ? "Guardando..." : "Guardar Garantía")
+
             </MudButton>
 
-            <MudButton Color="Color.Default"
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Secondary"
+                       StartIcon="@Icons.Material.Filled.Close"
                        OnClick="@(() => Navigation.NavigateTo("/garantias"))">
+
                 Cancelar
+
             </MudButton>
 
         </MudStack>
@@ -215,11 +225,11 @@
                 : null,
                 Cliente = _clienteSeleccionado.Nombre,
                 EmpServ = _empServSeleccionado.Empresa,
-                NroSerie=_nroSerie,
-                NroGuia = _nroGuia,
+                NroSerie = TextHelper.Upper(_nroSerie),
+                NroGuia = TextHelper.Upper(_nroGuia),
                 Detalles = _detalles,
                 GarantiaDetalles = detalles,   // 👈 nombre correcto
-                UsuaCreacion = "admin"
+                UsuaCreacion = UserSession.UsuarioActual.Usuario
             };
 
             await GarantiaService.CreateAsync(dto);

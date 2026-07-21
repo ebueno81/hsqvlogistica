@@ -10,6 +10,7 @@
 @inject IPedidoService PedidoService
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
+@inject IUserSessionService UserSession
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
 
@@ -196,7 +197,7 @@
                 Direccion = _direccion,
                 Detalles = _observacion,
                 IdEmpServ = 1,
-                UsuaCreacion = "admin",
+                UsuaCreacion = UserSession.UsuarioActual.Usuario,
                 DetallesPedido = detalles
             });
 
