@@ -146,8 +146,8 @@
 @code {
 
     string? _cliente;
-    DateTime? _fechaDesde;
-    DateTime? _fechaHasta;
+    DateTime? _fechaDesde = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+    DateTime? _fechaHasta = DateTime.Today;
 
     bool _loading;
     MudTable<PedidoDto>? _table;

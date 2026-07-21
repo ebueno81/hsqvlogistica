@@ -15,7 +15,6 @@
         <!-- ================= HEADER ================= -->
         <MudStack Direction="Row"
                   AlignItems="AlignItems.Center"
-                  Justify="Justify.SpaceBetween"
                   Class="mb-4">
 
             <MudStack>
@@ -28,15 +27,35 @@
                 </MudText>
             </MudStack>
 
+            <MudSpacer />
+
             @if (_movimiento != null)
             {
-                <MudChip T="string"
-                         Color="@(_movimiento.Tipo == "ING" ? Color.Info : Color.Warning)"
-                         Variant="Variant.Filled"
-                         Size="Size.Medium">
-                    @(_movimiento.Tipo == "ING" ? "Ingreso" : "Salida")
-                </MudChip>
+                <MudGrid Spacing="1"
+                         Class="d-flex justify-center align-center">
+
+                    <MudItem>
+                        <MudChip T="string"
+                                 Color="@(_movimiento.Tipo == "ING" ? Color.Info : Color.Warning)"
+                                 Variant="Variant.Filled">
+                            @(_movimiento.Tipo == "ING" ? "Ingreso" : "Salida")
+                        </MudChip>
+                    </MudItem>
+
+                    <MudItem>
+                        <MudChip T="string"
+                                 Color="@(_movimiento.Activo == true ? Color.Success : Color.Error)"
+                                 Variant="Variant.Filled"
+                                 Icon="@(_movimiento.Activo == true
+                                                             ? Icons.Material.Filled.CheckCircle
+                                                             : Icons.Material.Filled.Cancel)">
+                        @(_movimiento.Activo == true ? "Activo" : "Anulado")
+                    </MudChip>
+                </MudItem>
+
+                </MudGrid>
             }
+
         </MudStack>
 
         <MudDivider Class="my-4" />

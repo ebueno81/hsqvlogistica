@@ -180,8 +180,8 @@
 
     string? _cliente;
     bool? _estado;
-    DateTime? _fechaDesde;
-    DateTime? _fechaHasta;
+    DateTime? _fechaDesde = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+    DateTime? _fechaHasta = DateTime.Today;
 
     MudTable<GarantiaDto>? _table;
 

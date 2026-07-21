@@ -39,17 +39,15 @@
                 <MudCardContent>
                     <MudStack Spacing="1">
 
-                        <MudTextField T="DateTime?"
-                                      Label="Fecha Desde"
-                                      InputType="InputType.Date"
-                                      Dense
-                                      Margin="Margin.Dense" />
+                        <MudDatePicker Label="Fecha Desde"
+                                       @bind-Date="_fechaDesdeKardex"
+                                       Margin="Margin.Dense"
+                                       Dense="true" />
 
-                        <MudTextField T="DateTime?"
-                                      Label="Fecha Hasta"
-                                      InputType="InputType.Date"
-                                      Dense
-                                      Margin="Margin.Dense" />
+                        <MudDatePicker Label="Fecha Desde"
+                                       @bind-Date="_fechaHastaKardex"
+                                       Margin="Margin.Dense"
+                                       Dense="true" />
 
                         <MudSelect T="TipoMovimiento"
                                    Label="Tipo"
@@ -153,17 +151,14 @@
                 <MudCardContent>
                     <MudStack Spacing="1">
 
-                        <MudTextField T="DateTime?"
-                                      Label="Fecha Desde"
-                                      InputType="InputType.Date"
-                                      Dense
-                                      Margin="Margin.Dense" />
-
-                        <MudTextField T="DateTime?"
-                                      Label="Fecha Hasta"
-                                      InputType="InputType.Date"
-                                      Dense
-                                      Margin="Margin.Dense" />
+                        <MudDatePicker Label="Fecha Desde"
+                                       @bind-Date="_fechaDesdeGarantia"
+                                       Margin="Margin.Dense"
+                                       Dense="true" />
+                        <MudDatePicker Label="Fecha Desde"
+                                       @bind-Date="_fechaHastaGarantia"
+                                       Margin="Margin.Dense"
+                                       Dense="true" />
 
                         <MudSelect T="TipoEstadoGarantia"
                                    Label="Estado"
@@ -202,6 +197,12 @@
     private TipoEstadoGarantia _tipoEstado = TipoEstadoGarantia.Todos;
     private string _almacen = "Todos";
     private string _linea = "Todas";
+
+    private DateTime? _fechaDesdeKardex = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private DateTime? _fechaHastaKardex = DateTime.Today;
+
+    private DateTime? _fechaDesdeGarantia = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private DateTime? _fechaHastaGarantia = DateTime.Today;
 
     public enum TipoMovimiento
     {

@@ -89,6 +89,7 @@
             <MudTh>Fecha</MudTh>
             <MudTh>Guía</MudTh>
             <MudTh>Motivo</MudTh>
+            <MudTh>Estado</MudTh>
             <MudTh>Acciones</MudTh>
         </HeaderContent>
 
@@ -115,17 +116,23 @@
 
             <MudTd>@row.Motivo</MudTd>
 
+            <MudTd>
+                <MudChip T="string"
+                         Color="@(row.Activo == true ? Color.Success : Color.Error)"
+                         Variant="Variant.Filled"
+                         Size="Size.Small"
+                         Icon="@(row.Activo == true ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                         Clickable="@(row.Activo == true)"
+                         Style="@(row.Activo == true ? "cursor:pointer;" : "cursor:default;")"
+                         OnClick="@(row.Activo == true ? (() => ConfirmarAnulacion(row)) : null)">
+                    @(row.Activo == true ? "Activo" : "Anulado")
+                </MudChip>
+            </MudTd>
+
             <MudTd Align="Align.Right">
                 <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                Color="Color.Primary"
                                OnClick="@(() => Navigation.NavigateTo($"/kardex/ver/{row.Id}"))" />
-                @if (row.Activo == true)
-                {
-                    <MudIconButton Icon="@Icons.Material.Filled.Block"
-                                   Color="Color.Error"
-                                   Title="Anular movimiento"
-                                   OnClick="@(() => ConfirmarAnulacion(row))" />
-                }
             </MudTd>
         </RowTemplate>
 
@@ -140,8 +147,8 @@
 
     string? _tipo; // ING / SAL
     string? _cliente;
-    DateTime? _fechaDesde;
-    DateTime? _fechaHasta;
+    DateTime? _fechaDesde = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+    DateTime? _fechaHasta = DateTime.Today;
 
     MudTable<MovimientoDto>? _table;
 
@@ -219,15 +226,13 @@
             if (movimiento.IdMotivo == 2)
                 await actualizarEstadoPedido(movimiento.IdPedido ?? 0, 2, "admin");
 
-            if (!actualizado)
+            if (actualizado)
             {
                 Snackbar.Add("Se registró el movimiento pero no se pudo actualizar el estado del pedido.", Severity.Warning);
             }
             else
             {
                 Snackbar.Add($"Movimiento #{movimiento.Id} anulado correctamente", Severity.Success);
-                // 🔄 refrescar tabla
-                _table?.NavigateTo(0);
                 await _table!.ReloadServerData();
             }
         }

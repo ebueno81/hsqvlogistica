@@ -55,7 +55,7 @@ namespace HsqvLogistica.Services
 
                 SerieGuia = entity.SerieGuia,
                 NroGuia = entity.NroGuia,
-
+                Activo = entity.Activo,
                 Observacion = entity.Detalles,
 
                 Detalles = entity.MovimientoDetalles.Select(d => new MovimientoDetalleDto
