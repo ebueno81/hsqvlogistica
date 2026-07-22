@@ -50,14 +50,34 @@ public class PedidoService : IPedidoService
         }
         catch (Exception ex)
         {
-            // Registrar el error (logger)
-            // No lanzar excepción para no afectar el registro del pedido.
+            Console.WriteLine(ex.ToString());
+            throw;
         }
         return pedido.Id;
     }
 
-    public async Task<bool> ChangeStatusAsync(int id, int activo, string usuarioModifica)
-        => await _pedidoRepo.ChangeStatusAsync(id, activo, usuarioModifica);
+    public async Task<bool> ChangeStatusAsync(int id, int estado, string usuarioModifica)
+    {
+        try
+        {
+            await _pedidoRepo.ChangeStatusAsync(id, estado, usuarioModifica);
+
+            switch (estado)
+            {
+                case 1: // Aprobado
+                    await _notificationService.NotificarPedidoAprobadoAsync(id);
+                    break;
+
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            throw;
+        }
+    }
 
     public async Task<PedidoPagedResultDto> SearchAsync(
     PedidoFilterDto filter,

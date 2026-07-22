@@ -29,7 +29,7 @@ namespace HsqvLogistica.Services
         public async Task NotificarPedidoCreadoAsync(int idPedido)
         {
             var pedido = await _pedidoRepository.GetByIdAsync(idPedido);
-
+            
             if (pedido == null)
                 return;
 
@@ -39,7 +39,7 @@ namespace HsqvLogistica.Services
                 await _configurationService.GetNotificationSettingsAsync();
 
             var html =
-                await _templateService.PedidoCreadoAsync(pedidoDto);
+                await _templateService.PedidoCreadoAsync(pedidoDto, settings);
 
             await _emailService.SendAsync(
                 new[]
@@ -52,7 +52,28 @@ namespace HsqvLogistica.Services
 
         public async Task NotificarPedidoAprobadoAsync(int idPedido)
         {
-            // Lo implementaremos cuando hagamos la aprobación.
+            var pedido = await _pedidoRepository.GetByIdAsync(idPedido);
+
+            if (pedido == null)
+                return;
+
+            var pedidoDto = PedidoMapper.ToDto(pedido);
+
+            var settings =
+                await _configurationService.GetNotificationSettingsAsync();
+
+            var html =
+                await _templateService.PedidoAprobadoAsync(
+                    pedidoDto,
+                    settings);
+
+            await _emailService.SendAsync(
+                new[]
+                {
+                    settings.CorreoSupervisor!
+                },
+                $"Pedido N° {pedidoDto.Id} Aprobado",
+                html);
         }
 
         public async Task NotificarSalidaAlmacenAsync(int idMovimiento)

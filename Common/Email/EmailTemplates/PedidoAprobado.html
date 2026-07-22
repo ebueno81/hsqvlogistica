@@ -1,5 +1,284 @@
-﻿<h3>PedidoCreado</h3>
+﻿<!DOCTYPE html>
+<html lang="es">
 
-@code {
+<head>
+    <meta charset="UTF-8">
 
-}
+    <style>
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f4f6f9;
+            font-family: Segoe UI, Arial, sans-serif;
+            color: #333;
+        }
+
+        .container {
+            width: 850px;
+            margin: auto;
+            background: white;
+            border: 1px solid #ddd;
+        }
+
+        .header {
+            background: #2E7D32;
+            color: white;
+            padding: 30px;
+        }
+
+            .header h1 {
+                margin: 0;
+                font-size: 28px;
+            }
+
+            .header p {
+                margin-top: 8px;
+                opacity: .9;
+            }
+
+        .content {
+            padding: 35px;
+        }
+
+        .success {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .success-icon {
+            font-size: 55px;
+        }
+
+        .success-title {
+            color: #2E7D32;
+            font-size: 26px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .success-text {
+            color: #555;
+            margin-top: 10px;
+            font-size: 15px;
+        }
+
+        .card {
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .card-title {
+            background: #f8f8f8;
+            padding: 15px;
+            font-weight: bold;
+            border-bottom: 1px solid #ececec;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+            table th {
+                background: #2E7D32;
+                color: white;
+                padding: 12px;
+            }
+
+            table td {
+                padding: 10px;
+                border-bottom: 1px solid #efefef;
+            }
+
+        .estado {
+            display: inline-block;
+            padding: 8px 18px;
+            border-radius: 30px;
+            background: #D4EDDA;
+            color: #155724;
+            font-weight: bold;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #2E7D32;
+            color: white !important;
+            text-decoration: none;
+            padding: 15px 35px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .footer {
+            padding: 25px;
+            background: #fafafa;
+            text-align: center;
+            font-size: 13px;
+            color: #777;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="header">
+
+            <h1>HSQV LOGÍSTICA</h1>
+
+            <p>Pedido Aprobado</p>
+
+        </div>
+
+        <div class="content">
+
+            <div class="success">
+
+                <div class="success-icon">
+                    ✅
+                </div>
+
+                <div class="success-title">
+                    Pedido aprobado correctamente
+                </div>
+
+                <div class="success-text">
+                    El pedido ha sido aprobado y ya puede continuar con el proceso de despacho.
+                </div>
+
+            </div>
+
+            <div class="card">
+
+                <div class="card-title">
+                    Información del Pedido
+                </div>
+
+                <div class="card-body">
+
+                    <table>
+
+                        <tr>
+                            <td width="220"><b>N° Pedido</b></td>
+                            <td>{{Numero}}</td>
+                        </tr>
+
+                        <tr>
+                            <td><b>Cliente</b></td>
+                            <td>{{Cliente}}</td>
+                        </tr>
+
+                        <tr>
+                            <td><b>Fecha de entrega</b></td>
+                            <td>{{Fecha}}</td>
+                        </tr>
+
+                        <tr>
+                            <td><b>Estado</b></td>
+                            <td>
+
+                                <span class="estado">
+                                    APROBADO
+                                </span>
+
+                            </td>
+                        </tr>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+            <div class="card">
+
+                <div class="card-title">
+                    Información de la aprobación
+                </div>
+
+                <div class="card-body">
+
+                    <table>
+
+                        <tr>
+                            <td width="220"><b>Aprobado por</b></td>
+                            <td>{{UsuarioAprueba}}</td>
+                        </tr>
+
+                        <tr>
+                            <td><b>Fecha de aprobación</b></td>
+                            <td>{{FechaAprobacion}}</td>
+                        </tr>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+            <div class="card">
+
+                <div class="card-title">
+                    Artículos del Pedido
+                </div>
+
+                <div class="card-body">
+
+                    {{Detalle}}
+
+                </div>
+
+            </div>
+
+            <div class="card">
+
+                <div class="card-title">
+                    Dirección de Entrega
+                </div>
+
+                <div class="card-body">
+
+                    {{Direccion}}
+
+                </div>
+
+            </div>
+
+            <div style="text-align:center;margin-top:35px;">
+
+                <a class="btn" href="{{UrlPedido}}">
+
+                    Ver Pedido
+
+                </a>
+
+            </div>
+
+        </div>
+
+        <div class="footer">
+
+            Este correo fue generado automáticamente por
+            <b>HSQV Logística</b>.
+
+            <br><br>
+
+            No responda este mensaje.
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>

@@ -17,5 +17,8 @@ public class PedidoDto
     public int? Estado { get; set; }
     public bool? Activo { get; set; }
 
+    public string? UsuarioModifica { get; set; }
+    public DateTime? FechaModifica { get; set; }
+
     public List<PedidoDetalleDto> Detalle { get; set; } = new();
 }

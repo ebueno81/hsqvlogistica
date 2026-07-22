@@ -11,6 +11,7 @@
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 @inject IUserSessionService UserSession
+@inject IDialogService DialogService
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
 
@@ -97,6 +98,22 @@
                 </MudButton>
             }
 
+            @if (UserSession.UsuarioActual?.Permisos.PuedeAprobarPedidos == true)
+            {
+                @if (_mode == PedidoMode.View && _estado == 0)
+                {
+                    <MudButton Color="Color.Success"
+                               Variant="Variant.Filled"
+                               StartIcon="@Icons.Material.Filled.CheckCircle"
+                               Disabled="_aprobando"
+                               OnClick="AprobarPedido">
+
+                        @(_aprobando ? "Aprobando..." : "Aprobar")
+
+                    </MudButton>
+                }
+            }
+            
             <MudButton Variant="Variant.Filled" Color="Color.Tertiary"
                        OnClick="@(() => Navigation.NavigateTo("/pedidos"))">
                 Volver
@@ -121,6 +138,8 @@
     DateTime? _fechaEntrega;
     string _observacion = string.Empty;
     bool _saving = false;
+    int _estado;
+    private bool _aprobando = false;
 
     PedidoDetalleGrid? _detalleGrid;
     List<PedidoDetalleDto> _detallesView = new();
@@ -129,6 +148,14 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (!UserSession.EstaAutenticado)
+        {
+            var returnUrl = Uri.EscapeDataString($"/pedidos/ver/{Id}");
+
+            Navigation.NavigateTo($"/login?returnUrl={returnUrl}", true);
+            return;
+        }
+
         if (Id.HasValue)
         {
             _mode = PedidoMode.View;
@@ -147,6 +174,7 @@
     {
         var pedido = await PedidoService.GetByIdAsync(id);
 
+        _estado = pedido.Estado ?? 0;
         _idCliente = pedido.IdCliente;
         _cliente = pedido.Cliente ?? "";
         _idVendedor = pedido.IdVendedor;
@@ -211,6 +239,45 @@
         finally
         {
             _saving = false;
+        }
+    }
+
+    private async Task AprobarPedido()
+    {
+        if (_aprobando)
+            return;
+
+        var confirmar = await DialogService.ShowMessageBox(
+            "Confirmación",
+            "¿Desea aprobar este pedido?",
+            yesText: "Sí",
+            cancelText: "No");
+
+        if (confirmar != true)
+            return;
+
+        _aprobando = true;
+
+        try
+        {
+            await PedidoService.ChangeStatusAsync(
+                Id!.Value,
+                1,
+                UserSession.UsuarioActual.Usuario);
+
+            Snackbar.Add(
+                "Pedido aprobado correctamente.",
+                Severity.Success);
+
+            await CargarPedido(Id.Value);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _aprobando = false;
         }
     }
 

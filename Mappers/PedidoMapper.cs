@@ -33,8 +33,10 @@ public static class PedidoMapper
             Direccion = entity.Direccion,
             Estado = entity.Estado,
             Activo = entity.Activo,
+            UsuarioModifica = entity.UsuaModifica,
+            FechaModifica = entity.FechaModifica,
 
-             Detalle = entity.PedidoDetalles
+            Detalle = entity.PedidoDetalles
             .Select(d => new PedidoDetalleDto
             {
                 IdArticulo = d.IdArticulo,

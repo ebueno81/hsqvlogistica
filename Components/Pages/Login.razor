@@ -2,7 +2,7 @@
 @page "/login"
 @layout EmptyLayout
 
-@inject NavigationManager Nav
+@inject NavigationManager Navigation
 @inject IUsuarioService UsuarioService
 @inject IUserSessionService UserSession
 
@@ -95,6 +95,9 @@
 </MudContainer>
 
 @code {
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; }
+
     private MudForm? _form;
     private readonly LoginModel _model = new();
     private bool _showPassword;
@@ -139,7 +142,14 @@
                 Permisos = PermissionHelper.ObtenerPermisos(usuario.IdTipo)
             });
 
-            Nav.NavigateTo("/dashboard");
+            if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            {
+                Navigation.NavigateTo(ReturnUrl);
+            }
+            else
+            {
+                Navigation.NavigateTo("/dashboard");
+            }
         }
         catch
         {

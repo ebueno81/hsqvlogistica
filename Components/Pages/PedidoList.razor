@@ -125,13 +125,16 @@
                     <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                     Color="Color.Primary"
                                     OnClick="@(() => Navigation.NavigateTo($"/pedidos/ver/{row.Id}"))" />
-                    <!-- Aprobar (solo Pendiente + Activo) -->
-                    @if (row.Estado == 0 && row.Activo == true)
+                    @if (UserSession.UsuarioActual?.Permisos.PuedeAprobarPedidos == true)
                     {
-                        <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
-                                        Color="Color.Success"
-                                        Title="Aprobar pedido"
-                                        OnClick="@(() => ConfirmarAprobacion(row))" />
+                        <!-- Aprobar (solo Pendiente + Activo) -->
+                        @if (row.Estado == 0 && row.Activo == true)
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
+                                           Color="Color.Success"
+                                           Title="Aprobar pedido"
+                                           OnClick="@(() => ConfirmarAprobacion(row))" />
+                        }
                     }
                 </MudTd>                
             </RowTemplate>
@@ -252,6 +255,9 @@
                 {
                     options.CloseAfterNavigation = true;
                 });
+
+            if (_table is not null)
+                await _table.ReloadServerData();
         }
     }
 
