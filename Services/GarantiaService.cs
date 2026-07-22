@@ -10,14 +10,17 @@ namespace HsqvLogistica.Services;
 public class GarantiaService : IGarantiaService
 {
     private readonly IGarantiaRepository _repository;
+    private readonly INotificationService _notificationService;
     private readonly GarantiaMapper _mapper;
 
     public GarantiaService(
         IGarantiaRepository repository,
-        GarantiaMapper mapper)
+        GarantiaMapper mapper,
+        INotificationService notificationService)
     {
         _repository = repository;
         _mapper = mapper;
+        _notificationService = notificationService;
     }
 
     public async Task<GarantiaPagedResultDto> SearchAsync(GarantiaFilterDto filter)
@@ -32,7 +35,7 @@ public class GarantiaService : IGarantiaService
 
         return new GarantiaPagedResultDto
         {
-            Items = items.Select(g => _mapper.MapToDto(g)).ToList(),
+            Items = items.Select(_mapper.MapToDto).ToList(),
             TotalItems = total
         };
     }
@@ -44,31 +47,7 @@ public class GarantiaService : IGarantiaService
         if (entity == null)
             return null;
 
-        return new GarantiaDto
-        {
-            Id = entity.Id,
-            Cliente = entity.Cliente,
-            EmpresaServicio = entity.EmpServ,
-
-            FechaDespacho = entity.FechaDespacho,
-            FechaEntrega = entity.FechaEntrega,
-
-            NroSerie = entity.NroSerie,   // ✅
-            NroGuia = entity.NroGuia,     // ✅
-
-            Detalles = entity.Detalles,
-            Estado = entity.Estado,
-
-            DetallesGarantia = entity.GarantiaDetalles
-                .Select(d => new GarantiaDetalleDto
-                {
-                    IdArticulo = d.IdArticulo,
-                    Articulo = d.IdArticuloNavigation.Descripcion,
-                    Cantidad = d.Cantidad ?? 0,
-                    Detalles = d.Detalles
-                })
-                .ToList()
-        };
+        return _mapper.MapToDetailDto(entity);
     }
 
     public async Task<int> CreateAsync(GarantiaCreateDto dto)
@@ -100,6 +79,14 @@ public class GarantiaService : IGarantiaService
         await _repository.AddAsync(entity);
         await _repository.SaveChangesAsync();
 
+        try
+        {
+            await _notificationService.NotificarGarantiaCreadaAsync(entity.Id);
+        }
+        catch
+        {
+            // No impedir el registro si falla el correo
+        }
         return entity.Id;
     }
 
@@ -132,6 +119,14 @@ public class GarantiaService : IGarantiaService
         entity.FechaModifica = DateTime.Now;
 
         await _repository.SaveChangesAsync();
+        try
+        {
+            await _notificationService.NotificarGarantiaCerradaAsync(id);
+        }
+        catch
+        {
+            // No impedir el registro si falla el correo
+        }
     }
 
     public async Task AnularAsync(int id, string usuario)
@@ -160,28 +155,4 @@ public class GarantiaService : IGarantiaService
         await _repository.UpdateAsync(entity);
     }
 
-    //private static GarantiaDto MapToDto(Garantium g)
-    //{
-    //    return new GarantiaDto
-    //    {
-    //        Id = g.Id,
-    //        IdCliente = g.IdCliente,
-    //        IdEmpServ = g.IdEmpServ,
-    //        FechaDespacho = g.FechaDespacho,
-    //        FechaEntrega = g.FechaEntrega,
-    //        NroSerie = g.NroSerie,
-    //        NroGuia = g.NroGuia,
-    //        Estado = g.Estado,
-    //        Activo = g.Activo ?? true,
-    //        Detalles = g.Detalles,
-    //        DetallesGarantia = g.GarantiaDetalles
-    //            .Where(d => d.Activo == true)
-    //            .Select(d => new GarantiaDetalleDto
-    //            {
-    //                IdArticulo = d.IdArticulo,
-    //                Cantidad = d.Cantidad ?? 0,
-    //                Detalles = d.Detalles
-    //            }).ToList()
-    //    };
-    //}
 }

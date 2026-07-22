@@ -84,6 +84,7 @@
     <HeaderContent>
         <MudTh>#</MudTh>
         <MudTh>Cliente</MudTh>
+        <MudTh>Guia</MudTh>
         <MudTh>Transporte</MudTh>
         <MudTh>Despacho</MudTh>
         <MudTh>Entrega</MudTh>
@@ -96,6 +97,7 @@
 
         <MudTd>@row.Id</MudTd>
         <MudTd>@row.Cliente</MudTd>
+        <MudTd>@row.NroSerie - @row.NroGuia</MudTd>
         <MudTd>@row.EmpresaServicio</MudTd>
         <MudTd>@row.FechaDespacho?.ToString("dd/MM/yyyy")</MudTd>
         <MudTd>@row.FechaEntrega?.ToString("dd/MM/yyyy")</MudTd>
@@ -165,13 +167,6 @@
                         OnClick="@(() => ConfirmarCierre(row.Id))" />
                     </MudTooltip>
 
-                    <!-- ANULAR -->
-                    <MudTooltip Text="Anular">
-                        <MudIconButton Icon="@Icons.Material.Filled.Block"
-                                Color="Color.Error"
-                                Size="Size.Small"
-                                OnClick="@(() => ConfirmarAnular(row.Id))" />
-                    </MudTooltip>
                 }
             }
         </MudTd>

@@ -1,4 +1,6 @@
 ﻿using HsqvLogistica.Common.Configuration;
+using HsqvLogistica.Models.DTOs.Garantia;
+using HsqvLogistica.Models.DTOs.Garantias;
 using HsqvLogistica.Models.DTOs.Movimientos;
 using HsqvLogistica.Models.DTOs.Pedidos;
 using HsqvLogistica.Services.Interfaces;
@@ -73,7 +75,80 @@ namespace HsqvLogistica.Services
 
         #endregion
 
+        #region Garantías
+
+        public async Task<string> GarantiaCreadaAsync(
+            GarantiaDto garantia,
+            NotificationSettings settings)
+        {
+            var html = await LeerPlantillaAsync("GarantiaCreada.html");
+
+            return ReemplazarDatosGarantia(
+                html,
+                garantia,
+                settings);
+        }
+
+        public async Task<string> GarantiaCerradaAsync(
+            GarantiaDto garantia,
+            NotificationSettings settings)
+        {
+            var html = await LeerPlantillaAsync("GarantiaCerrada.html");
+
+            html = ReemplazarDatosGarantia(
+                html,
+                garantia,
+                settings);
+
+            html = html.Replace(
+                "{{UsuarioCierre}}",
+                garantia.UsuaModifica ?? string.Empty);
+
+            html = html.Replace(
+                "{{FechaCierre}}",
+                garantia.FechaModifica?.ToString("dd/MM/yyyy HH:mm") ?? string.Empty);
+
+            return html;
+        }
+
+        #endregion
+
         #region Métodos privados
+
+        private string ReemplazarDatosGarantia(
+            string html,
+            GarantiaDto garantia,
+            NotificationSettings settings)
+        {
+            html = html.Replace(
+                "{{Numero}}",
+                garantia.Id.ToString());
+
+            html = html.Replace(
+                "{{Cliente}}",
+                garantia.Cliente ?? string.Empty);
+
+            html = html.Replace(
+                "{{Fecha}}",
+                garantia.FechaDespacho?.ToString("dd/MM/yyyy") ?? string.Empty);
+
+            html = html.Replace(
+                "{{Observacion}}",
+                garantia.Detalles ?? string.Empty);
+
+            var returnUrl = Uri.EscapeDataString(
+                $"/garantias/ver/{garantia.Id}");
+
+            html = html.Replace(
+                "{{UrlGarantia}}",
+                $"{settings.UrlSistema}/login?returnUrl={returnUrl}");
+
+            html = html.Replace(
+                "{{Detalle}}",
+                GenerarTablaGarantia(garantia.DetallesGarantia));
+
+            return html;
+        }
 
         private async Task<string> LeerPlantillaAsync(string archivo)
         {
@@ -166,6 +241,50 @@ namespace HsqvLogistica.Services
                 </tbody>
 
             </table>");
+
+            return sb.ToString();
+        }
+
+        private string GenerarTablaGarantia(IEnumerable<GarantiaDetalleDto> detalles)
+        {
+            var sb = new StringBuilder();
+
+            sb.AppendLine(@"
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th style='text-align:left'>Código</th>
+                            <th style='text-align:left'>Artículo</th>
+                            <th style='text-align:center'>Cantidad</th>
+                            <th style='text-align:left'>Unidad</th>
+                            <th style='text-align:left'>Detalle</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>");
+
+                            foreach (var item in detalles ?? Enumerable.Empty<GarantiaDetalleDto>())
+                            {
+                                sb.AppendLine($@"
+                                <tr>
+                                    <td>{item.IdArticulo}</td>
+                                    <td>{item.Articulo}</td>
+                                    <td align='center'>{item.Cantidad}</td>
+                                    <td>{item.Unidad}</td>
+                                    <td>{item.Detalles}</td>
+                                </tr>");
+                            }
+
+                            sb.AppendLine(@"
+
+                    </tbody>
+
+                </table>");
 
             return sb.ToString();
         }

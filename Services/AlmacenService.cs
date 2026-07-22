@@ -1,4 +1,5 @@
-﻿using HsqvLogistica.Models.Entities.Store;
+﻿using HsqvLogistica.Mappers;
+using HsqvLogistica.Models.DTOs.Almacen;
 using HsqvLogistica.Repositories.Interfaces;
 using HsqvLogistica.Services.Interfaces;
 
@@ -7,49 +8,75 @@ namespace HsqvLogistica.Services;
 public class AlmacenService : IAlmacenService
 {
     private readonly IAlmacenRepository _repository;
+    private readonly AlmacenMapper _mapper;
 
-    public AlmacenService(IAlmacenRepository repository)
+    public AlmacenService(
+        IAlmacenRepository repository,
+        AlmacenMapper mapper)
     {
         _repository = repository;
+        _mapper = mapper;
     }
 
-    public async Task<List<Almacen>> GetAllAsync()
-        => await _repository.GetAllAsync();
-
-    public async Task<Almacen?> GetByIdAsync(int id)
-        => await _repository.GetByIdAsync(id);
-
-    public async Task<Almacen> CreateAsync(Almacen entity)
+    public async Task<List<AlmacenDto>> GetAllAsync()
     {
-        // 🧠 regla de negocio ejemplo
+        var almacenes = await _repository.GetAllAsync();
+
+        return _mapper
+            .MapToDto(almacenes)
+            .ToList();
+    }
+
+    public async Task<AlmacenDto?> GetByIdAsync(int id)
+    {
+        var almacen = await _repository.GetByIdAsync(id);
+
+        if (almacen == null)
+            return null;
+
+        return _mapper.MapToDto(almacen);
+    }
+
+    public async Task<AlmacenDto> CreateAsync(AlmacenDto dto)
+    {
+        var entity = _mapper.MapToEntity(dto);
+
         entity.Activo ??= true;
 
         await _repository.AddAsync(entity);
-        return entity;
+
+        return _mapper.MapToDto(entity);
     }
 
-    public async Task<bool> UpdateAsync(int id, Almacen entity)
+    public async Task<bool> UpdateAsync(int id, AlmacenDto dto)
     {
-        var current = await _repository.GetByIdAsync(id);
-        if (current == null) return false;
+        var entity = await _repository.GetByIdAsync(id);
 
-        current.Descripcion = entity.Descripcion;
-        current.Activo = entity.Activo;
+        if (entity == null)
+            return false;
 
-        await _repository.UpdateAsync(current);
+        _mapper.MapToEntity(entity, dto);
+
+        await _repository.UpdateAsync(entity);
+
         return true;
     }
 
     public async Task<bool> DeleteAsync(int id)
     {
         var entity = await _repository.GetByIdAsync(id);
-        if (entity == null) return false;
 
-        // 🧠 regla de negocio
+        if (entity == null)
+            return false;
+
         if (entity.Activo == true)
-            throw new InvalidOperationException("No se puede eliminar un almacén activo.");
+            throw new InvalidOperationException(
+                "No se puede eliminar un almacén activo.");
 
         await _repository.DeleteAsync(entity);
+
         return true;
     }
+
+
 }

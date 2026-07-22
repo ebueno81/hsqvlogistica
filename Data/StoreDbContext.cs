@@ -1,7 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using HsqvLogistica.Models.DTOs.Reportes;
 using HsqvLogistica.Models.Entities.Store;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
 
 namespace HsqvLogistica.Data;
 
@@ -42,6 +43,8 @@ public partial class StoreDbContext : DbContext
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
 
+    public DbSet<ReporteKardexDto> ReporteKardex { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     { }
 
@@ -51,6 +54,9 @@ public partial class StoreDbContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__Almacen__3214EC07DAF2A424");
         });
+
+        modelBuilder.Entity<ReporteKardexDto>()
+        .HasNoKey();
 
         modelBuilder.Entity<Articulo>(entity =>
         {

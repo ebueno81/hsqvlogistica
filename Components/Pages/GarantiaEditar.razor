@@ -1,5 +1,6 @@
 ﻿@page "/garantias/editar/{Id:int}"
 
+@using HsqvLogistica.Helpers
 @using HsqvLogistica.Models.DTOs.Garantias
 @using HsqvLogistica.Services.Interfaces
 @using MudBlazor
@@ -186,8 +187,8 @@
                         ? DateOnly.FromDateTime(_fechaEntrega.Value)
                         : null,
 
-                    NroSerie = _nroSerie,
-                    NroGuia = _nroGuia,
+                    NroSerie = TextHelper.Upper(_nroSerie),
+                    NroGuia = TextHelper.Upper(_nroGuia),
                     Detalles = _observaciones,
                     UsuaModifica = "admin"
                 }

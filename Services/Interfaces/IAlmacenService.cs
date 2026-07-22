@@ -1,12 +1,13 @@
-﻿using HsqvLogistica.Models.Entities.Store;
+﻿using HsqvLogistica.Models.DTOs.Almacen;
+using HsqvLogistica.Models.Entities.Store;
 
 namespace HsqvLogistica.Services.Interfaces;
 
 public interface IAlmacenService
 {
-    Task<List<Almacen>> GetAllAsync();
-    Task<Almacen?> GetByIdAsync(int id);
-    Task<Almacen> CreateAsync(Almacen entity);
-    Task<bool> UpdateAsync(int id, Almacen entity);
+    Task<List<AlmacenDto>> GetAllAsync();
+    Task<AlmacenDto?> GetByIdAsync(int id);
+    Task<AlmacenDto> CreateAsync(AlmacenDto dto);
+    Task<bool> UpdateAsync(int id, AlmacenDto dto);
     Task<bool> DeleteAsync(int id);
 }

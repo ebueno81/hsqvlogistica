@@ -1,4 +1,8 @@
 ﻿@page "/reportes"
+@using HsqvLogistica.Models.DTOs.Almacen
+@using HsqvLogistica.Models.DTOs.Lineas
+@using HsqvLogistica.Models.DTOs.Reportes
+@using HsqvLogistica.Services.Interfaces
 @using MudBlazor
 
 <MudContainer MaxWidth="MaxWidth.False" Class="mt-6 px-6">
@@ -68,6 +72,7 @@
                     <MudButton Color="Color.Success"
                                Variant="Variant.Filled"
                                StartIcon="@Icons.Material.Filled.FileDownload"
+                               OnClick="ExportarKardexExcel"
                                FullWidth>
                         Exportar Excel
                     </MudButton>
@@ -98,20 +103,42 @@
                 <MudCardContent>
                     <MudStack Spacing="1">
 
-                        <MudSelect T="string"
+                        <MudSelect T="int?"
                                    Label="Almacén"
                                    Dense
                                    Margin="Margin.Dense"
-                                   @bind-Value="_almacen">
-                            <MudSelectItem Value="_almacen">Todos los almacenes</MudSelectItem>
+                                   @bind-Value="_idAlmacen">
+
+                            <MudSelectItem Value="@((int?)null)">
+                                Todos los almacenes
+                            </MudSelectItem>
+
+                            @foreach (var almacen in _almacenes)
+                            {
+                                <MudSelectItem Value="@((int?)almacen.Id)">
+                                    @almacen.Nombre
+                                </MudSelectItem>
+                            }
+
                         </MudSelect>
 
-                        <MudSelect T="string"
+                        <MudSelect T="int?"
                                    Label="Línea"
                                    Dense
                                    Margin="Margin.Dense"
-                                   @bind-Value="_linea">
-                            <MudSelectItem Value="_linea">Todas las líneas</MudSelectItem>
+                                   @bind-Value="_idLinea">
+
+                            <MudSelectItem Value="@((int?)null)">
+                                Todas las líneas
+                            </MudSelectItem>
+
+                            @foreach (var linea in _lineas)
+                            {
+                                <MudSelectItem Value="@((int?)linea.Id)">
+                                    @linea.Descripcion
+                                </MudSelectItem>
+                            }
+
                         </MudSelect>
 
                     </MudStack>
@@ -121,8 +148,11 @@
                     <MudButton Color="Color.Success"
                                Variant="Variant.Filled"
                                StartIcon="@Icons.Material.Filled.FileDownload"
+                               OnClick="ExportarStockExcel"
                                FullWidth>
+
                         Exportar Excel
+
                     </MudButton>
                 </MudCardActions>
 
@@ -167,8 +197,8 @@
                                    @bind-Value="_tipoEstado">
 
                             <MudSelectItem Value="TipoEstadoGarantia.Todos">Todos</MudSelectItem>
-                            <MudSelectItem Value="TipoEstadoGarantia.Activo">Activos</MudSelectItem>
-                            <MudSelectItem Value="TipoEstadoGarantia.Vencido">Vencidos</MudSelectItem>
+                            <MudSelectItem Value="TipoEstadoGarantia.Pendientes">Pendientes</MudSelectItem>
+                            <MudSelectItem Value="TipoEstadoGarantia.Cerrados">Cerrados</MudSelectItem>
 
                         </MudSelect>
 
@@ -179,6 +209,7 @@
                     <MudButton Color="Color.Success"
                                Variant="Variant.Filled"
                                StartIcon="@Icons.Material.Filled.FileDownload"
+                               OnClick="ExportarGarantiaExcel"
                                FullWidth>
                         Exportar Excel
                     </MudButton>
@@ -193,16 +224,91 @@
 
 @code {
 
+    [Inject] private IAlmacenService AlmacenService { get; set; } = default!;
+    [Inject] private ILineaService LineaService { get; set; } = default!;
+    [Inject] private IReporteService ReporteService { get; set; } = default!;
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+
     private TipoMovimiento _tipo = TipoMovimiento.Todos;
     private TipoEstadoGarantia _tipoEstado = TipoEstadoGarantia.Todos;
-    private string _almacen = "Todos";
-    private string _linea = "Todas";
 
-    private DateTime? _fechaDesdeKardex = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-    private DateTime? _fechaHastaKardex = DateTime.Today;
+    private int? _idAlmacen;
+    private int? _idLinea;
 
-    private DateTime? _fechaDesdeGarantia = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-    private DateTime? _fechaHastaGarantia = DateTime.Today;
+    private List<AlmacenDto> _almacenes = new();
+    private List<LineaDto> _lineas = new();
+
+    private DateTime? _fechaDesdeKardex =
+        new(DateTime.Today.Year, DateTime.Today.Month, 1);
+
+    private DateTime? _fechaHastaKardex =
+        DateTime.Today;
+
+    private DateTime? _fechaDesdeGarantia =
+        new(DateTime.Today.Year, DateTime.Today.Month, 1);
+
+    private DateTime? _fechaHastaGarantia =
+        DateTime.Today;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCombosAsync();
+    }
+
+    private async Task CargarCombosAsync()
+    {
+        _almacenes = (await AlmacenService.GetAllAsync())
+            .OrderBy(x => x.Nombre)
+            .ToList();
+
+        _lineas = (await LineaService.GetAllAsync())
+            .OrderBy(x => x.Descripcion)
+            .ToList();
+    }
+
+    private async Task ExportarStockExcel()
+    {
+        var filtro = new ReporteStockFilterDto
+        {
+            IdAlmacen = _idAlmacen,
+            IdLinea = _idLinea
+        };
+
+        var archivo = await ReporteService.ExportarStockExcelAsync(filtro);
+
+        await JSRuntime.InvokeVoidAsync(
+            "downloadFile",
+            "ReporteStock.xlsx",
+            Convert.ToBase64String(archivo));
+    }
+
+    private bool? ObtenerEstadoGarantia()
+    {
+        return _tipoEstado switch
+        {
+            TipoEstadoGarantia.Todos => null,
+            TipoEstadoGarantia.Pendientes => false,
+            TipoEstadoGarantia.Cerrados => true,
+            _ => null
+        };
+    }
+
+    private async Task ExportarGarantiaExcel()
+    {
+        var filtro = new ReporteGarantiaFilterDto
+        {
+            FechaDesde = _fechaDesdeGarantia!.Value,
+            FechaHasta = _fechaHastaGarantia!.Value,
+            Estado = ObtenerEstadoGarantia()
+        };
+
+        var archivo = await ReporteService.ExportarGarantiasExcelAsync(filtro);
+
+        await JSRuntime.InvokeVoidAsync(
+            "downloadFile",
+            "ReporteGarantia.xlsx",
+            Convert.ToBase64String(archivo));
+    }
 
     public enum TipoMovimiento
     {
@@ -214,7 +320,51 @@
     public enum TipoEstadoGarantia
     {
         Todos,
-        Activo,
-        Vencido
+        Pendientes,
+        Cerrados
+    }
+    
+    private async Task ExportarKardexExcel()
+    {
+        var filtro = new ReporteKardexFilterDto
+        {
+            FechaDesde = _fechaDesdeKardex!.Value,
+            FechaHasta = _fechaHastaKardex!.Value,
+
+            //Si tu Kardex trabaja por almacén
+            IdAlmacen = _idAlmacen ?? 1,
+            IdLinea = null,
+            IdArticulo = null
+        };
+
+        byte[] archivo;
+
+        switch (_tipo)
+        {
+            case TipoMovimiento.Todos:
+
+                archivo = await ReporteService.ExportarKardexExcelAsync(filtro);
+                break;
+
+            case TipoMovimiento.Ingreso:
+
+                archivo = await ReporteService.ExportarIngresosExcelAsync(filtro);
+                break;
+
+            case TipoMovimiento.Salida:
+
+                archivo = await ReporteService.ExportarSalidasExcelAsync(filtro);
+                break;
+
+            default:
+
+                archivo = await ReporteService.ExportarKardexExcelAsync(filtro);
+                break;
+        }
+
+        await JSRuntime.InvokeVoidAsync(
+            "downloadFile",
+            "ReporteKardex.xlsx",
+            Convert.ToBase64String(archivo));
     }
 }

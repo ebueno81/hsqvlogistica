@@ -1,0 +1,314 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <style>
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f4f6f9;
+            font-family: 'Segoe UI',Arial,sans-serif;
+            color: #333;
+        }
+
+        .container {
+            width: 850px;
+            margin: auto;
+            background: #fff;
+            border: 1px solid #ddd;
+        }
+
+        .header {
+            background: #EF6C00;
+            color: #fff;
+            padding: 30px;
+        }
+
+            .header h1 {
+                margin: 0;
+                font-size: 30px;
+                font-weight: bold;
+            }
+
+            .header p {
+                margin-top: 8px;
+                opacity: .95;
+            }
+
+        .content {
+            padding: 35px;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .hero-icon {
+            font-size: 58px;
+        }
+
+        .hero-title {
+            margin-top: 10px;
+            color: #EF6C00;
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        .hero-text {
+            margin-top: 12px;
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .card {
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 25px;
+        }
+
+        .card-title {
+            background: #fafafa;
+            padding: 15px;
+            font-weight: bold;
+            border-bottom: 1px solid #ececec;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+            table th {
+                background: #EF6C00;
+                color: #fff;
+                padding: 12px;
+                text-align: left;
+            }
+
+            table td {
+                padding: 10px;
+                border-bottom: 1px solid #efefef;
+            }
+
+        .estado {
+            display: inline-block;
+            padding: 8px 18px;
+            border-radius: 30px;
+            background: #FFE0B2;
+            color: #E65100;
+            font-weight: bold;
+        }
+
+        .alerta {
+            background: #FFF3E0;
+            border-left: 5px solid #EF6C00;
+            padding: 18px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+        }
+
+        .alerta-title {
+            font-weight: bold;
+            color: #E65100;
+            margin-bottom: 8px;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #EF6C00;
+            color: white !important;
+            text-decoration: none;
+            padding: 15px 35px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .footer {
+            padding: 25px;
+            background: #fafafa;
+            text-align: center;
+            font-size: 13px;
+            color: #777;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="header">
+
+            <h1>HSQV LOGÍSTICA</h1>
+
+            <p>Nueva Garantía Registrada</p>
+
+        </div>
+
+        <div class="content">
+
+            <div class="hero">
+
+                <div class="hero-icon">
+
+                    🛠
+
+                </div>
+
+                <div class="hero-title">
+
+                    Nueva Garantía Registrada
+
+                </div>
+
+                <div class="hero-text">
+
+                    Se registró una nueva garantía en el sistema y requiere seguimiento hasta su atención y cierre.
+
+                </div>
+
+            </div>
+
+            <div class="card">
+
+                <div class="card-title">
+
+                    Información de la Garantía
+
+                </div>
+
+                <div class="card-body">
+
+                    <table>
+
+                        <tr>
+
+                            <td width="220"><b>N° Garantía</b></td>
+
+                            <td>{{Numero}}</td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td><b>Cliente</b></td>
+
+                            <td>{{Cliente}}</td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td><b>Fecha Registro</b></td>
+
+                            <td>{{Fecha}}</td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td><b>Estado</b></td>
+
+                            <td>
+
+                                <span class="estado">
+
+                                    EN PROCESO
+
+                                </span>
+
+                            </td>
+
+                        </tr>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+            <div class="card">
+
+                <div class="card-title">
+
+                    Artículos de la Garantía
+
+                </div>
+
+                <div class="card-body">
+
+                    {{Detalle}}
+
+                </div>
+
+            </div>
+
+            <div class="card">
+
+                <div class="card-title">
+
+                    Observaciones
+
+                </div>
+
+                <div class="card-body">
+
+                    {{Observacion}}
+
+                </div>
+
+            </div>
+
+            <div class="alerta">
+
+                <div class="alerta-title">
+
+                    Seguimiento requerido
+
+                </div>
+
+                Esta garantía permanecerá en estado <b>EN PROCESO</b> hasta que el área responsable registre la solución y proceda con su cierre.
+
+            </div>
+
+            <div style="text-align:center;margin-top:35px;">
+
+                <a class="btn" href="{{UrlGarantia}}">
+
+                    Ver Garantía
+
+                </a>
+
+            </div>
+
+        </div>
+
+        <div class="footer">
+
+            Este correo fue generado automáticamente por
+            <b>HSQV Logística</b>.
+
+            <br><br>
+
+            No responda este mensaje.
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>

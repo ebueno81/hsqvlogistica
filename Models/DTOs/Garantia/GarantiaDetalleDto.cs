@@ -6,4 +6,5 @@ public class GarantiaDetalleDto
     public string? Articulo { get; set; }
     public decimal Cantidad { get; set; }
     public string? Detalles { get; set; }
+    public string? Unidad { get; set; }
 }

@@ -1,4 +1,5 @@
-﻿using HsqvLogistica.Models.DTOs.Garantias;
+﻿using HsqvLogistica.Models.DTOs.Garantia;
+using HsqvLogistica.Models.DTOs.Garantias;
 using HsqvLogistica.Models.Entities.Store;
 
 namespace HsqvLogistica.Mappers
@@ -10,17 +11,35 @@ namespace HsqvLogistica.Mappers
             return new GarantiaDto
             {
                 Id = g.Id,
-                Cliente = g.Cliente,                 // 👈 FALTABA
-                EmpresaServicio = g.EmpServ, // 👈 FALTABA
+                Cliente = g.Cliente,
+                EmpresaServicio = g.EmpServ,
                 FechaDespacho = g.FechaDespacho,
                 FechaEntrega = g.FechaEntrega,
-                NroGuia= g.NroGuia,
-                NroSerie= g.NroSerie,
-                Detalles = g.Detalles,
+                NroGuia = g.NroGuia,
+                NroSerie = g.NroSerie,
                 Estado = g.Estado,
-                //DetallesGarantia = (List<Models.DTOs.Garantia.GarantiaDetalleDto>)g.GarantiaDetalles,
-                Activo = g.Activo ?? true
+                Detalles = g.Detalles,
+                Activo = g.Activo ?? true,
+                FechaModifica = g.FechaModifica,
+                UsuaModifica = g.UsuaModifica
             };
+        }
+
+        public GarantiaDto MapToDetailDto(Garantium g)
+        {
+            var dto = MapToDto(g);
+
+            dto.DetallesGarantia = g.GarantiaDetalles
+                .Select(x => new GarantiaDetalleDto
+                {
+                    IdArticulo = x.IdArticulo,
+                    Articulo = x.IdArticuloNavigation?.Descripcion ?? "",
+                    Cantidad = x.Cantidad ?? 0,
+                    Unidad = "UNID.",
+                    Detalles = x.Detalles
+                }).ToList();
+
+            return dto;
         }
     }
 }

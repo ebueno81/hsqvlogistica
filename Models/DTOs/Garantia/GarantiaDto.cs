@@ -22,6 +22,8 @@ public class GarantiaDto
     public bool Activo { get; set; }
 
     public string? Detalles { get; set; }
+    public string? UsuaModifica { get; set; }
+    public DateTime? FechaModifica { get; set; }
 
     public List<GarantiaDetalleDto> DetallesGarantia { get; set; } = new();
 }

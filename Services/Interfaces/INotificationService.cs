@@ -9,5 +9,10 @@
         Task NotificarSalidaAlmacenAsync(int idMovimiento);
 
         Task NotificarDevolucionAsync(int idMovimiento);
+
+        Task NotificarGarantiaCreadaAsync(int idGarantia);
+
+        Task NotificarGarantiaCerradaAsync(int idGarantia);
+
     }
 }

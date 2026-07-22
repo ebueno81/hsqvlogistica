@@ -42,6 +42,7 @@ namespace HsqvLogistica.Helpers
                     permisos.PuedeVerOperaciones = true;
                     permisos.PuedeVerReportes = true;
                     permisos.PuedeCrearPedidos = true;
+                    permisos.PuedeCrearGarantia = true;
 
                     permisos.PuedeAdministrarUsuarios = true;
                     permisos.PuedeAprobarPedidos = true;

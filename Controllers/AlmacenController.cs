@@ -1,4 +1,5 @@
-﻿using HsqvLogistica.Models.Entities.Store;
+﻿using HsqvLogistica.Models.DTOs.Almacen;
+using HsqvLogistica.Models.Entities.Store;
 using HsqvLogistica.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,11 +28,11 @@ public class AlmacenController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Post([FromBody] Almacen model)
+    public async Task<IActionResult> Post([FromBody] AlmacenDto model)
         => Ok(await _service.CreateAsync(model));
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Put(int id, [FromBody] Almacen model)
+    public async Task<IActionResult> Put(int id, [FromBody] AlmacenDto model)
         => await _service.UpdateAsync(id, model)
             ? NoContent()
             : NotFound();
