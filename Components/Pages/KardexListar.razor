@@ -20,13 +20,14 @@
               Class="mb-4">
 
         <MudText Typo="Typo.h5">Movimientos de Kardex</MudText>
-
-        <MudButton Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.Add"
-                   OnClick="@(() => Navigation.NavigateTo("/kardex/nuevo"))">
-            Nuevo Movimiento
-        </MudButton>
-
+        @if (UserSession.UsuarioActual?.Permisos.PuedeCrearMovimientos == true)
+        {
+            <MudButton Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="@(() => Navigation.NavigateTo("/kardex/nuevo"))">
+                Nuevo Movimiento
+            </MudButton>
+        }
     </MudStack>
 
     <!-- FILTROS -->
@@ -122,9 +123,11 @@
                          Variant="Variant.Filled"
                          Size="Size.Small"
                          Icon="@(row.Activo == true ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
-                         Clickable="@(row.Activo == true)"
+                         Clickable="@(row.Activo == true && PuedeAnular)"
                          Style="@(row.Activo == true ? "cursor:pointer;" : "cursor:default;")"
-                         OnClick="@(row.Activo == true ? (() => ConfirmarAnulacion(row)) : null)">
+                         OnClick="@(row.Activo == true && PuedeAnular
+                                 ? (() => ConfirmarAnulacion(row))
+                                 : null)">
                     @(row.Activo == true ? "Activo" : "Anulado")
                 </MudChip>
             </MudTd>
@@ -151,6 +154,8 @@
     DateTime? _fechaHasta = DateTime.Today;
 
     MudTable<MovimientoDto>? _table;
+    private bool PuedeAnular =>
+    UserSession.UsuarioActual?.Permisos.PuedeAnularOperaciones == true;
 
     async Task<TableData<MovimientoDto>> LoadServerData(
         TableState state,

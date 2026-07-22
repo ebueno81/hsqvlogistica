@@ -10,10 +10,12 @@ namespace HsqvLogistica.Services;
 public class PedidoService : IPedidoService
 {
     private readonly IPedidoRepository _pedidoRepo;
+    private readonly INotificationService _notificationService;
 
-    public PedidoService(IPedidoRepository pedidoRepo)
+    public PedidoService(IPedidoRepository pedidoRepo, INotificationService notificationService)
     {
         _pedidoRepo = pedidoRepo;
+        _notificationService = notificationService;
     }
 
     public async Task<IEnumerable<PedidoDto>> GetAllAsync()
@@ -42,6 +44,15 @@ public class PedidoService : IPedidoService
         await _pedidoRepo.AddAsync(pedido);
         await _pedidoRepo.SaveChangesAsync();
 
+        try
+        {
+            await _notificationService.NotificarPedidoCreadoAsync(pedido.Id);
+        }
+        catch (Exception ex)
+        {
+            // Registrar el error (logger)
+            // No lanzar excepción para no afectar el registro del pedido.
+        }
         return pedido.Id;
     }
 

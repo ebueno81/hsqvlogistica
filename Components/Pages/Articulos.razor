@@ -56,7 +56,10 @@
                 <MudTh>Stock</MudTh>
                 <MudTh>Precio MN</MudTh>
                 <MudTh>Estado</MudTh>
-                <MudTh></MudTh>
+                @if (UserSession.UsuarioActual?.Permisos.PuedeAnularOperaciones == true)
+                {
+                    <MudTh></MudTh>
+                }
             </HeaderContent>
 
             <RowTemplate Context="row">
@@ -75,8 +78,9 @@
                         @(row.Activo == true ? "Activo" : "Inactivo")
                     </MudChip>
                 </MudTd>
-
-                <MudTd Align="Align.Right">
+                @if (UserSession.UsuarioActual?.Permisos.PuedeAnularOperaciones == true)
+                {
+                    <MudTd Align="Align.Right">
 
                     <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                    Color="Color.Primary"
@@ -87,7 +91,7 @@
                                    Color="Color.Error"
                                    OnClick="@(() => ConfirmChangeStatus(row))" />
                 </MudTd>
-
+                }
             </RowTemplate>
 
             <PagerContent>

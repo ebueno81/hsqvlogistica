@@ -16,6 +16,7 @@ namespace HsqvLogistica.Helpers
                     permisos.PuedeVerMantenimiento = true;
                     permisos.PuedeVerOperaciones = true;
                     permisos.PuedeVerReportes = true;
+                    permisos.PuedeEditarGarantia = true;
 
                     break;
 
@@ -29,6 +30,7 @@ namespace HsqvLogistica.Helpers
                     permisos.PuedeAnularOperaciones = true;
                     permisos.PuedeCrearArticulos = true;
                     permisos.PuedeCrearLineas = true;
+                    permisos.PuedeEditarGarantia = true;
 
                     break;
 
@@ -44,6 +46,7 @@ namespace HsqvLogistica.Helpers
                     permisos.PuedeCrearArticulos = true;
                     permisos.PuedeCrearMotivos = true;
                     permisos.PuedeCrearLineas = true;
+                    permisos.PuedeEditarGarantia = true;
 
                     break;
             }

@@ -53,7 +53,10 @@
                 <MudTh>Descripción</MudTh>
                 <MudTh>Tipo</MudTh>
                 <MudTh>Estado</MudTh>
-                <MudTh></MudTh>
+                @if (UserSession.UsuarioActual?.Permisos.PuedeAnularOperaciones == true)
+                {
+                    <MudTh></MudTh>
+                }
             </HeaderContent>
 
             <RowTemplate Context="row">
@@ -78,9 +81,10 @@
                         @(row.Activo == true ? "Activo" : "Inactivo")
                     </MudChip>
                 </MudTd>
-
-                <!-- ACCIONES -->
-                <MudTd Align="Align.Right">
+                @if (UserSession.UsuarioActual?.Permisos.PuedeAnularOperaciones == true)
+                {
+                    <!-- ACCIONES -->
+                    <MudTd Align="Align.Right">
 
                     <!-- EDITAR (solo si activo) -->
                     <MudIconButton Icon="@Icons.Material.Filled.Edit"
@@ -95,6 +99,7 @@
                                    Color="Color.Error"
                                    OnClick="@(() => ToggleMotivo(row))" />
                 </MudTd>
+                }
             </RowTemplate>
 
             <PagerContent>

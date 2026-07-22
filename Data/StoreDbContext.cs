@@ -20,6 +20,8 @@ public partial class StoreDbContext : DbContext
 
     public virtual DbSet<Articulo> Articulos { get; set; }
 
+    public virtual DbSet<Configuracion> Configuracions { get; set; }
+
     public virtual DbSet<GarantiaDetalle> GarantiaDetalles { get; set; }
 
     public virtual DbSet<Garantium> Garantia { get; set; }
@@ -41,8 +43,7 @@ public partial class StoreDbContext : DbContext
     public virtual DbSet<Usuario> Usuarios { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("workstation id=DbStore.mssql.somee.com;packet size=4096;user id=adminEbueno81;pwd=ACEace11;data source=DbStore.mssql.somee.com;persist security info=False;initial catalog=DbStore;TrustServerCertificate=True");
+    { }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -58,6 +59,14 @@ public partial class StoreDbContext : DbContext
             entity.Property(e => e.Activo).HasDefaultValue(true);
 
             entity.HasOne(d => d.IdLineaNavigation).WithMany(p => p.Articulos).HasConstraintName("FK_Articulo_Linea");
+        });
+
+        modelBuilder.Entity<Configuracion>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Configur__3214EC07A89A1544");
+
+            entity.Property(e => e.Activo).HasDefaultValue(true);
+            entity.Property(e => e.FechaCreacion).HasDefaultValueSql("(getdate())");
         });
 
         modelBuilder.Entity<GarantiaDetalle>(entity =>

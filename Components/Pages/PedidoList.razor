@@ -85,7 +85,10 @@
                 <MudTh>Cliente</MudTh>
                 <MudTh>Fecha</MudTh>
                 <MudTh>Estado</MudTh>
-                <MudTh>Anulado</MudTh>
+                @if (UserSession.UsuarioActual?.Permisos.PuedeAnularOperaciones == true)
+                {
+                    <MudTh>Anulado</MudTh>
+                }
                 <MudTh Align="Right"></MudTh>
             </HeaderContent>
 
@@ -118,23 +121,19 @@
                 </MudTd>
                 }
 
-                @if (UserSession.UsuarioActual?.Permisos.PuedeAprobarPedidos == true)
-                {
-                    <MudTd Align="Align.Right">
-                        <MudIconButton Icon="@Icons.Material.Filled.Visibility"
-                                       Color="Color.Primary"
-                                       OnClick="@(() => Navigation.NavigateTo($"/pedidos/ver/{row.Id}"))" />
-                        <!-- Aprobar (solo Pendiente + Activo) -->
-                        @if (row.Estado == 0 && row.Activo == true)
-                        {
-                            <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
-                                           Color="Color.Success"
-                                           Title="Aprobar pedido"
-                                           OnClick="@(() => ConfirmarAprobacion(row))" />
-                        }
-                    </MudTd>
-                }
-                
+                <MudTd Align="Align.Right">
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                    Color="Color.Primary"
+                                    OnClick="@(() => Navigation.NavigateTo($"/pedidos/ver/{row.Id}"))" />
+                    <!-- Aprobar (solo Pendiente + Activo) -->
+                    @if (row.Estado == 0 && row.Activo == true)
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
+                                        Color="Color.Success"
+                                        Title="Aprobar pedido"
+                                        OnClick="@(() => ConfirmarAprobacion(row))" />
+                    }
+                </MudTd>                
             </RowTemplate>
 
             <NoRecordsContent>

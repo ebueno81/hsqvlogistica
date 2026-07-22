@@ -18,12 +18,14 @@
           Class="mb-4">
 
     <MudText Typo="Typo.h5">📦 Garantías</MudText>
-
-    <MudButton Color="Color.Primary"
-               StartIcon="@Icons.Material.Filled.Add"
-               OnClick="@(() => Navigation.NavigateTo("/garantias/nuevo"))">
-        Nueva Garantía
-    </MudButton>
+    @if (UserSession.UsuarioActual?.Permisos.PuedeCrearGarantia == true)
+    {
+        <MudButton Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="@(() => Navigation.NavigateTo("/garantias/nuevo"))">
+            Nueva Garantía
+        </MudButton>
+    }
 </MudStack>
 
 <!-- ================= FILTROS ================= -->
@@ -86,7 +88,7 @@
         <MudTh>Despacho</MudTh>
         <MudTh>Entrega</MudTh>
         <MudTh>Estado</MudTh>
-        <MudTh>Vigencia</MudTh>   @* 👈 NUEVA *@
+        <MudTh>Vigencia</MudTh>
         <MudTh Align="Align.Right">Acciones</MudTh>
     </HeaderContent>
 
@@ -111,16 +113,16 @@
             @if (row.Activo)
             {
                 <MudTooltip Text="Anular garantía">
-                    <MudChip T="string"
-                                Color="Color.Success"
-                                Variant="Variant.Filled"
-                                Size="Size.Small"
-                                Clickable="true"
-                                Style="cursor:pointer;"
-                                OnClick="@(() => ConfirmarAnular(row.Id))">
-                        Activo
-                    </MudChip>
-                </MudTooltip>
+                <MudChip T="string"
+                         Color="Color.Success"
+                         Variant="Variant.Filled"
+                         Size="Size.Small"
+                         Clickable="@PuedeAnular"
+                         Style=@($"cursor:{(PuedeAnular ? "pointer" : "default")};")
+                         OnClick="@(PuedeAnular ? (() => ConfirmarAnular(row.Id)) : null)">
+                    Activo
+                </MudChip>
+            </MudTooltip>
             }
             else
             {
@@ -143,29 +145,34 @@
             </MudTooltip>
             @if (!row.Estado && row.Activo == true)
             {
-                <!-- EDITAR -->
-                <MudTooltip Text="Editar">
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                   Color="Color.Info"
-                                   Size="Size.Small"
-                                   OnClick="@(() => Editar(row.Id))" />
-                </MudTooltip>
+                @if (UserSession.UsuarioActual?.Permisos.PuedeAnularOperaciones == true)
+                {
+                    <!-- EDITAR -->
+                    <MudTooltip Text="Editar">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                       Color="Color.Info"
+                                       Size="Size.Small"
+                                       OnClick="@(() => Editar(row.Id))" />
+                    </MudTooltip>
+                }
+                @if (UserSession.UsuarioActual?.Permisos.PuedeAnularOperaciones == true)
+                {
+                    <!-- CERRAR -->
+                    <MudTooltip Text="Cerrar">
+                        <MudIconButton Icon="@Icons.Material.Filled.DoneAll"
+                        Color="Color.Success"
+                        Size="Size.Small"
+                        OnClick="@(() => ConfirmarCierre(row.Id))" />
+                    </MudTooltip>
 
-                <!-- CERRAR -->
-                <MudTooltip Text="Cerrar">
-                    <MudIconButton Icon="@Icons.Material.Filled.DoneAll"
-                                   Color="Color.Success"
-                                   Size="Size.Small"
-                                   OnClick="@(() => ConfirmarCierre(row.Id))" />
-                </MudTooltip>
-
-                <!-- ANULAR -->
-                <MudTooltip Text="Anular">
-                    <MudIconButton Icon="@Icons.Material.Filled.Block"
-                                   Color="Color.Error"
-                                   Size="Size.Small"
-                                   OnClick="@(() => ConfirmarAnular(row.Id))" />
-                </MudTooltip>
+                    <!-- ANULAR -->
+                    <MudTooltip Text="Anular">
+                        <MudIconButton Icon="@Icons.Material.Filled.Block"
+                                Color="Color.Error"
+                                Size="Size.Small"
+                                OnClick="@(() => ConfirmarAnular(row.Id))" />
+                    </MudTooltip>
+                }
             }
         </MudTd>
     </RowTemplate>
@@ -182,6 +189,8 @@
     bool? _estado;
     DateTime? _fechaDesde = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
     DateTime? _fechaHasta = DateTime.Today;
+    private bool PuedeAnular =>
+        UserSession.UsuarioActual?.Permisos.PuedeAnularOperaciones == true;
 
     MudTable<GarantiaDto>? _table;
 

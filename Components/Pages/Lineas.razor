@@ -50,8 +50,11 @@
                 <MudTh>Id</MudTh>
                 <MudTh>Descripción</MudTh>
                 <MudTh>Estado</MudTh>
-                <MudTh></MudTh>
-                <MudTh></MudTh>
+                @if (UserSession.UsuarioActual?.Permisos.PuedeAnularOperaciones == true)
+                {
+                        <MudTh></MudTh>
+                        <MudTh></MudTh>
+                }
             </HeaderContent>
 
             <RowTemplate Context="row">
@@ -66,21 +69,23 @@
                         @(row.Activo.GetValueOrDefault() ? "Activo" : "Inactivo")
                     </MudChip>
                 </MudTd>
+                @if (UserSession.UsuarioActual?.Permisos.PuedeAnularOperaciones == true)
+                {
+                    <MudTd Align="Align.Right">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                        Color="Color.Primary"
+                        OnClick="@(() => TryOpenEditDialog(row))" />
 
-                <MudTd Align="Align.Right">
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                   Color="Color.Primary"
-                                   OnClick="@(() => TryOpenEditDialog(row))" />
-
-                </MudTd>
-                <MudTd Align="Align.Right">
-                    <MudIconButton Icon="@(row.Activo == true
+                    </MudTd>
+                    <MudTd Align="Align.Right">
+                        <MudIconButton Icon="@(row.Activo == true
                                                                ? Icons.Material.Filled.Close
                                                                : Icons.Material.Filled.Restore)"
                                    Color="@(row.Activo == true ? Color.Error : Color.Success)"
                                    Title="@(row.Activo == true ? "Desactivar línea" : "Activar línea")"
                                    OnClick="@(() => ConfirmChangeStatus(row))" />
                 </MudTd>
+                }
             </RowTemplate>
 
             <PagerContent>

@@ -26,5 +26,7 @@
 
         public bool PuedeCrearGarantia { get; set; }
 
+        public bool PuedeEditarGarantia { get; set; }
+
     }
 }
