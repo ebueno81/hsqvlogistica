@@ -5,8 +5,11 @@
 @inject NavigationManager Navigation
 @inject IUsuarioService UsuarioService
 @inject IUserSessionService UserSession
+@inject IDialogService DialogService
+@inject ILoginStorageService LoginStorage
 
 @using HsqvLogistica.Components.Layout
+@using HsqvLogistica.Components.Pages.Dialogs
 @using HsqvLogistica.Helpers
 @using HsqvLogistica.Models.DTOs.Usuarios
 @using HsqvLogistica.Services.Interfaces
@@ -27,7 +30,10 @@
 
         <MudText Typo="Typo.body2" Align="Align.Center" Class="register-line">
             ¿No tienes cuenta?
-            <MudLink Href="#" Underline="Underline.Always">Solicitalo aquí</MudLink>
+            <MudLink OnClick="MostrarSolicitudAcceso"
+                     Underline="Underline.Always">
+                Solicítalo aquí
+            </MudLink>
         </MudText>
 
         <MudDivider Class="my-4" />
@@ -35,7 +41,7 @@
         <!-- Form -->
         <MudForm @ref="_form" Model="_model">
             <MudTextField @bind-Value="_model.Usuario"
-                          Label="E-mail"
+                          Label="Usuario"
                           Variant="Variant.Outlined"
                           Margin="Margin.Dense"
                           FullWidth="true"
@@ -55,8 +61,13 @@
                           OnAdornmentClick="TogglePassword" />
 
             <div class="row-between">
-                <MudCheckBox T="bool" @bind-Checked="_model.RememberMe" Label="Remember me?" Dense="true" />
-                <MudLink Href="#" Underline="Underline.Always">Forgot password?</MudLink>
+                <MudCheckBox T="bool"
+                             @bind-Value="_model.RememberMe"
+                             Label="Remember me?" />
+                <MudLink OnClick="ForgotPassword"
+                         Underline="Underline.Always">
+                    Forgot password?
+                </MudLink>
             </div>
 
             @if (!string.IsNullOrWhiteSpace(_mensajeError))
@@ -106,6 +117,27 @@
     private bool _loading;
     private string? _mensajeError;
 
+    private bool _loaded;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _loaded)
+            return;
+
+        _loaded = true;
+
+        var login = await LoginStorage.ObtenerAsync();
+        
+        if (login == null)
+            return;
+
+        _model.Usuario = login.Usuario;
+        _model.Password = login.Password;
+        _model.RememberMe = true;
+
+        StateHasChanged();
+    }
+
     private async Task SignIn()
     {
         if (_form is null)
@@ -142,6 +174,22 @@
                 Permisos = PermissionHelper.ObtenerPermisos(usuario.IdTipo)
             });
 
+            if (_model.RememberMe)
+            {
+                await LoginStorage.GuardarAsync(
+                    new LoginRememberDto
+                    {
+                        Usuario = _model.Usuario!,
+                        Password = _model.Password!,
+                        RememberMe = true,
+                        Expiration = DateTime.Now.AddHours(1)
+                    });
+            }
+            else
+            {
+                await LoginStorage.EliminarAsync();
+            }
+
             if (!string.IsNullOrWhiteSpace(ReturnUrl))
             {
                 Navigation.NavigateTo(ReturnUrl);
@@ -161,11 +209,45 @@
         }
     }
 
+    private async Task ForgotPassword()
+    {
+        var options = new DialogOptions
+        {
+            CloseButton = true,
+            MaxWidth = MaxWidth.ExtraSmall,
+            FullWidth = true
+        };
+
+        await DialogService.ShowAsync<ForgotPasswordDialog>(
+            "Recuperar contraseña",
+            options);
+    }
+
     private sealed class LoginModel
     {
         public string? Usuario { get; set; }
         public string? Password { get; set; }
         public bool RememberMe { get; set; }
+    }
+
+    private async Task MostrarSolicitudAcceso()
+    {
+        var parametros = new DialogParameters
+        {
+            ["ContentText"] =
+                "Si aún no cuentas con un usuario para ingresar al sistema, comunícate con el Administrador de Sistemas para solicitar el acceso a la plataforma. Una vez aprobada tu solicitud, recibirás tus credenciales de acceso.",
+
+            ["ButtonText"] = "Entendido",
+
+            ["Color"] = Color.Primary
+        };
+
+        await DialogService.ShowMessageBox(
+            "Solicitud de Acceso",
+            (MarkupString)@"
+        <p>Si aún no cuentas con un usuario para ingresar al sistema, comunícate con el <b>Administrador de Sistemas</b> para solicitar el acceso a la plataforma.</p>
+        <p>Una vez aprobada tu solicitud, se te proporcionarán las credenciales correspondientes.</p>",
+            yesText: "Entendido");
     }
 }
 

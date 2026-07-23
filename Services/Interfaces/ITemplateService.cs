@@ -2,6 +2,7 @@
 using HsqvLogistica.Models.DTOs.Garantias;
 using HsqvLogistica.Models.DTOs.Movimientos;
 using HsqvLogistica.Models.DTOs.Pedidos;
+using HsqvLogistica.Models.DTOs.Usuarios;
 
 namespace HsqvLogistica.Services.Interfaces
 {
@@ -29,6 +30,18 @@ namespace HsqvLogistica.Services.Interfaces
 
         Task<string> GarantiaCerradaAsync(
             GarantiaDto garantia,
+            NotificationSettings settings);
+
+        Task<string> PasswordRecoveryAsync(
+            UsuarioDto usuario,
+            NotificationSettings settings);
+
+        Task<string> UsuarioCreadoAsync(
+            UsuarioDto usuario,
+            NotificationSettings settings);
+
+        Task<string> UsuarioActualizadoAsync(
+            UsuarioDto usuario,
             NotificationSettings settings);
     }
 }

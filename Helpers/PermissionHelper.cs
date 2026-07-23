@@ -33,6 +33,7 @@ namespace HsqvLogistica.Helpers
                     permisos.PuedeCrearArticulos = true;
                     permisos.PuedeCrearLineas = true;
                     permisos.PuedeEditarGarantia = true;
+                    permisos.PuedeCrearMovimientos = true;
 
                     break;
 
@@ -51,6 +52,7 @@ namespace HsqvLogistica.Helpers
                     permisos.PuedeCrearMotivos = true;
                     permisos.PuedeCrearLineas = true;
                     permisos.PuedeEditarGarantia = true;
+                    permisos.PuedeCrearMovimientos = true;
 
                     break;
             }

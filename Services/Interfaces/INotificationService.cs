@@ -14,5 +14,11 @@
 
         Task NotificarGarantiaCerradaAsync(int idGarantia);
 
+        Task NotificarRecuperacionPasswordAsync(int idUsuario);
+
+        Task NotificarUsuarioCreadoAsync(int idUsuario);
+
+        Task NotificarUsuarioActualizadoAsync(int idUsuario);
+
     }
 }

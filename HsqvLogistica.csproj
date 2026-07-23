@@ -25,10 +25,11 @@
     <Content Include="Common\Email\EmailTemplates\PedidoCreado.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Common\Email\EmailTemplates\UsuarioActualizado.html" />
+    <Content Include="Common\Email\EmailTemplates\UsuarioCreado.html" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ChartJs.Blazor" Version="1.1.0" />
     <PackageReference Include="ClosedXML" Version="0.105.0" />
     <PackageReference Include="MailKit" Version="4.17.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.22">

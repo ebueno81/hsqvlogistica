@@ -20,8 +20,7 @@ public class ReporteService : IReporteService
     public async Task<byte[]> ExportarStockExcelAsync(
     ReporteStockFilterDto filtro)
     {
-        var empresa = await _configurationService.GetAsync(
-                    ConfiguracionKeys.Empresa);
+        var empresa = await ObtenerEmpresaAsync();
 
         var datos = await _repository.ObtenerReporteStockAsync(filtro);
 
@@ -106,9 +105,11 @@ public class ReporteService : IReporteService
 
         var ws = workbook.Worksheets.Add("Kardex");
 
+        var empresa = await ObtenerEmpresaAsync();
+        
         #region Titulo
 
-        ws.Cell("A1").Value = "HSQV LOGÍSTICA";
+        ws.Cell("A1").Value = empresa;
         ws.Range("A1:L1").Merge();
         ws.Cell("A1").Style.Font.Bold = true;
         ws.Cell("A1").Style.Font.FontSize = 18;
@@ -217,10 +218,11 @@ public class ReporteService : IReporteService
 
         var worksheet = workbook.Worksheets.Add("Garantías");
 
+        var empresa = await ObtenerEmpresaAsync();
         // ===============================
         // Título
         // ===============================
-        worksheet.Cell(1, 1).Value = "HSQV LOGÍSTICA";
+        worksheet.Cell(1, 1).Value = empresa;
         worksheet.Cell(2, 1).Value = "Reporte de Garantías";
         worksheet.Cell(3, 1).Value = $"Fecha: {DateTime.Now:dd/MM/yyyy HH:mm}";
 
@@ -322,9 +324,11 @@ public class ReporteService : IReporteService
 
         var ws = workbook.Worksheets.Add("Salidas");
 
+        var empresa = await ObtenerEmpresaAsync();
+
         #region Título
 
-        ws.Cell("A1").Value = ConfiguracionKeys.Empresa;
+        ws.Cell("A1").Value = empresa;
         ws.Range("A1:I1").Merge();
         ws.Cell("A1").Style.Font.Bold = true;
         ws.Cell("A1").Style.Font.FontSize = 18;
@@ -422,9 +426,11 @@ public class ReporteService : IReporteService
 
         var ws = workbook.Worksheets.Add("Ingresos");
 
+        var empresa = await ObtenerEmpresaAsync();
+
         #region Título
 
-        ws.Cell("A1").Value = ConfiguracionKeys.Empresa;
+        ws.Cell("A1").Value = empresa;
         ws.Range("A1:I1").Merge();
         ws.Cell("A1").Style.Font.Bold = true;
         ws.Cell("A1").Style.Font.FontSize = 18;
@@ -512,5 +518,11 @@ public class ReporteService : IReporteService
         workbook.SaveAs(stream);
 
         return stream.ToArray();
+    }
+
+    private async Task<string> ObtenerEmpresaAsync()
+    {
+        return await _configurationService.GetAsync(ConfiguracionKeys.Empresa)
+               ?? string.Empty;
     }
 }

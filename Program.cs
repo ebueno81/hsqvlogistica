@@ -4,7 +4,6 @@ using HsqvLogistica.Integrations.Auth;
 using HsqvLogistica.Integrations.Clients;
 using HsqvLogistica.Integrations.Clients.Interfaces;
 using HsqvLogistica.Mappers;
-using HsqvLogistica.Models.Mappers;
 using HsqvLogistica.Repositories;
 using HsqvLogistica.Repositories.Interfaces;
 using HsqvLogistica.Services;
@@ -61,6 +60,7 @@ builder.Services.AddScoped<IReporteRepository, ReporteRepository>();
 builder.Services.AddScoped<IReporteService, ReporteService>();
 builder.Services.AddScoped<IAlmacenRepository, AlmacenRepository>();
 builder.Services.AddSingleton<AlmacenMapper>();
+builder.Services.AddScoped<ILoginStorageService, LoginStorageService>();
 
 builder.Services.AddMemoryCache();
 

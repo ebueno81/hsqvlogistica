@@ -1,4 +1,5 @@
 ﻿using HsqvLogistica.Data;
+using HsqvLogistica.Models.DTOs.Usuarios;
 using HsqvLogistica.Models.Entities.Store;
 using HsqvLogistica.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -44,5 +45,23 @@ public class UsuarioRepository : IUsuarioRepository
                 x.Usuario1 == user &&
                 x.Clave == pass &&
                 x.Activo == true);
+    }
+
+    public async Task<UsuarioDto?> GetByUsuarioAsync(string usuario)
+    {
+        return await _context.Usuarios
+            .Where(x => x.Activo == true &&
+                        x.Usuario1 == usuario)
+            .Select(x => new UsuarioDto
+            {
+                Id = x.Id,
+                Usuario = x.Usuario1,
+                Password = x.Clave,
+                Nombres = x.Nombres,
+                Correo = x.Correo,
+                IdTipo = x.IdTipo ?? 0,
+                Activo = (bool)x.Activo
+            })
+            .FirstOrDefaultAsync();
     }
 }

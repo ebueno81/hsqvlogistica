@@ -1,5 +1,4 @@
 ﻿using HsqvLogistica.Mappers;
-using HsqvLogistica.Repositories;
 using HsqvLogistica.Repositories.Interfaces;
 using HsqvLogistica.Services.Interfaces;
 
@@ -14,6 +13,7 @@ namespace HsqvLogistica.Services
         private readonly IEmailService _emailService;
         private readonly IGarantiaRepository _garantiaRepository;
         private readonly GarantiaMapper _garantiaMapper;
+        private readonly IUsuarioRepository _usuarioRepository;
 
         public NotificationService(
             IPedidoRepository pedidoRepository,
@@ -22,7 +22,8 @@ namespace HsqvLogistica.Services
             ITemplateService templateService,
             IEmailService emailService,
             IGarantiaRepository garantiaRepository,
-            GarantiaMapper garantiaMapper)
+            GarantiaMapper garantiaMapper,
+            IUsuarioRepository usuarioRepository)
         {
             _pedidoRepository = pedidoRepository;
             _movimientoRepository = movimientoRepository;
@@ -31,6 +32,7 @@ namespace HsqvLogistica.Services
             _emailService = emailService;
             _garantiaRepository = garantiaRepository;
             _garantiaMapper = garantiaMapper;
+            _usuarioRepository = usuarioRepository;
         }
 
         public async Task NotificarPedidoCreadoAsync(int idPedido)
@@ -140,6 +142,74 @@ namespace HsqvLogistica.Services
             settings.CorreoLogistica!
                 },
                 $"Garantía Cerrada - {garantia.Id}",
+                html);
+        }
+
+        public async Task NotificarRecuperacionPasswordAsync(int idUsuario)
+        {
+            var usuario = await _usuarioRepository.GetByIdAsync(idUsuario);
+
+            if (usuario == null)
+                return;
+
+            if (string.IsNullOrWhiteSpace(usuario.Correo))
+                return;
+
+            var settings =
+                await _configurationService.GetNotificationSettingsAsync();
+
+            var usuarioDto = UsuarioMapper.ToDto(usuario);
+
+            var html =
+                await _templateService.PasswordRecoveryAsync(
+                    usuarioDto,
+                    settings);
+
+            await _emailService.SendAsync(
+                new[] { usuario.Correo },
+                "Recuperación de Credenciales",
+                html);
+        }
+
+        public async Task NotificarUsuarioCreadoAsync(int idUsuario)
+        {
+            var usuario = await _usuarioRepository.GetByIdAsync(idUsuario);
+
+            if (usuario is null)
+                return;
+
+            var dto = UsuarioMapper.ToDto(usuario);
+
+            var settings =
+                await _configurationService.GetNotificationSettingsAsync();
+
+            var html =
+                await _templateService.UsuarioCreadoAsync(dto, settings);
+
+            await _emailService.SendAsync(
+                new[] { dto.Correo! },
+                "Bienvenido a la plataforma",
+                html);
+        }
+
+        public async Task NotificarUsuarioActualizadoAsync(int idUsuario)
+        {
+            var usuario = await _usuarioRepository.GetByIdAsync(idUsuario);
+
+            if (usuario is null)
+                return;
+
+            var dto = UsuarioMapper.ToDto(usuario);
+
+            var settings =
+                await _configurationService.GetNotificationSettingsAsync();
+
+            var html =
+                await _templateService.UsuarioActualizadoAsync(dto, settings);
+
+            await _emailService.SendAsync(
+                new[] { dto.Correo! },
+                "Actualización de credenciales",
                 html);
         }
     }

@@ -6,6 +6,7 @@ public class UsuarioDto
     public string? Usuario { get; set; }
     public string? Nombres { get; set; }
     public string? Correo { get; set; }
+    public string? Password { get; set; }
 
     public int IdTipo { get; set; }
     public bool Activo { get; set; }  

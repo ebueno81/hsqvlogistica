@@ -1,4 +1,5 @@
-﻿using HsqvLogistica.Models.Entities.Store;
+﻿using HsqvLogistica.Models.DTOs.Usuarios;
+using HsqvLogistica.Models.Entities.Store;
 
 namespace HsqvLogistica.Repositories.Interfaces;
 
@@ -10,4 +11,5 @@ public interface IUsuarioRepository
     Task UpdateAsync(Usuario usuario);
     Task SaveChangesAsync();
     Task<Usuario?> ValidateUserAsync(string user, string pass);
+    Task<UsuarioDto?> GetByUsuarioAsync(string usuario);
 }

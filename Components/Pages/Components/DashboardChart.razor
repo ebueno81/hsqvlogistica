@@ -1,5 +1,6 @@
 ﻿@using HsqvLogistica.Models.DTOs.Dashboard
 @using MudBlazor
+@inject IJSRuntime JS
 
 <MudPaper Elevation="3"
           Class="pa-6"
@@ -29,39 +30,40 @@
     }
     else
     {
-        <MudChart ChartType="ChartType.Bar"
-                  Labels="@_labels"
-                  Data="@_data"
-                  Height="320px"
-                  Class="mt-2" />
+        <MudText Typo="Typo.h6">Prueba del gráfico</MudText>
+
+        <div style="height:350px">
+
+            <canvas id="dashboardChart"></canvas>
+
+        </div>
     }
 
 </MudPaper>
 
-@code {
+@code{
 
     [Parameter]
     public List<MonthlyMovementDto> Movimientos { get; set; } = new();
 
-    private string[] _labels = Array.Empty<string>();
-    private double[][] _data = Array.Empty<double[]>();
-
-    protected override void OnParametersSet()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (Movimientos == null || !Movimientos.Any())
+        if (!firstRender)
             return;
 
-        // Eje X
-        _labels = Movimientos
+        var labels = Movimientos
             .Select(x => x.Mes)
             .ToArray();
 
-        // Serie de datos
-        _data = new[]
-        {
-            Movimientos
-                .Select(x => (double)x.Total)
-                .ToArray()
-        };
+        var valores = Movimientos
+            .Select(x => x.Total)
+            .ToArray();
+
+        await JS.InvokeVoidAsync(
+            "dashboardChart.render",
+            "dashboardChart",
+            labels,
+            valores);
     }
+
 }

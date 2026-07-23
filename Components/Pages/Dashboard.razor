@@ -49,6 +49,7 @@
     {
         _resumen = await DashboardService.GetSummaryAsync();
         _movimientos = await DashboardService.GetMonthlyMovementsAsync();
+
         _loading = false;
     }
 }

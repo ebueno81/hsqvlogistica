@@ -1,5 +1,7 @@
-﻿using HsqvLogistica.Mappers;
+﻿using DocumentFormat.OpenXml.Office2010.Excel;
+using HsqvLogistica.Mappers;
 using HsqvLogistica.Models.DTOs.Usuarios;
+using HsqvLogistica.Repositories;
 using HsqvLogistica.Repositories.Interfaces;
 using HsqvLogistica.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -9,10 +11,11 @@ namespace HsqvLogistica.Services;
 public class UsuarioService : IUsuarioService
 {
     private readonly IUsuarioRepository _repository;
-
-    public UsuarioService(IUsuarioRepository repository)
+    private readonly INotificationService _notificationService;
+    public UsuarioService(IUsuarioRepository repository, INotificationService notificationService)
     {
         _repository = repository;
+        _notificationService = notificationService;
     }
 
     public async Task<IEnumerable<UsuarioDto>> GetAllAsync()
@@ -30,6 +33,9 @@ public class UsuarioService : IUsuarioService
         var entity = UsuarioMapper.ToEntity(dto);
         await _repository.AddAsync(entity);
         await _repository.SaveChangesAsync();
+
+        await _notificationService.NotificarUsuarioCreadoAsync(entity.Id);
+
         return UsuarioMapper.ToDto(entity);
     }
 
@@ -47,6 +53,8 @@ public class UsuarioService : IUsuarioService
 
         await _repository.UpdateAsync(entity);
         await _repository.SaveChangesAsync();
+
+        await _notificationService.NotificarUsuarioActualizadoAsync(id);
     }
 
     public async Task<bool> ChangeStatusAsync(int id, bool activo)
@@ -58,6 +66,9 @@ public class UsuarioService : IUsuarioService
         usuario.Activo = activo;
         await _repository.UpdateAsync(usuario);
         await _repository.SaveChangesAsync();
+
+        if (activo)
+            await _notificationService.NotificarUsuarioActualizadoAsync(id);
 
         return true;
     }
@@ -71,4 +82,11 @@ public class UsuarioService : IUsuarioService
             : UsuarioMapper.ToDto(usuario);
     }
 
+    public async Task<UsuarioDto?> GetByUsuarioAsync(string usuario)
+    {
+        if (string.IsNullOrWhiteSpace(usuario))
+            return null;
+
+        return await _repository.GetByUsuarioAsync(usuario.Trim());
+    }
 }

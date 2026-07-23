@@ -3,6 +3,7 @@ using HsqvLogistica.Models.DTOs.Garantia;
 using HsqvLogistica.Models.DTOs.Garantias;
 using HsqvLogistica.Models.DTOs.Movimientos;
 using HsqvLogistica.Models.DTOs.Pedidos;
+using HsqvLogistica.Models.DTOs.Usuarios;
 using HsqvLogistica.Services.Interfaces;
 using System.Text;
 
@@ -89,9 +90,7 @@ namespace HsqvLogistica.Services
                 settings);
         }
 
-        public async Task<string> GarantiaCerradaAsync(
-            GarantiaDto garantia,
-            NotificationSettings settings)
+        public async Task<string> GarantiaCerradaAsync(GarantiaDto garantia, NotificationSettings settings)
         {
             var html = await LeerPlantillaAsync("GarantiaCerrada.html");
 
@@ -289,6 +288,95 @@ namespace HsqvLogistica.Services
             return sb.ToString();
         }
 
+        public async Task<string> PasswordRecoveryAsync(UsuarioDto usuario, NotificationSettings settings)
+        {
+            var html = await LeerPlantillaAsync("PasswordRecovery.html");
+
+            html = ReemplazarConfiguracion(html, settings);
+
+            html = html.Replace(
+                "{{Nombre}}",
+                usuario.Nombres ?? string.Empty);
+
+            html = html.Replace(
+                "{{Usuario}}",
+                usuario.Usuario ?? string.Empty);
+
+            html = html.Replace(
+                "{{Password}}",
+                usuario.Password ?? string.Empty);
+
+            return html;
+        }
+
+        private string ReemplazarConfiguracion(string html, NotificationSettings settings)
+                {
+                    html = html.Replace(
+                        "{{Empresa}}",
+                        settings.Empresa ?? string.Empty);
+
+                    html = html.Replace(
+                        "{{UrlSistema}}",
+                        settings.UrlSistema ?? string.Empty);
+
+                    return html;
+        }
+
+        public async Task<string> UsuarioCreadoAsync(UsuarioDto usuario,
+            NotificationSettings settings)
+        {
+            var html = await LeerPlantillaAsync("UsuarioCreado.html");
+
+            return ReemplazarDatosUsuario(
+                html,
+                usuario,
+                settings);
+        }
+
+        public async Task<string> UsuarioActualizadoAsync(UsuarioDto usuario,
+            NotificationSettings settings)
+        {
+            var html = await LeerPlantillaAsync("UsuarioActualizado.html");
+
+            return ReemplazarDatosUsuario(
+                html,
+                usuario,
+                settings);
+        }
+
+        private string ReemplazarDatosUsuario(string html, UsuarioDto usuario,
+            NotificationSettings settings)
+        {
+            html = html.Replace(
+                "{{Empresa}}",
+                settings.Empresa ?? string.Empty);
+
+            html = html.Replace(
+                "{{Nombre}}",
+                usuario.Nombres ?? string.Empty);
+
+            html = html.Replace(
+                "{{Usuario}}",
+                usuario.Usuario ?? string.Empty);
+
+            html = html.Replace(
+                "{{Clave}}",
+                usuario.Password ?? string.Empty);
+
+            html = html.Replace(
+                "{{Correo}}",
+                usuario.Correo ?? string.Empty);
+
+            html = html.Replace(
+                "{{TipoUsuario}}",
+                usuario.TipoUsuario ?? string.Empty);
+
+            html = html.Replace(
+                "{{UrlSistema}}",
+                settings.UrlSistema ?? string.Empty);
+
+            return html;
+        }
         #endregion
     }
 }

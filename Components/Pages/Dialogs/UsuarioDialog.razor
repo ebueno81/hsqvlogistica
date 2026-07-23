@@ -99,13 +99,31 @@
     </DialogContent>
 
     <DialogActions>
-        <MudButton OnClick="Cancel">Cancelar</MudButton>
+
+        <MudButton OnClick="Cancel"
+                   Disabled="_saving">
+            Cancelar
+        </MudButton>
 
         <MudButton Color="Color.Primary"
                    Variant="Variant.Filled"
+                   Disabled="_saving"
                    OnClick="Save">
-            @(_isEditMode ? "Actualizar" : "Guardar")
+
+            @if (_saving)
+            {
+                <MudProgressCircular Indeterminate="true"
+                                     Size="Size.Small"
+                                     Class="me-2" />
+                <span>Procesando...</span>
+            }
+            else
+            {
+                @(_isEditMode ? "Actualizar" : "Guardar")
+            }
+
         </MudButton>
+
     </DialogActions>
 
 </MudDialog>
@@ -134,6 +152,7 @@
     int _idTipo=1;
     string _clave = string.Empty;
     string _confirmarClave = string.Empty;
+    private bool _saving;
 
     List<TipoUsuarioLookupDto> TiposUsuario = new();
 
@@ -147,7 +166,7 @@
             _usuario = Usuario.Usuario!;
             _nombres = Usuario.Nombres!;
             _correo = Usuario.Correo!;
-
+            _clave = Usuario.Password;
             _idTipo = Usuario.IdTipo;
             StateHasChanged();
         }
@@ -155,49 +174,65 @@
 
     async Task Save()
     {
-        if (_form is null) return;
+        if (_saving)
+            return;
 
-        _claveError = false;
+        _saving = true;
 
-        await _form.Validate();
-        if (!_form.IsValid) return;
-
-        // 🔐 Validación de clave
-        if (!_isEditMode)
+        try
         {
-            if (_clave != _confirmarClave)
-            {
-                _claveError = true;
+            if (_form is null)
                 return;
+
+            _claveError = false;
+
+            await _form.Validate();
+
+            if (!_form.IsValid)
+                return;
+
+            if (!_isEditMode)
+            {
+                if (_clave != _confirmarClave)
+                {
+                    _claveError = true;
+                    return;
+                }
             }
-        }
 
-        if (_isEditMode && Usuario != null)
-        {
-            await UsuarioService.UpdateAsync(
-                Usuario.Id,
-                new UsuarioUpdateDto
-                {
-                    Nombres = TextHelper.Upper(_nombres),
-                    Correo = TextHelper.Lower(_correo),
-                    IdTipo = _idTipo,
-                    Clave = string.IsNullOrWhiteSpace(_clave) ? null : _clave
-                });
-        }
-        else
-        {
-            await UsuarioService.CreateAsync(
-                new UsuarioCreateDto
-                {
-                    Usuario = TextHelper.Lower(_usuario),
-                    Nombres = TextHelper.Upper(_nombres),
-                    Correo = TextHelper.Lower(_correo),
-                    Clave = _clave,
-                    IdTipo = _idTipo
-                });
-        }
+            if (_isEditMode && Usuario != null)
+            {
+                await UsuarioService.UpdateAsync(
+                    Usuario.Id,
+                    new UsuarioUpdateDto
+                    {
+                        Nombres = TextHelper.Upper(_nombres),
+                        Correo = TextHelper.Lower(_correo),
+                        IdTipo = _idTipo,
+                        Clave = string.IsNullOrWhiteSpace(_clave)
+                            ? null
+                            : _clave
+                    });
+            }
+            else
+            {
+                await UsuarioService.CreateAsync(
+                    new UsuarioCreateDto
+                    {
+                        Usuario = TextHelper.Lower(_usuario),
+                        Nombres = TextHelper.Upper(_nombres),
+                        Correo = TextHelper.Lower(_correo),
+                        Clave = _clave,
+                        IdTipo = _idTipo
+                    });
+            }
 
-        MudDialog.Close(DialogResult.Ok(true));
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        finally
+        {
+            _saving = false;
+        }
     }
 
     void Cancel() => MudDialog.Cancel();

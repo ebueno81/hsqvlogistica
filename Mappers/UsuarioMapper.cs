@@ -13,6 +13,7 @@ public static class UsuarioMapper
         Correo = entity.Correo,
         IdTipo = entity.IdTipo ?? 0,
         TipoUsuario = entity.IdTipoNavigation?.Descripcion,
+        Password = entity.Clave,
         Activo = (bool)entity.Activo
     };
 

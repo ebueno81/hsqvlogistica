@@ -1,0 +1,132 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Actualización de Usuario</title>
+</head>
+
+<body style="margin:0;padding:0;background:#f5f6fa;font-family:Segoe UI,Arial,sans-serif;">
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="padding:30px;">
+
+        <tr>
+            <td align="center">
+
+                <table width="650"
+                       cellpadding="0"
+                       cellspacing="0"
+                       style="background:white;border-radius:10px;overflow:hidden;box-shadow:0 3px 10px rgba(0,0,0,.10);">
+
+                    <!-- Header -->
+                    <tr>
+                        <td style="background:#1565C0;color:white;padding:20px;">
+
+                            <h2 style="margin:0;">
+                                {{Empresa}}
+                            </h2>
+
+                            <div style="margin-top:6px;">
+                                Actualización de Cuenta
+                            </div>
+
+                        </td>
+                    </tr>
+
+                    <!-- Contenido -->
+                    <tr>
+
+                        <td style="padding:30px;">
+
+                            <p>Estimado(a) <strong>{{Nombre}}</strong>,</p>
+
+                            <p>
+                                Le informamos que los datos de su cuenta de acceso han sido
+                                actualizados correctamente.
+                            </p>
+
+                            <p>
+                                Sus credenciales vigentes son las siguientes:
+                            </p>
+
+                            <table cellpadding="8"
+                                   cellspacing="0"
+                                   width="100%"
+                                   style="border:1px solid #ddd;border-collapse:collapse;margin-top:15px;">
+
+                                <tr style="background:#f4f6f9;">
+                                    <td width="180"><strong>Usuario</strong></td>
+                                    <td>{{Usuario}}</td>
+                                </tr>
+
+                                <tr>
+                                    <td><strong>Clave</strong></td>
+                                    <td>{{Clave}}</td>
+                                </tr>
+
+                                <tr style="background:#f4f6f9;">
+                                    <td><strong>Tipo de Usuario</strong></td>
+                                    <td>{{TipoUsuario}}</td>
+                                </tr>
+
+                                <tr>
+                                    <td><strong>Correo</strong></td>
+                                    <td>{{Correo}}</td>
+                                </tr>
+
+                            </table>
+
+                            <br>
+
+                            <p>
+                                Puede ingresar al sistema desde:
+                            </p>
+
+                            <p>
+                                <a href="{{UrlSistema}}">
+                                    {{UrlSistema}}
+                                </a>
+                            </p>
+
+                            <br>
+
+                            <div style="padding:15px;background:#FFF8E1;border-left:5px solid #FFC107;">
+
+                                <strong>Importante</strong>
+
+                                <br><br>
+
+                                Si usted no solicitó esta actualización,
+                                comuníquese inmediatamente con el Administrador de Sistemas.
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    <!-- Footer -->
+
+                    <tr>
+
+                        <td style="padding:20px;background:#f4f6f9;color:#666;text-align:center;font-size:12px;">
+
+                            Este mensaje fue generado automáticamente por
+                            <strong>{{Empresa}}</strong>.
+
+                            <br><br>
+
+                            No responda este correo.
+
+                        </td>
+
+                    </tr>
+
+                </table>
+
+            </td>
+        </tr>
+
+    </table>
+
+</body>
+</html>
