@@ -41,6 +41,7 @@ public class ArticuloService : IArticuloService
 
         articulo.Descripcion = dto.Descripcion;
         articulo.Stock = dto.Stock;
+        articulo.StockFijo = dto.StockFijo;
         articulo.PrecioMn = dto.PrecioMn;
         articulo.PrecioUs = dto.PrecioUs;
         articulo.FechaModifica = DateTime.Now;

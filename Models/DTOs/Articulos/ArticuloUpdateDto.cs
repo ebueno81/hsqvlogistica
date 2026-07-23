@@ -7,7 +7,8 @@ public class ArticuloUpdateDto
     [Required, StringLength(150)]
     public string Descripcion { get; set; } = null!;
 
-    public int Stock { get; set; }
+    public decimal Stock { get; set; }
+    public decimal StockFijo { get; set; }
     public decimal PrecioMn { get; set; }
     public decimal PrecioUs { get; set; }
 

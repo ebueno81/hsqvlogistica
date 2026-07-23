@@ -8,7 +8,8 @@ public class ArticuloDto
     public string? LineaDescripcion { get; set; }
     public string? Detalles { get; set; }
     public string? Descripcion { get; set; }
-    public int? Stock { get; set; }
+    public decimal? Stock { get; set; }
+    public decimal? StockFijo { get; set; }
     public decimal? PrecioMn { get; set; }
     public decimal? PrecioUs { get; set; }
     public string? RutaImagen { get; set; }

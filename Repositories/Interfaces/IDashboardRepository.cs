@@ -5,7 +5,7 @@ namespace HsqvLogistica.Repositories.Interfaces;
 public interface IDashboardRepository
 {
     Task<int> GetTotalArticulosAsync();
-    Task<int> GetStockTotalAsync();
+    Task<decimal> GetStockTotalAsync();
     Task<int> GetPedidosActivosAsync();
     Task<int> GetGarantiasAsync();
 

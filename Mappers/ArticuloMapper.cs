@@ -24,6 +24,7 @@ public static class ArticuloMapper
             IdLinea = dto.IdLinea,
             Descripcion = dto.Descripcion,
             Stock = dto.Stock,
+            StockFijo = dto.StockFijo,
             PrecioMn = dto.PrecioMn,
             PrecioUs = dto.PrecioUs,
             Activo = true,

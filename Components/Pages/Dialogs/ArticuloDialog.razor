@@ -77,32 +77,59 @@
 
             <MudDivider Class="my-3" />
 
-            <!-- Stock -->
-            <MudNumericField T="int"
-                             Label="Stock"
-                             @bind-Value="_stock"
-                             Variant="Variant.Outlined"
-                             Color="Color.Primary"
-                             Adornment="Adornment.Start"
-                             AdornmentIcon="@Icons.Material.Filled.Inventory" />
+            <MudDivider Class="my-3" />
 
-            <!-- Precio MN -->
-            <MudNumericField T="decimal"
-                             Label="Precio MN"
-                             @bind-Value="_precioMn"
-                             Variant="Variant.Outlined"
-                             Color="Color.Primary"
-                             Adornment="Adornment.Start"
-                             AdornmentIcon="@Icons.Material.Filled.AttachMoney" />
+            <MudGrid Spacing="2">
 
-            <!-- Precio US -->
-            <MudNumericField T="decimal"
-                             Label="Precio US"
-                             @bind-Value="_precioUs"
-                             Variant="Variant.Outlined"
-                             Color="Color.Primary"
-                             Adornment="Adornment.Start"
-                             AdornmentIcon="@Icons.Material.Filled.CurrencyExchange" />
+                <!-- Stock -->
+                <MudItem xs="12" sm="6">
+                    <MudNumericField T="decimal"
+                                     Label="Stock"
+                                     @bind-Value="_stock"
+                                     Variant="Variant.Outlined"
+                                     Color="Color.Primary"
+                                     Adornment="Adornment.Start"
+                                     AdornmentIcon="@Icons.Material.Filled.Inventory"
+                                     FullWidth />
+                </MudItem>
+
+                <!-- Stock Fijo -->
+                <MudItem xs="12" sm="6">
+                    <MudNumericField T="decimal"
+                                     Label="Stock Fijo"
+                                     @bind-Value="_stockFijo"
+                                     Variant="Variant.Outlined"
+                                     Color="Color.Primary"
+                                     Adornment="Adornment.Start"
+                                     AdornmentIcon="@Icons.Material.Filled.Inventory"
+                                     FullWidth />
+                </MudItem>
+
+                <!-- Precio MN -->
+                <MudItem xs="12" sm="6">
+                    <MudNumericField T="decimal"
+                                     Label="Precio MN"
+                                     @bind-Value="_precioMn"
+                                     Variant="Variant.Outlined"
+                                     Color="Color.Primary"
+                                     Adornment="Adornment.Start"
+                                     AdornmentIcon="@Icons.Material.Filled.AttachMoney"
+                                     FullWidth />
+                </MudItem>
+
+                <!-- Precio US -->
+                <MudItem xs="12" sm="6">
+                    <MudNumericField T="decimal"
+                                     Label="Precio US"
+                                     @bind-Value="_precioUs"
+                                     Variant="Variant.Outlined"
+                                     Color="Color.Primary"
+                                     Adornment="Adornment.Start"
+                                     AdornmentIcon="@Icons.Material.Filled.CurrencyExchange"
+                                     FullWidth />
+                </MudItem>
+
+            </MudGrid>
 
         </MudForm>
 
@@ -142,7 +169,8 @@
 
     string _codigo = string.Empty;
     string _descripcion = string.Empty;
-    int _stock;
+    decimal _stock;
+    decimal _stockFijo;
     decimal _precioMn;
     decimal _precioUs;
     int _idLinea;
@@ -156,7 +184,9 @@
             _isEditMode = true;
             _codigo = Articulo.Codigo ?? "";
             _descripcion = Articulo.Descripcion ?? "";
-            _stock = Articulo.Stock ?? 0;
+            _stock = Articulo.Stock.Value;
+            _stockFijo = Articulo.StockFijo ?? 0;
+
             _precioMn = Articulo.PrecioMn ?? 0;
             _precioUs = Articulo.PrecioUs ?? 0;
             _idLinea = Articulo.IdLinea ?? 0; 
@@ -179,6 +209,7 @@
                 {
                     Descripcion = TextHelper.Upper(_descripcion),
                     Stock = _stock,
+                    StockFijo = _stockFijo,
                     PrecioMn = _precioMn,
                     PrecioUs = _precioUs,
                     RutaImagen = _rutaImagen,
@@ -195,6 +226,7 @@
                     Codigo = _codigo,
                     Descripcion = TextHelper.Upper(_descripcion),
                     Stock = _stock,
+                    StockFijo = _stockFijo,
                     PrecioMn = _precioMn,
                     PrecioUs = _precioUs,
                     RutaImagen = _rutaImagen,

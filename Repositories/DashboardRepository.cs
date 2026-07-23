@@ -17,7 +17,7 @@ public class DashboardRepository : IDashboardRepository
     public async Task<int> GetTotalArticulosAsync()
         => await _context.Articulos.CountAsync();
 
-    public async Task<int> GetStockTotalAsync()
+    public async Task<decimal> GetStockTotalAsync()
         => await _context.Articulos.SumAsync(a => a.Stock ?? 0);
 
     public async Task<int> GetPedidosActivosAsync()

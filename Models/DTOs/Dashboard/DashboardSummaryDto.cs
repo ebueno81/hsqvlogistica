@@ -3,7 +3,7 @@
 public class DashboardSummaryDto
 {
     public int TotalArticulos { get; set; }
-    public int StockTotal { get; set; }
+    public decimal StockTotal { get; set; }
     public int PedidosActivos { get; set; }
     public int Garantias { get; set; }
 

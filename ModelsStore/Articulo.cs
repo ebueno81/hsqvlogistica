@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace HsqvLogistica.Models.Entities.Store;
+namespace HsqvLogistica.ModelsStore;
 
 [Table("Articulo")]
 public partial class Articulo

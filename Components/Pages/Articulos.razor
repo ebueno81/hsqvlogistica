@@ -53,7 +53,8 @@
                 <MudTh>Código</MudTh>
                 <MudTh>Descripción</MudTh>
                 <MudTh>Línea</MudTh>
-                <MudTh>Stock</MudTh>
+                <MudTh>Stock Actual</MudTh>
+                <MudTh>Stock Fijo</MudTh>
                 <MudTh>Precio MN</MudTh>
                 <MudTh>Estado</MudTh>
                 @if (UserSession.UsuarioActual?.Permisos.PuedeAnularOperaciones == true)
@@ -69,6 +70,7 @@
                 <MudTd>@row.Descripcion</MudTd>
                 <MudTd>@row.LineaDescripcion</MudTd>
                 <MudTd>@row.Stock</MudTd>
+                <MudTd>@row.StockFijo</MudTd>
                 <MudTd>@row.PrecioMn</MudTd>
 
                 <MudTd>
