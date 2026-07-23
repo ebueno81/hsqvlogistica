@@ -7,12 +7,24 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Common\Email\EmailTemplates\GarantiaCerrada.html" />
-    <Content Include="Common\Email\EmailTemplates\GarantiaCreada.html" />
-    <Content Include="Common\Email\EmailTemplates\SalidaAlmacen.html" />
-    <Content Include="Common\Email\EmailTemplates\Devolucion.html" />
-    <Content Include="Common\Email\EmailTemplates\PedidoAprobado.html" />
-    <Content Include="Common\Email\EmailTemplates\PedidoCreado.html" />
+    <Content Include="Common\Email\EmailTemplates\GarantiaCerrada.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Common\Email\EmailTemplates\GarantiaCreada.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Common\Email\EmailTemplates\SalidaAlmacen.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Common\Email\EmailTemplates\Devolucion.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Common\Email\EmailTemplates\PedidoAprobado.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Common\Email\EmailTemplates\PedidoCreado.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

@@ -1,25 +1,28 @@
 ﻿using ClosedXML.Excel;
 using HsqvLogistica.Common.Constants;
-using HsqvLogistica.Components.Pages;
 using HsqvLogistica.Models.DTOs.Reportes;
 using HsqvLogistica.Repositories.Interfaces;
 using HsqvLogistica.Services.Interfaces;
-using System.IO;
 
 namespace HsqvLogistica.Services;
 
 public class ReporteService : IReporteService
 {
     private readonly IReporteRepository _repository;
+    private readonly IConfigurationService _configurationService;
 
-    public ReporteService(IReporteRepository repository)
+    public ReporteService(IReporteRepository repository, IConfigurationService configurationService)
     {
         _repository = repository;
+        _configurationService = configurationService;
     }
 
     public async Task<byte[]> ExportarStockExcelAsync(
     ReporteStockFilterDto filtro)
     {
+        var empresa = await _configurationService.GetAsync(
+                    ConfiguracionKeys.Empresa);
+
         var datos = await _repository.ObtenerReporteStockAsync(filtro);
 
         using var workbook = new XLWorkbook();
@@ -27,7 +30,7 @@ public class ReporteService : IReporteService
         var worksheet = workbook.Worksheets.Add("Stock");
 
         // Título
-        worksheet.Cell(1, 1).Value = "HSQV LOGÍSTICA";
+        worksheet.Cell(1, 1).Value = empresa;
         worksheet.Cell(2, 1).Value = "Reporte de Stock";
         worksheet.Cell(3, 1).Value = $"Fecha: {DateTime.Now:dd/MM/yyyy HH:mm}";
 
