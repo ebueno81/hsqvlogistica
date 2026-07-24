@@ -12,4 +12,5 @@ public interface IArticuloRepository
     Task SaveChangesAsync();
     Task<IEnumerable<Articulo>> SearchAsync(string filtro);
     Task<List<Articulo>> GetByIdsAsync(IEnumerable<int> ids);
+    Task<StockArticuloDto?> GetStockAsync(int idArticulo);
 }

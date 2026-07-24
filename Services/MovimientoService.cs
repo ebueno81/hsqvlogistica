@@ -9,10 +9,12 @@ namespace HsqvLogistica.Services
     public class MovimientoService : IMovimientoService
     {
         private readonly IMovimientoRepository _repository;
+        private readonly IArticuloStockService _articuloStockService;
 
-        public MovimientoService(IMovimientoRepository repository)
+        public MovimientoService(IMovimientoRepository repository, IArticuloStockService articuloStockService)
         {
             _repository = repository;
+            _articuloStockService = articuloStockService;
         }
 
         public Task<MovimientoPagedResultDto> SearchAsync(
@@ -22,6 +24,16 @@ namespace HsqvLogistica.Services
 
         public async Task<int> CreateAsync(MovimientoDto dto)
         {
+            if (dto.Tipo == "SAL")
+            {
+                foreach (var detalle in dto.Detalles)
+                {
+                    await _articuloStockService.ValidarStockAsync(
+                        detalle.IdArticulo,
+                        detalle.Cantidad);
+                }
+            }
+
             var movimiento = MovimientoMapper.ToEntity(dto);
 
             return await _repository.CreateAsync(movimiento);

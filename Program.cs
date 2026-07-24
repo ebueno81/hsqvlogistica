@@ -63,6 +63,7 @@ builder.Services.AddSingleton<AlmacenMapper>();
 builder.Services.AddScoped<ILoginStorageService, LoginStorageService>();
 builder.Services.AddScoped<IArticuloDisponibilidadRepository, ArticuloDisponibilidadRepository>();
 builder.Services.AddScoped<IArticuloDisponibilidadService, ArticuloDisponibilidadService>();
+builder.Services.AddScoped<IArticuloStockService, ArticuloStockService>();
 
 builder.Services.AddMemoryCache();
 

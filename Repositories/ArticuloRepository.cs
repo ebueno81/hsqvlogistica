@@ -69,4 +69,20 @@ public class ArticuloRepository : IArticuloRepository
             .Where(a => ids.Contains(a.Id))
             .ToListAsync();
     }
+
+    public async Task<StockArticuloDto?> GetStockAsync(int idArticulo)
+    {
+        return await _context.Articulos
+            .AsNoTracking()
+            .Where(x => x.Id == idArticulo && x.Activo == true)
+            .Select(x => new StockArticuloDto
+            {
+                IdArticulo = x.Id,
+                Codigo = x.Codigo,
+                Descripcion = x.Descripcion,
+                Stock = x.Stock ?? 0
+            })
+            .FirstOrDefaultAsync();
+    }
+
 }
