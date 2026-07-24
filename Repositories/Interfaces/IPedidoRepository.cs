@@ -14,5 +14,6 @@ public interface IPedidoRepository
     Task<bool> ChangeStatusAsync(int id, int activo, string usuarioModifica);
     Task<PedidoPagedResultDto> SearchAsync(PedidoFilterDto filter,
             CancellationToken cancellationToken);
-   
+    Task<List<DisponibilidadArticuloDto>> ObtenerDisponibilidadAsync(DateOnly fecha,
+            IEnumerable<int> articulos, int? idPedidoExcluir = null);
 }

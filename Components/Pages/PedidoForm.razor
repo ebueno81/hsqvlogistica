@@ -1,6 +1,7 @@
 ﻿@page "/pedidos/nuevo"
 @page "/pedidos/ver/{Id:int}"
 
+@using HsqvLogistica.Common.Exceptions
 @using HsqvLogistica.Components.Pages.Components
 @using HsqvLogistica.Models.DTOs.Pedidos
 @using HsqvLogistica.Models.DTOs.Clientes
@@ -98,22 +99,24 @@
                 </MudButton>
             }
 
-            @if (UserSession.UsuarioActual?.Permisos.PuedeAprobarPedidos == true)
+            @if (_activo)
             {
-                @if (_mode == PedidoMode.View && _estado == 0)
+                @if (UserSession.UsuarioActual?.Permisos.PuedeAprobarPedidos == true)
                 {
-                    <MudButton Color="Color.Success"
-                               Variant="Variant.Filled"
-                               StartIcon="@Icons.Material.Filled.CheckCircle"
-                               Disabled="_aprobando"
-                               OnClick="AprobarPedido">
+                    @if (_mode == PedidoMode.View && _estado == 0)
+                    {
+                        <MudButton Color="Color.Success"
+                                   Variant="Variant.Filled"
+                                   StartIcon="@Icons.Material.Filled.CheckCircle"
+                                   Disabled="_aprobando"
+                                   OnClick="AprobarPedido">
 
-                        @(_aprobando ? "Aprobando..." : "Aprobar")
+                            @(_aprobando ? "Aprobando..." : "Aprobar")
 
-                    </MudButton>
+                        </MudButton>
+                    }
                 }
             }
-            
             <MudButton Variant="Variant.Filled" Color="Color.Tertiary"
                        OnClick="@(() => Navigation.NavigateTo("/pedidos"))">
                 Volver
@@ -140,6 +143,7 @@
     bool _saving = false;
     int _estado;
     private bool _aprobando = false;
+    private bool _activo;
 
     PedidoDetalleGrid? _detalleGrid;
     List<PedidoDetalleDto> _detallesView = new();
@@ -181,6 +185,7 @@
         _direccion = pedido.Direccion ?? "";
         _fechaEntrega = pedido.FechaEntrega?.ToDateTime(TimeOnly.MinValue);
         _observacion = pedido.Detalles ?? "";
+        _activo = pedido.Activo ?? false;
 
         _detallesView = pedido.Detalle ?? new();
         StateHasChanged();
@@ -231,6 +236,10 @@
 
             Snackbar.Add("Pedido registrado correctamente", Severity.Success);
             Navigation.NavigateTo("/pedidos");
+        }
+        catch (BusinessException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Warning);
         }
         catch (Exception ex)
         {

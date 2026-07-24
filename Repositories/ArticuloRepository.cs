@@ -28,6 +28,7 @@ public class ArticuloRepository : IArticuloRepository
                 Detalles = a.Detalles,
                 Descripcion = a.Descripcion,
                 Stock = a.Stock,
+                StockFijo = a.StockFijo,
                 PrecioMn = a.PrecioMn,
                 PrecioUs = a.PrecioUs,
                 RutaImagen = a.RutaImagen,
@@ -59,6 +60,13 @@ public class ArticuloRepository : IArticuloRepository
                 a.Codigo!.Contains(filtro))
             .AsNoTracking()
             .Take(20)
+            .ToListAsync();
+    }
+
+    public async Task<List<Articulo>> GetByIdsAsync(IEnumerable<int> ids)
+    {
+        return await _context.Articulos
+            .Where(a => ids.Contains(a.Id))
             .ToListAsync();
     }
 }

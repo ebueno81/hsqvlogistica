@@ -5,6 +5,7 @@ using HsqvLogistica.Models.Entities.Store;
 using HsqvLogistica.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
 using System.Net.NetworkInformation;
 
 namespace HsqvLogistica.Repositories;
@@ -109,5 +110,33 @@ public class PedidoRepository : IPedidoRepository
             @Usuario_Modifica={usuarioModifica}");
 
         return filas > 0;
+    }
+
+    public async Task<List<DisponibilidadArticuloDto>> ObtenerDisponibilidadAsync(
+        DateOnly fecha, IEnumerable<int> articulos, int? idPedidoExcluir = null)
+    {
+        var query = _context.PedidoDetalles
+             .Where(d =>
+                 d.IdArticulo.HasValue &&
+                 articulos.Contains(d.IdArticulo.Value) &&
+                 d.IdPedidoNavigation.Activo == true &&
+                 (d.IdPedidoNavigation.Estado == 0 ||
+                  d.IdPedidoNavigation.Estado == 1) &&
+                 d.IdPedidoNavigation.FechaEntrega == fecha);
+
+        if (idPedidoExcluir.HasValue)
+        {
+            query = query.Where(d =>
+                d.IdPedido != idPedidoExcluir.Value);
+        }
+
+        return await query
+            .GroupBy(d => d.IdArticulo)
+            .Select(g => new DisponibilidadArticuloDto
+            {
+                IdArticulo = g.Key!.Value,
+                CantidadReservada = (decimal)g.Sum(x => x.Cantidad)
+            })
+            .ToListAsync();
     }
 }

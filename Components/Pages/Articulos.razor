@@ -49,6 +49,7 @@
             </ToolBarContent>
 
             <HeaderContent>
+                <MudTh></MudTh>
                 <MudTh>Id</MudTh>
                 <MudTh>Código</MudTh>
                 <MudTh>Descripción</MudTh>
@@ -64,7 +65,9 @@
             </HeaderContent>
 
             <RowTemplate Context="row">
-
+                <MudIconButton Icon="@Icons.Material.Filled.CalendarMonth"
+                               Color="Color.Info"
+                               OnClick="@(() => VerDisponibilidad(row.Id))" />
                 <MudTd>@row.Id</MudTd>
                 <MudTd>@row.Codigo</MudTd>
                 <MudTd>@row.Descripcion</MudTd>
@@ -107,6 +110,8 @@
 </MudContainer>
 
 @code {
+    [Inject]
+    private NavigationManager Navigation { get; set; } = default!;
 
     List<ArticuloDto> _articulos = new();
     bool _loading;
@@ -202,5 +207,10 @@
 
             await LoadData();
         }
+    }
+
+    async Task VerDisponibilidad(int articuloId)
+    {
+        Navigation.NavigateTo($"/articulos/disponibilidad/{articuloId}");
     }
 }

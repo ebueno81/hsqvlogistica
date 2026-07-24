@@ -1,0 +1,411 @@
+﻿@page "/articulos/disponibilidad/{IdArticulo:int}"
+
+@using HsqvLogistica.Models.DTOs.Disponibilidad
+@using HsqvLogistica.Services.Interfaces
+@using MudBlazor
+
+@inject IArticuloDisponibilidadService DisponibilidadService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>Disponibilidad del Artículo</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False" Class="pa-4">
+
+    <MudPaper Elevation="1" Class="pa-5 mb-4 rounded-lg">
+
+        <MudStack Row="true"
+                  AlignItems="AlignItems.Center"
+                  Justify="Justify.SpaceBetween">
+
+            <div>
+
+                <MudText Typo="Typo.h4">
+                    Disponibilidad del Artículo
+                </MudText>
+
+                <MudText Typo="Typo.body2" Color="Color.Default">
+                    Consulte la disponibilidad diaria y las reservas del artículo.
+                </MudText>
+
+            </div>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Secondary"
+                       StartIcon="@Icons.Material.Filled.ArrowBack"
+                       OnClick="Volver">
+                Regresar
+            </MudButton>
+
+        </MudStack>
+
+        <MudDivider Class="my-3" />
+
+        <MudGrid>
+
+            <MudItem xs="12" md="3">
+                <MudText Typo="Typo.caption">Código</MudText>
+                <MudText>@(_disponibilidad?.Resumen?.Codigo ?? "-")</MudText>
+            </MudItem>
+
+            <MudItem xs="12" md="5">
+                <MudText Typo="Typo.caption">Artículo</MudText>
+                <MudText>@(_disponibilidad?.Resumen?.Articulo ?? "-")</MudText>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.caption">Línea</MudText>
+                <MudText>@(_disponibilidad?.Resumen?.Linea ?? "-")</MudText>
+            </MudItem>
+
+            <MudItem xs="12" md="3">
+                <MudPaper Class="pa-3 text-center">
+                    <MudText Typo="Typo.caption">
+                        Stock Actual
+                    </MudText>
+
+                    <MudText Typo="Typo.h5" Color="Color.Primary">
+                        @(_disponibilidad?.Resumen?.StockActual ?? 0)
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="3">
+                <MudPaper Class="pa-3 text-center">
+                    <MudText Typo="Typo.caption">
+                        Stock Fijo
+                    </MudText>
+
+                    <MudText Typo="Typo.h5" Color="Color.Success">
+                        @(_disponibilidad?.Resumen?.StockFijo ?? 0)
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="3">
+                <MudPaper Class="pa-3 text-center">
+                    <MudText Typo="Typo.caption">
+                        Días Completos
+                    </MudText>
+
+                    <MudText Typo="Typo.h5" Color="Color.Error">
+                        @(_disponibilidad?.Resumen?.DiasCompletos ?? 0)
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="3">
+                <MudPaper Class="pa-3 text-center">
+                    <MudText Typo="Typo.caption">
+                        Próxima Fecha Disponible
+                    </MudText>
+
+                    <MudText Typo="Typo.h6">
+                        @(_disponibilidad?.Resumen?.ProximaFechaDisponible?.ToString("dd/MM/yyyy") ?? "-")
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+
+        </MudGrid>
+
+    </MudPaper>
+
+    <MudPaper Elevation="2" Class="pa-4 mb-4">
+
+        <MudGrid>
+
+            <MudItem xs="12" md="3">
+
+                <MudDatePicker Label="Desde"
+                               @bind-Date="_fechaInicio" />
+
+            </MudItem>
+
+            <MudItem xs="12" md="3">
+
+                <MudDatePicker Label="Hasta"
+                               @bind-Date="_fechaFin" />
+
+            </MudItem>
+
+            <MudItem xs="12" md="2" Class="d-flex align-end">
+
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Search"
+                           OnClick="Consultar">
+
+                    Consultar
+
+                </MudButton>
+
+            </MudItem>
+
+        </MudGrid>
+
+    </MudPaper>
+
+    <MudGrid>
+
+        <MudItem xs="12" md="8">
+
+            <MudPaper Elevation="2" Class="pa-4">
+
+                <MudText Typo="Typo.h6">
+                    Calendario de Disponibilidad
+                </MudText>
+
+                <MudDivider Class="mb-3" />
+
+                @if (_disponibilidad?.Calendario != null)
+                {
+                    @if (_disponibilidad?.Calendario != null)
+                    {
+                        <MudTable Items="_disponibilidad.Calendario"
+                                  Dense="true"
+                                  Hover="true"
+                                  Striped="true"
+                                  Bordered="true"
+                                  Breakpoint="Breakpoint.Sm"
+                                  Elevation="0"
+                                  OnRowClick="@((TableRowClickEventArgs<DisponibilidadCalendarioDto> e) => OnRowClick(e))">
+
+                            <HeaderContent>
+
+                                <MudTh Style="background:#455A64;color:white;font-weight:600;">
+                                    Fecha
+                                </MudTh>
+
+                                <MudTh Style="background:#455A64;color:white;font-weight:600;text-align:center;">
+                                    Stock Fijo
+                                </MudTh>
+
+                                <MudTh Style="background:#455A64;color:white;font-weight:600;text-align:center;">
+                                    Reservado
+                                </MudTh>
+
+                                <MudTh Style="background:#455A64;color:white;font-weight:600;text-align:center;">
+                                    Disponible
+                                </MudTh>
+
+                            </HeaderContent>
+
+                            <RowTemplate>
+                                <MudTd>@context.Fecha.ToString("dd/MM/yyyy")</MudTd>
+                                <MudTd>@context.StockFijo</MudTd>
+                                <MudTd>@context.CantidadReservada</MudTd>
+                                <MudTd>@context.CantidadDisponible</MudTd>
+                            </RowTemplate>
+
+                        </MudTable>
+                    }
+                }
+                else
+                {
+                    <MudText Color="Color.Secondary">
+                        Sin información.
+                    </MudText>
+                }
+
+            </MudPaper>
+
+        </MudItem>
+
+        <MudItem xs="12" md="4">
+
+    <MudPaper Elevation="2" Class="pa-4">
+
+        @if (_diaSeleccionado is null)
+        {
+            <MudText Typo="Typo.h6" Style="font-weight:600;">
+                Detalle del Día
+            </MudText>
+
+            <MudDivider Class="mb-3" />
+
+            <MudText>
+                Seleccione una fecha.
+            </MudText>
+        }
+        else
+        {
+            <MudStack Row="true"
+                      Justify="Justify.SpaceBetween"
+                      AlignItems="AlignItems.Center"
+                      Class="mb-1">
+
+                <MudStack Row="true"
+                          AlignItems="AlignItems.Center"
+                          Spacing="1">
+
+                    <MudIcon Icon="@Icons.Material.Filled.Assignment"
+                             Color="Color.Primary" />
+
+                    <MudText Typo="Typo.h6"
+                             Style="font-weight:600;">
+                        Detalle del Día
+                    </MudText>
+
+                </MudStack>
+
+                        <MudChip T="string"
+                                 Color="Color.Info"
+                                 Variant="Variant.Filled"
+                                 Size="Size.Small"
+                                 StartIcon="@Icons.Material.Filled.Today">
+
+                            @_diaSeleccionado.Fecha.ToString("dd/MM/yyyy")
+
+                        </MudChip>
+
+            </MudStack>
+
+            <MudDivider Class="mb-3" />
+
+            <MudTable Items="_detalleDia"
+                      Dense="true"
+                      Hover="true"
+                      Striped="true"
+                      Bordered="true"
+                      Elevation="0">
+
+                <HeaderContent>
+
+                    <MudTh Style="background:#455A64;color:white;font-weight:600;">
+                        Pedido
+                    </MudTh>
+
+                    <MudTh Style="background:#455A64;color:white;font-weight:600;">
+                        Cliente
+                    </MudTh>
+
+                    <MudTh Style="background:#455A64;color:white;font-weight:600;text-align:center;">
+                        Cantidad
+                    </MudTh>
+
+                    <MudTh Style="background:#455A64;color:white;font-weight:600;text-align:center;">
+                        Estado
+                    </MudTh>
+
+                </HeaderContent>
+
+                <RowTemplate>
+
+                    <MudTd>@context.NumeroPedido</MudTd>
+
+                    <MudTd>@context.Cliente</MudTd>
+
+                    <MudTd Align="Align.Center">
+                        @context.Cantidad
+                    </MudTd>
+
+                    <MudTd Align="Align.Center">
+                        @context.Estado
+                    </MudTd>
+
+                </RowTemplate>
+
+            </MudTable>
+        }
+
+    </MudPaper>
+
+</MudItem>
+
+    </MudGrid>
+
+</MudContainer>
+
+@code {
+
+    [Parameter]
+    public int IdArticulo { get; set; }
+
+    private DisponibilidadArticuloDto? _disponibilidad;
+
+    private DateTime? _fechaInicio =
+        new DateTime(DateTime.Today.Year,
+                     DateTime.Today.Month,
+                     1);
+
+    private DateTime? _fechaFin =
+        new DateTime(DateTime.Today.Year,
+                     DateTime.Today.Month,
+                     DateTime.DaysInMonth(DateTime.Today.Year,
+                                          DateTime.Today.Month));
+
+    private List<DisponibilidadDetalleDto> _detalleDia = new();
+
+    private DisponibilidadCalendarioDto? _diaSeleccionado;
+
+    protected override Task OnInitializedAsync()
+    {
+        return Consultar();
+    }
+
+    private async Task Consultar()
+    {
+        try
+        {
+            if (!_fechaInicio.HasValue || !_fechaFin.HasValue)
+            {
+                Snackbar.Add("Debe seleccionar la fecha inicial y final.", Severity.Warning);
+                return;
+            }
+
+            if (_fechaInicio > _fechaFin)
+            {
+                Snackbar.Add("La fecha inicial no puede ser mayor que la fecha final.", Severity.Warning);
+                return;
+            }
+
+            var dias = (_fechaFin.Value - _fechaInicio.Value).TotalDays;
+
+            if (dias > 31)
+            {
+                Snackbar.Add(
+                    "La consulta no puede exceder un mes (31 días).",
+                    Severity.Warning);
+
+                return;
+            }
+
+            _disponibilidad =
+                await DisponibilidadService.ObtenerDisponibilidadAsync(
+                    IdArticulo,
+                    DateOnly.FromDateTime(_fechaInicio.Value),
+                    DateOnly.FromDateTime(_fechaFin.Value));
+
+            _detalleDia.Clear();
+            _diaSeleccionado = null;
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task SeleccionarDia(DisponibilidadCalendarioDto dia)
+    {
+        _diaSeleccionado = dia;
+
+        _detalleDia = await DisponibilidadService.ObtenerDetalleDiaAsync(
+            IdArticulo,
+            dia.Fecha);
+    }
+
+    private async Task OnRowClick(TableRowClickEventArgs<DisponibilidadCalendarioDto> args)
+    {
+        if (args.Item is null)
+            return;
+
+        await SeleccionarDia(args.Item);
+    }
+
+    private void Volver()
+    {
+        Navigation.NavigateTo("/articulos");
+    }
+
+}

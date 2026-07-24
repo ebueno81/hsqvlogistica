@@ -11,4 +11,5 @@ public interface IArticuloRepository
     Task UpdateAsync(Articulo articulo);
     Task SaveChangesAsync();
     Task<IEnumerable<Articulo>> SearchAsync(string filtro);
+    Task<List<Articulo>> GetByIdsAsync(IEnumerable<int> ids);
 }
