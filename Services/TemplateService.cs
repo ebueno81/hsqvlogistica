@@ -186,6 +186,10 @@ namespace HsqvLogistica.Services
                 pedido.FechaEntrega?.ToString("dd/MM/yyyy") ?? string.Empty);
 
             html = html.Replace(
+                "{{Observaciones}}",
+                pedido.Detalles ?? string.Empty);
+
+            html = html.Replace(
                 "{{Direccion}}",
                 pedido.Direccion ?? string.Empty);
 
