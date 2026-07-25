@@ -1,4 +1,5 @@
 ﻿@page "/garantias/ver/{Id:int}"
+@inherits SecurePageBase
 
 @using HsqvLogistica.Models.DTOs.Garantias
 @using HsqvLogistica.Services.Interfaces
@@ -117,6 +118,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
+
+        if (!IsAuthorized)
+            return;
+
         _garantia = await GarantiaService.GetByIdAsync(Id);
         _loading = false;
     }

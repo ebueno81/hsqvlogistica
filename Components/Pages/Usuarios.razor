@@ -1,4 +1,6 @@
 ﻿@page "/usuarios"
+@inherits SecurePageBase
+
 @using HsqvLogistica.Components.Pages.Dialogs
 @using HsqvLogistica.Models.DTOs.Usuarios
 @using HsqvLogistica.Services.Interfaces
@@ -86,8 +88,15 @@
     bool _loading;
 
     protected override async Task OnInitializedAsync()
-        => await LoadData();
+    {
+        await base.OnInitializedAsync();
 
+        if (!IsAuthorized)
+            return;
+
+        await LoadData();
+    }
+    
     async Task LoadData()
     {
         _loading = true;

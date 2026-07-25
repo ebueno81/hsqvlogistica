@@ -1,4 +1,6 @@
 ﻿@page "/empresa"
+@inherits SecurePageBase
+
 @using HsqvLogistica.Integrations.Clients.Interfaces
 @using HsqvLogistica.Integrations.Models
 @using MudBlazor
@@ -129,6 +131,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
+
+        if (!IsAuthorized)
+            return;
+
         try
         {
             var data = await _empresaApi.GetEmpresaAsync();

@@ -1,4 +1,6 @@
 ﻿@page "/articulos"
+@inherits SecurePageBase
+
 @using HsqvLogistica.Components.Pages.Dialogs
 @using HsqvLogistica.Models.DTOs.Articulos
 @using HsqvLogistica.Models.DTOs.Lineas
@@ -120,6 +122,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
+
+        if (!IsAuthorized)
+            return;
+
         _lineasActivas = (await LineaService.GetActivasAsync())
             .Select(x => new LineaLookupDto
             {

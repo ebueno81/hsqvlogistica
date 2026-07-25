@@ -1,4 +1,6 @@
 ﻿@page "/reportes"
+@inherits SecurePageBase
+
 @using HsqvLogistica.Models.DTOs.Almacen
 @using HsqvLogistica.Models.DTOs.Lineas
 @using HsqvLogistica.Models.DTOs.Reportes
@@ -252,6 +254,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
+
+        if (!IsAuthorized)
+            return;
+
         await CargarCombosAsync();
     }
 

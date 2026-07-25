@@ -1,5 +1,6 @@
 ﻿@page "/pedidos/nuevo"
 @page "/pedidos/ver/{Id:int}"
+@inherits SecurePageBase
 
 @using HsqvLogistica.Common.Exceptions
 @using HsqvLogistica.Components.Pages.Components
@@ -152,6 +153,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+         await base.OnInitializedAsync();
+
+        if (!IsAuthorized)
+            return;
+
         if (!UserSession.EstaAutenticado)
         {
             var returnUrl = Uri.EscapeDataString($"/pedidos/ver/{Id}");

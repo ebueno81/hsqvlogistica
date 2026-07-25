@@ -1,4 +1,5 @@
 ﻿@page "/garantias/nuevo"
+@inherits SecurePageBase
 
 @using HsqvLogistica.Components.Pages.Components
 @using HsqvLogistica.Helpers
@@ -131,8 +132,13 @@
 
     GarantiaDetalleGrid? _detalleGrid;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
+
+        if (!IsAuthorized)
+            return;
+
         var hoy = DateTime.Today;
         _fechaDespacho = hoy;
         _fechaEntrega = hoy;

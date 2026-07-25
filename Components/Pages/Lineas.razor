@@ -1,4 +1,6 @@
 ﻿@page "/lineas"
+@inherits SecurePageBase
+
 @using HsqvLogistica.Components.Pages.Dialogs
 @using HsqvLogistica.Models.DTOs.Lineas
 @using HsqvLogistica.Services.Interfaces
@@ -106,6 +108,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
+
+        if (!IsAuthorized)
+            return;
+
         await LoadData();
     }
 

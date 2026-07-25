@@ -1,4 +1,6 @@
 ﻿@page "/clientes"
+@inherits SecurePageBase
+
 @using HsqvLogistica.Components.Pages.Dialogs
 @using HsqvLogistica.Integrations.Models.Clientes
 @using HsqvLogistica.Integrations.Clients.Interfaces
@@ -70,6 +72,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
+
+        if (!IsAuthorized)
+            return;
+
         _loading = true;
         _clientes = await ClienteApi.GetClientesAsync();
         _loading = false;
