@@ -6,6 +6,8 @@ public class PedidoFilterDto
     public DateOnly? FechaDesde { get; set; }
     public DateOnly? FechaHasta { get; set; }
 
+    public int? Estado { get; set; }
+
     public int Page { get; set; }
     public int PageSize { get; set; }
 }

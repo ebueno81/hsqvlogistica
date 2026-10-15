@@ -2,6 +2,9 @@
 
 public class ReporteKardexDto
 {
+    public int IdKardex { get; set; }
+    public int? IdPedido { get; set; }
+
     public int IdArticulo { get; set; }
     public string Codigo { get; set; } = "";
     public string Articulo { get; set; } = "";

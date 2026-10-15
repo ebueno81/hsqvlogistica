@@ -1,7 +1,9 @@
 ﻿@page "/kardex"
+@inherits SecurePageBase
 
 @using HsqvLogistica.Models.DTOs.Movimientos
 @using HsqvLogistica.Services.Interfaces
+@using HsqvLogistica.States
 @using MudBlazor
 
 @inject IMovimientoService MovimientoService
@@ -10,6 +12,7 @@
 @inject ISnackbar Snackbar
 @inject IPedidoService PedidoService
 @inject IUserSessionService UserSession
+@inject FiltroStateService FiltroService
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
 
@@ -20,6 +23,7 @@
               Class="mb-4">
 
         <MudText Typo="Typo.h5">Movimientos de Kardex</MudText>
+
         @if (UserSession.UsuarioActual?.Permisos.PuedeCrearMovimientos == true)
         {
             <MudButton Color="Color.Primary"
@@ -37,7 +41,7 @@
 
             <MudItem xs="12" md="3">
                 <MudTextField Label="Cliente"
-                              @bind-Value="_cliente"
+                              @bind-Value="_filtro.Cliente"
                               Variant="Variant.Text"
                               Dense="true"
                               Margin="Margin.Dense"
@@ -48,23 +52,28 @@
             <MudItem xs="12" md="3">
                 <MudSelect T="string"
                            Label="Tipo Movimiento"
-                           @bind-Value="_tipo">
+                           @bind-Value="_filtro.Tipo">
+
                     <MudSelectItem Value="@("TOD")">Todos</MudSelectItem>
                     <MudSelectItem Value="@("ING")">Entrada</MudSelectItem>
-                    <MudSelectItem Value=@("SAL")">Salida</MudSelectItem>
+                    <MudSelectItem Value="@("SAL")">Salida</MudSelectItem>
+
                 </MudSelect>
             </MudItem>
 
             <MudItem xs="12" md="2">
-                <MudDatePicker Label="Desde" @bind-Date="_fechaDesde" />
+                <MudDatePicker Label="Desde"
+                               @bind-Date="_filtro.FechaDesde" />
             </MudItem>
 
             <MudItem xs="12" md="2">
-                <MudDatePicker Label="Hasta" @bind-Date="_fechaHasta" />
+                <MudDatePicker Label="Hasta"
+                               @bind-Date="_filtro.FechaHasta" />
             </MudItem>
 
             <MudItem xs="12" md="2" Class="d-flex align-end">
-                <MudButton OnClick="Buscar" Color="Color.Primary">
+                <MudButton OnClick="Buscar"
+                           Color="Color.Primary">
                     Buscar
                 </MudButton>
             </MudItem>
@@ -77,6 +86,8 @@
     <MudTable T="MovimientoDto"
               @ref="_table"
               ServerData="LoadServerData"
+              CurrentPage="@_filtro.Pagina"
+              CurrentPageChanged="OnPaginaChanged"
               RowsPerPage="10"
               Dense
               Hover
@@ -122,12 +133,16 @@
                          Color="@(row.Activo == true ? Color.Success : Color.Error)"
                          Variant="Variant.Filled"
                          Size="Size.Small"
-                         Icon="@(row.Activo == true ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                         Icon="@(row.Activo == true
+                                                      ? Icons.Material.Filled.CheckCircle
+                                                      : Icons.Material.Filled.Cancel)"
                          Clickable="@(row.Activo == true && PuedeAnular)"
-                         Style="@(row.Activo == true ? "cursor:pointer;" : "cursor:default;")"
+                         Style="@(row.Activo == true
+                                                      ? "cursor:pointer;"
+                                                      : "cursor:default;")"
                          OnClick="@(row.Activo == true && PuedeAnular
-                                 ? (() => ConfirmarAnulacion(row))
-                                 : null)">
+                                                      ? (() => ConfirmarAnulacion(row))
+                                                      : null)">
                     @(row.Activo == true ? "Activo" : "Anulado")
                 </MudChip>
             </MudTd>
@@ -135,73 +150,183 @@
             <MudTd Align="Align.Right">
                 <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                Color="Color.Primary"
-                               OnClick="@(() => Navigation.NavigateTo($"/kardex/ver/{row.Id}"))" />
+                               OnClick="@(() =>
+                                                                  Navigation.NavigateTo($"/kardex/ver/{row.Id}"))" />
             </MudTd>
+
         </RowTemplate>
 
+        <NoRecordsContent>
+            <MudText Color="Color.Secondary">
+                No se encontraron movimientos.
+            </MudText>
+        </NoRecordsContent>
+
         <PagerContent>
-            <MudTablePager />
+            <MudTablePager PageSizeOptions="@(new int[] { 10, 20, 50, 100 })"
+                           RowsPerPageString="Registros por página"
+                           InfoFormat="{first_item}-{last_item} de {all_items}"
+                           HorizontalAlignment="HorizontalAlignment.Right" />
         </PagerContent>
+
     </MudTable>
 
 </MudContainer>
 
 @code {
 
-    string? _tipo; // ING / SAL
-    string? _cliente;
-    DateTime? _fechaDesde = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-    DateTime? _fechaHasta = DateTime.Today;
+    // ==========================================
+    // ESTADO DE FILTROS
+    // ==========================================
 
-    MudTable<MovimientoDto>? _table;
+    private KardexFiltroState _filtro = new();
+
+    private MudTable<MovimientoDto>? _table;
+
     private bool PuedeAnular =>
-    UserSession.UsuarioActual?.Permisos.PuedeAnularOperaciones == true;
+        UserSession.UsuarioActual?.Permisos.PuedeAnularOperaciones == true;
 
-    async Task<TableData<MovimientoDto>> LoadServerData(
+    // ==========================================
+    // INICIALIZACIÓN
+    // ==========================================
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Recuperar filtros antes del primer renderizado
+        _filtro = FiltroService.Obtener<KardexFiltroState>();
+
+        await base.OnInitializedAsync();
+
+        if (!IsAuthorized)
+            return;
+    }
+
+    // ==========================================
+    // CAMBIO DE PÁGINA
+    // ==========================================
+
+    private void OnPaginaChanged(int pagina)
+    {
+        _filtro.Pagina = Math.Max(0, pagina);
+    }
+
+    // ==========================================
+    // LISTADO DE MOVIMIENTOS
+    // ==========================================
+
+    private async Task<TableData<MovimientoDto>> LoadServerData(
         TableState state,
         CancellationToken cancellationToken)
     {
-        var result = await MovimientoService.SearchAsync(new MovimientoFilterDto
+        try
         {
-            Tipo = _tipo,
-            Cliente = _cliente,
-            FechaDesde = _fechaDesde.HasValue
-                ? DateOnly.FromDateTime(_fechaDesde.Value)
-                : null,
-            FechaHasta = _fechaHasta.HasValue
-                ? DateOnly.FromDateTime(_fechaHasta.Value)
-                : null,
-            Page = state.Page,
-            PageSize = state.PageSize
-        }, cancellationToken);
+            int pagina = Math.Max(0, state.Page);
 
-        return new TableData<MovimientoDto>
+            _filtro.Pagina = pagina;
+
+            var filtro = new MovimientoFilterDto
+            {
+                Tipo = _filtro.Tipo == "TOD"
+                    ? null
+                    : _filtro.Tipo,
+
+                Cliente = _filtro.Cliente,
+
+                FechaDesde = _filtro.FechaDesde.HasValue
+                    ? DateOnly.FromDateTime(_filtro.FechaDesde.Value)
+                    : null,
+
+                FechaHasta = _filtro.FechaHasta.HasValue
+                    ? DateOnly.FromDateTime(_filtro.FechaHasta.Value)
+                    : null,
+
+                Page = pagina,
+                PageSize = state.PageSize
+            };
+
+            var result = await MovimientoService.SearchAsync(
+                filtro,
+                cancellationToken);
+
+            return new TableData<MovimientoDto>
+            {
+                Items = result.Items,
+                TotalItems = result.TotalItems
+            };
+        }
+        catch (OperationCanceledException)
+            when (cancellationToken.IsCancellationRequested)
         {
-            Items = result.Items,
-            TotalItems = result.TotalItems
-        };
+            return new TableData<MovimientoDto>
+            {
+                Items = new List<MovimientoDto>(),
+                TotalItems = 0
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(
+                $"ERROR AL CARGAR KARDEX: {ex}");
+
+            Snackbar.Add(
+                "Ocurrió un error al consultar los movimientos.",
+                Severity.Error);
+
+            return new TableData<MovimientoDto>
+            {
+                Items = new List<MovimientoDto>(),
+                TotalItems = 0
+            };
+        }
     }
 
-    async Task ConfirmarAnulacion(MovimientoDto movimiento)
+    // ==========================================
+    // BUSCAR
+    // ==========================================
+
+    private async Task Buscar()
+    {
+        if (_table is null)
+            return;
+
+        _filtro.Pagina = 0;
+
+        if (_table.CurrentPage != 0)
+        {
+            _table.NavigateTo(0);
+        }
+        else
+        {
+            await _table.ReloadServerData();
+        }
+    }
+
+    // ==========================================
+    // ANULAR MOVIMIENTO
+    // ==========================================
+
+    private async Task ConfirmarAnulacion(MovimientoDto movimiento)
     {
         if (movimiento.IdPedido.HasValue)
         {
-            int estadoPedido = await obtenerPedido(movimiento.IdPedido.Value);
+            int estadoPedido =
+                await obtenerPedido(movimiento.IdPedido.Value);
+
             if (movimiento.IdMotivo == 1 && estadoPedido < 2)
             {
                 Snackbar.Add(
                     $"No se puede anular el movimiento #{movimiento.Id} porque el pedido asociado tiene una Devolución.",
-                    Severity.Error
-                );
+                    Severity.Error);
+
                 return;
             }
 
-            if (movimiento.IdMotivo == 2 && estadoPedido < 3) 
+            if (movimiento.IdMotivo == 2 && estadoPedido < 3)
             {
                 Snackbar.Add(
                     $"No se puede anular el movimiento #{movimiento.Id} porque el pedido asociado no tiene el estado correcto.",
-                    Severity.Error
-                );
+                    Severity.Error);
+
                 return;
             }
         }
@@ -218,52 +343,76 @@
             message: $"¿Está seguro que desea anular el movimiento #{movimiento.Id}?",
             yesText: "Anular",
             cancelText: "Cancelar",
-            options: options
-        );
+            options: options);
 
         if (result == true)
         {
-            var actualizado = await MovimientoService.AnularMovimiento(movimiento.Id, UserSession.UsuarioActual.Usuario);
-            
+            var actualizado = await MovimientoService.AnularMovimiento(
+                movimiento.Id,
+                UserSession.UsuarioActual!.Usuario);
+
             if (movimiento.IdMotivo == 1)
-                await actualizarEstadoPedido(movimiento.IdPedido ?? 0, 1, UserSession.UsuarioActual.Usuario);
-            
+            {
+                await actualizarEstadoPedido(
+                    movimiento.IdPedido ?? 0,
+                    1,
+                    UserSession.UsuarioActual!.Usuario);
+            }
+
             if (movimiento.IdMotivo == 2)
-                await actualizarEstadoPedido(movimiento.IdPedido ?? 0, 2, UserSession.UsuarioActual.Usuario);
+            {
+                await actualizarEstadoPedido(
+                    movimiento.IdPedido ?? 0,
+                    2,
+                    UserSession.UsuarioActual!.Usuario);
+            }
 
             if (!actualizado)
             {
-                Snackbar.Add("Se registró el movimiento pero no se pudo actualizar el estado del pedido.", Severity.Warning);
+                Snackbar.Add(
+                    "Se registró el movimiento pero no se pudo actualizar el estado del pedido.",
+                    Severity.Warning);
             }
             else
             {
-                Snackbar.Add($"Movimiento #{movimiento.Id} anulado correctamente", Severity.Success);
-                await _table!.ReloadServerData();
+                Snackbar.Add(
+                    $"Movimiento #{movimiento.Id} anulado correctamente",
+                    Severity.Success);
+
+                if (_table is not null)
+                    await _table.ReloadServerData();
             }
         }
     }
 
-    async Task <int> obtenerPedido(int idPedido)
+    // ==========================================
+    // OBTENER ESTADO DEL PEDIDO
+    // ==========================================
+
+    private async Task<int> obtenerPedido(int idPedido)
     {
         var pedido = await PedidoService.GetByIdAsync(idPedido);
+
         if (pedido != null)
         {
-            return pedido.Estado.Value;
+            return pedido.Estado ?? 0;
         }
-        else
-        {
-            return 0;
-        }
-    }
-    
-    async Task<bool> actualizarEstadoPedido(int idPedido, int estadoPedido, string usuarioModifica)
-    {
-        return await PedidoService.ChangeStatusAsync(idPedido, estadoPedido, usuarioModifica);
+
+        return 0;
     }
 
-    async Task Buscar()
+    // ==========================================
+    // ACTUALIZAR ESTADO DEL PEDIDO
+    // ==========================================
+
+    private async Task<bool> actualizarEstadoPedido(
+        int idPedido,
+        int estadoPedido,
+        string usuarioModifica)
     {
-        _table?.NavigateTo(0);
-        await _table!.ReloadServerData();
+        return await PedidoService.ChangeStatusAsync(
+            idPedido,
+            estadoPedido,
+            usuarioModifica);
     }
 }

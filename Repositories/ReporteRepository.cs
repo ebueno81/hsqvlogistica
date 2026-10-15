@@ -1,9 +1,7 @@
-﻿using DocumentFormat.OpenXml.Wordprocessing;
-using HsqvLogistica.Data;
+﻿using HsqvLogistica.Data;
 using HsqvLogistica.Models.DTOs.Reportes;
 using HsqvLogistica.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System;
 
 namespace HsqvLogistica.Repositories;
 

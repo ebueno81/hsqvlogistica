@@ -1,48 +1,69 @@
 ﻿using HsqvLogistica.Data;
-using HsqvLogistica.Mappers;
 using HsqvLogistica.Models.DTOs.Pedidos;
 using HsqvLogistica.Models.Entities.Store;
 using HsqvLogistica.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Net.NetworkInformation;
 
 namespace HsqvLogistica.Repositories;
 
 public class PedidoRepository : IPedidoRepository
 {
-    private readonly StoreDbContext _context;
+    private readonly IDbContextFactory<StoreDbContext> _contextFactory;
 
-    public PedidoRepository(StoreDbContext context)
+    public PedidoRepository(
+        IDbContextFactory<StoreDbContext> contextFactory)
     {
-        _context = context;
+        _contextFactory = contextFactory;
     }
 
-    public async Task<IEnumerable<Pedido>> GetAllAsync() =>
-        await _context.Pedidos
+    public async Task<IEnumerable<Pedido>> GetAllAsync()
+    {
+        await using var context =
+            await _contextFactory.CreateDbContextAsync();
+
+        return await context.Pedidos
             .Include(p => p.PedidoDetalles)
             .AsNoTracking()
             .ToListAsync();
+    }
 
     public async Task<Pedido?> GetByIdAsync(int id)
     {
-        return await _context.Pedidos
+        await using var context =
+            await _contextFactory.CreateDbContextAsync();
+
+        return await context.Pedidos
             .Include(p => p.PedidoDetalles)
-                .ThenInclude(d => d.IdArticuloNavigation) 
+                .ThenInclude(d => d.IdArticuloNavigation)
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
     public async Task AddAsync(Pedido pedido)
-        => await _context.Pedidos.AddAsync(pedido);
+    {
+        await using var context =
+            await _contextFactory.CreateDbContextAsync();
+
+        await context.Pedidos.AddAsync(pedido);
+    }
 
     public async Task SaveChangesAsync()
-        => await _context.SaveChangesAsync();
-
-    public async Task<bool> ChangeStatusAsync(int id, int activo, string usuarioModifica)
     {
-        var filas = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+        await using var context =
+            await _contextFactory.CreateDbContextAsync();
+
+        await context.SaveChangesAsync();
+    }
+
+    public async Task<bool> ChangeStatusAsync(
+    int id,
+    int activo,
+    string usuarioModifica)
+    {
+        await using var context =
+            await _contextFactory.CreateDbContextAsync();
+
+        var filas = await context.Database.ExecuteSqlInterpolatedAsync($@"
         EXEC sp_ActualizarEstadoPedido
             @Id={id},
             @Id_Status={activo},
@@ -55,9 +76,13 @@ public class PedidoRepository : IPedidoRepository
     PedidoFilterDto filter,
     CancellationToken cancellationToken)
     {
-        var query = _context.Pedidos.AsQueryable();
+        await using var context =
+            await _contextFactory.CreateDbContextAsync(cancellationToken);
 
-        // 🔎 Filtro por cliente
+        var query = context.Pedidos
+            .AsNoTracking()
+            .AsQueryable();
+
         if (!string.IsNullOrWhiteSpace(filter.Cliente))
         {
             query = query.Where(p =>
@@ -65,26 +90,41 @@ public class PedidoRepository : IPedidoRepository
                 p.Cliente.Contains(filter.Cliente));
         }
 
-        // 📅 Filtro fecha desde
         if (filter.FechaDesde.HasValue)
         {
             var desde = filter.FechaDesde.Value;
-            query = query.Where(p => p.FechaEntrega >= desde);
+
+            query = query.Where(p =>
+                p.FechaEntrega >= desde);
         }
 
-        // 📅 Filtro fecha hasta
         if (filter.FechaHasta.HasValue)
         {
             var hasta = filter.FechaHasta.Value;
-            query = query.Where(p => p.FechaEntrega <= hasta);
+
+            query = query.Where(p =>
+                p.FechaEntrega <= hasta);
+        }
+
+        // FILTRO POR ESTADO DEL PEDIDO
+        if (filter.Estado.HasValue)
+        {
+            query = query.Where(p =>
+                p.Estado == filter.Estado.Value);
         }
 
         var total = await query.CountAsync(cancellationToken);
 
+        // Garantizar valores válidos para la paginación
+        int page = Math.Max(0, filter.Page);
+        int pageSize = filter.PageSize > 0 ? filter.PageSize : 10;
+
+        int skip = page * pageSize;
+
         var items = await query
             .OrderByDescending(p => p.Id)
-            .Skip(filter.Page * filter.PageSize)
-            .Take(filter.PageSize)
+            .Skip(skip)
+            .Take(pageSize)
             .Select(p => new PedidoDto
             {
                 Id = p.Id,
@@ -102,9 +142,14 @@ public class PedidoRepository : IPedidoRepository
         };
     }
 
-    public async Task<bool> AnularPedido(int id, string usuarioModifica)
+    public async Task<bool> AnularPedido(
+    int id,
+    string usuarioModifica)
     {
-        var filas = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+        await using var context =
+            await _contextFactory.CreateDbContextAsync();
+
+        var filas = await context.Database.ExecuteSqlInterpolatedAsync($@"
         EXEC sp_ActualizarAnularPedido
             @Id={id},
             @Usuario_Modifica={usuarioModifica}");
@@ -112,17 +157,26 @@ public class PedidoRepository : IPedidoRepository
         return filas > 0;
     }
 
-    public async Task<List<DisponibilidadArticuloDto>> ObtenerDisponibilidadAsync(
-        DateOnly fecha, IEnumerable<int> articulos, int? idPedidoExcluir = null)
+    public async Task<List<DisponibilidadArticuloDto>>
+    ObtenerDisponibilidadAsync(
+        DateOnly fecha,
+        IEnumerable<int> articulos,
+        int? idPedidoExcluir = null)
     {
-        var query = _context.PedidoDetalles
-             .Where(d =>
-                 d.IdArticulo.HasValue &&
-                 articulos.Contains(d.IdArticulo.Value) &&
-                 d.IdPedidoNavigation.Activo == true &&
-                 (d.IdPedidoNavigation.Estado == 0 ||
-                  d.IdPedidoNavigation.Estado == 1) &&
-                 d.IdPedidoNavigation.FechaEntrega == fecha);
+        await using var context =
+            await _contextFactory.CreateDbContextAsync();
+
+        var idsArticulos = articulos.ToArray();
+
+        var query = context.PedidoDetalles
+            .AsNoTracking()
+            .Where(d =>
+                d.IdArticulo.HasValue &&
+                idsArticulos.Contains(d.IdArticulo.Value) &&
+                d.IdPedidoNavigation.Activo == true &&
+                (d.IdPedidoNavigation.Estado == 0 ||
+                 d.IdPedidoNavigation.Estado == 1) &&
+                d.IdPedidoNavigation.FechaEntrega == fecha);
 
         if (idPedidoExcluir.HasValue)
         {

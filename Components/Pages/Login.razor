@@ -46,6 +46,7 @@
                           Margin="Margin.Dense"
                           FullWidth="true"
                           Required="true"
+                          Disabled="@_loading"
                           Adornment="Adornment.End"
                           AdornmentIcon="@Icons.Material.Filled.MailOutline" />
 
@@ -55,6 +56,7 @@
                           Margin="Margin.Dense"
                           FullWidth="true"
                           Required="true"
+                          Disabled="@_loading"
                           InputType="@(_showPassword? InputType.Text: InputType.Password)"
                           Adornment="Adornment.End"
                           AdornmentIcon="@(_showPassword? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
@@ -63,6 +65,7 @@
             <div class="row-between">
                 <MudCheckBox T="bool"
                              @bind-Value="_model.RememberMe"
+                             Disabled="@_loading"
                              Label="Remember me?" />
                 <MudLink OnClick="ForgotPassword"
                          Underline="Underline.Always">
@@ -86,10 +89,22 @@
                        Variant="Variant.Filled"
                        Color="Color.Primary"
                        Class="mt-4"
-                       Disabled="_loading"
+                       Disabled="@_loading"
                        OnClick="SignIn">
 
-                @(_loading ? "VALIDANDO..." : "SIGN IN")
+                @if (_loading)
+                {
+                    <MudProgressCircular Size="Size.Small"
+                                         Indeterminate="true"
+                                         Color="Color.Inherit"
+                                         Class="me-2" />
+
+                    <MudText>INICIANDO SESIÓN...</MudText>
+                }
+                else
+                {
+                    <MudText>SIGN IN</MudText>
+                }
 
             </MudButton>
 
@@ -140,19 +155,33 @@
 
     private async Task SignIn()
     {
+        // Evitar múltiples clics o ejecuciones simultáneas
+        if (_loading)
+            return;
+
         if (_form is null)
             return;
 
-        await _form.Validate();
-
-        if (!_form.IsValid)
-            return;
-
+        // Bloquear inmediatamente
         _loading = true;
         _mensajeError = null;
 
+        // Indicar si el inicio de sesión fue exitoso
+        bool navegacionIniciada = false;
+
         try
         {
+            // Refrescar el botón antes de iniciar la validación
+            await InvokeAsync(StateHasChanged);
+            await Task.Yield();
+
+            // Validar formulario
+            await _form.Validate();
+
+            if (!_form.IsValid)
+                return;
+
+            // Validar usuario en la base de datos
             var usuario = await UsuarioService.ValidateUserAsync(
                 _model.Usuario!,
                 _model.Password!);
@@ -163,6 +192,7 @@
                 return;
             }
 
+            // Crear sesión
             UserSession.IniciarSesion(new UsuarioSesionDto
             {
                 Id = usuario.Id,
@@ -174,6 +204,7 @@
                 Permisos = PermissionHelper.ObtenerPermisos(usuario.IdTipo)
             });
 
+            // Recordar credenciales
             if (_model.RememberMe)
             {
                 await LoginStorage.GuardarAsync(
@@ -190,22 +221,32 @@
                 await LoginStorage.EliminarAsync();
             }
 
-            if (!string.IsNullOrWhiteSpace(ReturnUrl))
-            {
-                Navigation.NavigateTo(ReturnUrl);
-            }
-            else
-            {
-                Navigation.NavigateTo("/dashboard");
-            }
+            // Validar destino
+            string destino = !string.IsNullOrWhiteSpace(ReturnUrl)
+                && ReturnUrl.StartsWith("/")
+                && !ReturnUrl.StartsWith("//")
+                && !ReturnUrl.StartsWith("/\\")
+                    ? ReturnUrl
+                    : "/dashboard";
+
+            // Mantener el botón bloqueado durante la navegación
+            navegacionIniciada = true;
+
+            Navigation.NavigateTo(destino);
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine($"ERROR LOGIN: {ex}");
+
             _mensajeError = "Ocurrió un error al intentar iniciar sesión.";
         }
         finally
         {
-            _loading = false;
+            // Solo desbloquear cuando no se inició la navegación
+            if (!navegacionIniciada)
+            {
+                _loading = false;
+            }
         }
     }
 

@@ -4,6 +4,7 @@
 @using HsqvLogistica.Components.Pages.Dialogs
 @using HsqvLogistica.Models.DTOs.Pedidos
 @using HsqvLogistica.Services.Interfaces
+@using HsqvLogistica.States
 @using MudBlazor
 
 @inject IPedidoService PedidoService
@@ -11,6 +12,7 @@
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject IUserSessionService UserSession
+@inject FiltroStateService FiltroService
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
 
@@ -24,7 +26,7 @@
         @if (UserSession.UsuarioActual?.Permisos.PuedeCrearPedidos == true)
         {
             <MudButton Color="Color.Primary"
-                StartIcon="@Icons.Material.Filled.Add"
+                       StartIcon="@Icons.Material.Filled.Add"
                        OnClick="GoNuevoPedido"
                        Disabled="@_isNavigating">
                 Nuevo Pedido
@@ -39,22 +41,53 @@
 
             <MudItem xs="12" md="4">
                 <MudTextField Label="Cliente"
-                              @bind-Value="_cliente"
+                              @bind-Value="_filtro.Cliente"
                               Variant="Variant.Outlined"
                               Adornment="Adornment.Start"
                               AdornmentIcon="@Icons.Material.Filled.Search" />
             </MudItem>
 
-            <MudItem xs="12" md="3">
+            <MudItem xs="12" md="2">
                 <MudDatePicker Label="Desde"
-                               @bind-Date="_fechaDesde"
+                               @bind-Date="_filtro.FechaDesde"
                                Variant="Variant.Outlined" />
             </MudItem>
 
-            <MudItem xs="12" md="3">
+            <MudItem xs="12" md="2">
                 <MudDatePicker Label="Hasta"
-                               @bind-Date="_fechaHasta"
+                               @bind-Date="_filtro.FechaHasta"
                                Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudSelect T="int?"
+                           Label="Estado del Pedido"
+                           @bind-Value="_filtro.Estado"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense"
+                           Dense="true">
+
+                    <MudSelectItem T="int?" Value="@((int?)null)">
+                        Todos
+                    </MudSelectItem>
+
+                    <MudSelectItem T="int?" Value="@((int?)0)">
+                        Pendiente
+                    </MudSelectItem>
+
+                    <MudSelectItem T="int?" Value="@((int?)1)">
+                        Pendiente de despacho
+                    </MudSelectItem>
+
+                    <MudSelectItem T="int?" Value="@((int?)2)">
+                        Despachado
+                    </MudSelectItem>
+
+                    <MudSelectItem T="int?" Value="@((int?)3)">
+                        Entregado
+                    </MudSelectItem>
+
+                </MudSelect>
             </MudItem>
 
             <MudItem xs="12" md="2" Class="d-flex align-end">
@@ -75,10 +108,11 @@
         <MudTable T="PedidoDto"
                   @ref="_table"
                   ServerData="LoadServerData"
+                  CurrentPage="@_filtro.Pagina"
+                  CurrentPageChanged="OnPaginaChanged"
                   Dense
                   Hover
                   Striped
-                  Loading="_loading"
                   RowsPerPage="10">
 
             <HeaderContent>
@@ -99,33 +133,46 @@
                 <MudTd>@row.Cliente</MudTd>
                 <MudTd>@row.FechaEntrega?.ToString("dd/MM/yyyy")</MudTd>
 
-                <MudTd>
-                    <MudChip T="string"
-                             Color="@GetEstadoColor(row.Estado)"
-                             Variant="Variant.Filled"
-                             Size="Size.Small">
-                        @GetEstadoTexto(row.Estado)
-                    </MudChip>
-                </MudTd>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudSelect T="int?"
+                               Label="Estado del Pedido"
+                               @bind-Value="_filtro.Estado"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Dense="true">
+
+                        <MudSelectItem T="int?" Value="@((int?)null)">
+                            Todos
+                        </MudSelectItem>
+
+                        @foreach (var estado in _estadosPedido)
+                        {
+                            <MudSelectItem T="int?" Value="@((int?)estado)">
+                                @GetEstadoTexto(estado)
+                            </MudSelectItem>
+                        }
+
+                    </MudSelect>
+                </MudItem>
                 @if (UserSession.UsuarioActual?.Permisos.PuedeAnularOperaciones == true)
                 {
-                <MudTd>
-                    <MudChip T="string"
-                             Color="@(row.Activo == true ? Color.Success : Color.Error)"
-                             Variant="Variant.Filled"
-                             Size="Size.Small"
-                             Clickable="@PuedeAnular(row)"
-                             Style="@(PuedeAnular(row) ? "cursor:pointer;" : "cursor:default;")"
-                             OnClick="@(PuedeAnular(row) ? (() => ConfirmarAnulacion(row)) : null)">
-                        @(row.Activo == true ? "Activo" : "Anulado")
-                    </MudChip>
-                </MudTd>
+                    <MudTd>
+                        <MudChip T="string"
+                                 Color="@(row.Activo == true ? Color.Success : Color.Error)"
+                                 Variant="Variant.Filled"
+                                 Size="Size.Small"
+                                 Clickable="@PuedeAnular(row)"
+                                 Style="@(PuedeAnular(row) ? "cursor:pointer;" : "cursor:default;")"
+                                 OnClick="@(PuedeAnular(row) ? (() => ConfirmarAnulacion(row)) : null)">
+                            @(row.Activo == true ? "Activo" : "Anulado")
+                        </MudChip>
+                    </MudTd>
                 }
 
                 <MudTd Align="Align.Right">
                     <MudIconButton Icon="@Icons.Material.Filled.Visibility"
-                                    Color="Color.Primary"
-                                    OnClick="@(() => Navigation.NavigateTo($"/pedidos/ver/{row.Id}"))" />
+                                   Color="Color.Primary"
+                                   OnClick="@(() => Navigation.NavigateTo($"/pedidos/ver/{row.Id}"))" />
                     @if (UserSession.UsuarioActual?.Permisos.PuedeAprobarPedidos == true)
                     {
                         <!-- Aprobar (solo Pendiente + Activo) -->
@@ -137,7 +184,7 @@
                                            OnClick="@(() => ConfirmarAprobacion(row))" />
                         }
                     }
-                </MudTd>                
+                </MudTd>
             </RowTemplate>
 
             <NoRecordsContent>
@@ -145,6 +192,14 @@
                     No se encontraron pedidos
                 </MudText>
             </NoRecordsContent>
+
+            <!-- PAGINACIÓN -->
+            <PagerContent>
+                <MudTablePager PageSizeOptions="@(new int[] { 10, 20, 50, 100 })"
+                               RowsPerPageString="Registros por página"
+                               InfoFormat="{first_item}-{last_item} de {all_items}"
+                               HorizontalAlignment="HorizontalAlignment.Right" />
+            </PagerContent>
 
         </MudTable>
 
@@ -159,10 +214,11 @@
     DateTime? _fechaDesde = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
     DateTime? _fechaHasta = DateTime.Today;
 
-    bool _loading;
     MudTable<PedidoDto>? _table;
 
     private bool _isNavigating = false;
+
+    private readonly int[] _estadosPedido = { 0, 1, 2, 3 };
 
     private void GoNuevoPedido()
     {
@@ -174,43 +230,56 @@
         Navigation.NavigateTo("/pedidos/nuevo");
     }
 
+    private PedidoFiltroState _filtro = new();
+
+    private void OnPaginaChanged(int pagina)
+    {
+        _filtro.Pagina = Math.Max(0, pagina);
+    }
+
     protected override async Task OnInitializedAsync()
     {
+        // Recuperar filtros guardados antes del primer renderizado
+        _filtro = FiltroService.Obtener<PedidoFiltroState>();
+
         await base.OnInitializedAsync();
 
         if (!IsAuthorized)
             return;
+
     }
 
-    async Task<TableData<PedidoDto>> LoadServerData(
+    private async Task<TableData<PedidoDto>> LoadServerData(
     TableState state,
     CancellationToken cancellationToken)
     {
-        if (_loading)
-        {
-            return new TableData<PedidoDto>
-            {
-                Items = new List<PedidoDto>(),
-                TotalItems = 0
-            };
-        }
-
-        _loading = true;
-
         try
         {
-            var result = await PedidoService.SearchAsync(new PedidoFilterDto
+            int pagina = Math.Max(0, state.Page);
+
+            _filtro.Pagina = pagina;
+
+            var filtro = new PedidoFilterDto
             {
-                Cliente = _cliente,
-                FechaDesde = _fechaDesde.HasValue
-                    ? DateOnly.FromDateTime(_fechaDesde.Value)
+                Cliente = _filtro.Cliente,
+
+                FechaDesde = _filtro.FechaDesde.HasValue
+                    ? DateOnly.FromDateTime(_filtro.FechaDesde.Value)
                     : null,
-                FechaHasta = _fechaHasta.HasValue
-                    ? DateOnly.FromDateTime(_fechaHasta.Value)
+
+                FechaHasta = _filtro.FechaHasta.HasValue
+                    ? DateOnly.FromDateTime(_filtro.FechaHasta.Value)
                     : null,
+
+                Estado = _filtro.Estado,
+
                 Page = state.Page,
                 PageSize = state.PageSize
-            }, cancellationToken);
+            };
+
+            var result = await PedidoService.SearchAsync(
+                filtro,
+                cancellationToken);
 
             return new TableData<PedidoDto>
             {
@@ -218,19 +287,44 @@
                 TotalItems = result.TotalItems
             };
         }
-        finally
+        catch (OperationCanceledException)
+            when (cancellationToken.IsCancellationRequested)
         {
-            _loading = false;
+            return new TableData<PedidoDto>
+            {
+                Items = new List<PedidoDto>(),
+                TotalItems = 0
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR AL CARGAR PEDIDOS: {ex}");
+
+            Snackbar.Add(
+                "Ocurrió un error al consultar los pedidos.",
+                Severity.Error);
+
+            return new TableData<PedidoDto>
+            {
+                Items = new List<PedidoDto>(),
+                TotalItems = 0
+            };
         }
     }
 
-    async Task Buscar()
+    private async Task Buscar()
     {
-        if (_loading) return;
+        if (_table is null)
+            return;
 
-        if (_table is not null)
+        _filtro.Pagina = 0;
+
+        if (_table.CurrentPage != 0)
         {
             _table.NavigateTo(0);
+        }
+        else
+        {
             await _table.ReloadServerData();
         }
     }

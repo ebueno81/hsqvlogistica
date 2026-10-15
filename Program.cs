@@ -8,6 +8,7 @@ using HsqvLogistica.Repositories;
 using HsqvLogistica.Repositories.Interfaces;
 using HsqvLogistica.Services;
 using HsqvLogistica.Services.Interfaces;
+using HsqvLogistica.States;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 
@@ -23,10 +24,11 @@ builder.Services.AddMudServices();
 // Configuración
 builder.Configuration.AddJsonFile("appsettings.json");
 
-// DbContext
-builder.Services.AddDbContext<StoreDbContext>(options =>
+// DbContext Factory
+builder.Services.AddDbContextFactory<StoreDbContext>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("CadenaSQL"));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("CadenaSQL"));
 });
 
 // DI
@@ -64,6 +66,8 @@ builder.Services.AddScoped<ILoginStorageService, LoginStorageService>();
 builder.Services.AddScoped<IArticuloDisponibilidadRepository, ArticuloDisponibilidadRepository>();
 builder.Services.AddScoped<IArticuloDisponibilidadService, ArticuloDisponibilidadService>();
 builder.Services.AddScoped<IArticuloStockService, ArticuloStockService>();
+
+builder.Services.AddScoped<FiltroStateService>();
 
 builder.Services.AddMemoryCache();
 

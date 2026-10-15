@@ -1,4 +1,5 @@
-﻿using HsqvLogistica.Data;
+﻿
+using HsqvLogistica.Data;
 using HsqvLogistica.Models.DTOs.Movimientos;
 using HsqvLogistica.Models.Entities.Store;
 using HsqvLogistica.Repositories.Interfaces;
@@ -8,37 +9,69 @@ namespace HsqvLogistica.Repositories
 {
     public class MovimientoRepository : IMovimientoRepository
     {
-        private readonly StoreDbContext _context;
+        private readonly IDbContextFactory<StoreDbContext> _contextFactory;
 
-        public MovimientoRepository(StoreDbContext context)
+        public MovimientoRepository(
+            IDbContextFactory<StoreDbContext> contextFactory)
         {
-            _context = context;
+            _contextFactory = contextFactory;
         }
 
+        // ==========================================
+        // LISTADO DE MOVIMIENTOS - KARDEX
+        // ==========================================
         public async Task<MovimientoPagedResultDto> SearchAsync(
             MovimientoFilterDto filter,
             CancellationToken cancellationToken)
         {
-            var query = _context.Movimientos.AsQueryable();
+            await using var context =
+                await _contextFactory.CreateDbContextAsync(cancellationToken);
 
+            var query = context.Movimientos
+                .AsNoTracking()
+                .AsQueryable();
+
+            // Filtro por tipo de movimiento
             if (!string.IsNullOrEmpty(filter.Tipo))
-                query = query.Where(x => x.IdMotivoNavigation!.TipoMov == filter.Tipo);
+            {
+                query = query.Where(x =>
+                    x.IdMotivoNavigation!.TipoMov == filter.Tipo);
+            }
 
+            // Filtro por cliente
             if (!string.IsNullOrEmpty(filter.Cliente))
-                query = query.Where(x => x.Cliente!.Contains(filter.Cliente));
+            {
+                query = query.Where(x =>
+                    x.Cliente != null &&
+                    x.Cliente.Contains(filter.Cliente));
+            }
 
+            // Fecha desde
             if (filter.FechaDesde.HasValue)
-                query = query.Where(x => x.Fecha >= filter.FechaDesde);
+            {
+                query = query.Where(x =>
+                    x.Fecha >= filter.FechaDesde);
+            }
 
+            // Fecha hasta
             if (filter.FechaHasta.HasValue)
-                query = query.Where(x => x.Fecha <= filter.FechaHasta);
+            {
+                query = query.Where(x =>
+                    x.Fecha <= filter.FechaHasta);
+            }
 
             var total = await query.CountAsync(cancellationToken);
 
+            // Evitar OFFSET negativo
+            int page = Math.Max(0, filter.Page);
+            int pageSize = filter.PageSize > 0 ? filter.PageSize : 10;
+
+            int skip = page * pageSize;
+
             var items = await query
                 .OrderByDescending(x => x.Id)
-                .Skip(filter.Page * filter.PageSize)
-                .Take(filter.PageSize)
+                .Skip(skip)
+                .Take(pageSize)
                 .Select(x => new MovimientoDto
                 {
                     Id = x.Id,
@@ -61,18 +94,29 @@ namespace HsqvLogistica.Repositories
             };
         }
 
+        // ==========================================
+        // REGISTRAR MOVIMIENTO Y ACTUALIZAR STOCK
+        // ==========================================
         public async Task<int> CreateAsync(Movimiento movimiento)
         {
-            await using var transaction = await _context.Database.BeginTransactionAsync();
+            await using var context =
+                await _contextFactory.CreateDbContextAsync();
+
+            await using var transaction =
+                await context.Database.BeginTransactionAsync();
 
             try
             {
-                _context.Movimientos.Add(movimiento);
+                // Registrar cabecera y detalles
+                context.Movimientos.Add(movimiento);
 
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
 
-                // Actualiza stock
-                await ActualizarStockAsync(movimiento.Id, 1);
+                // Actualizar stock dentro de la misma transacción
+                await ActualizarStockAsync(
+                    context,
+                    movimiento.Id,
+                    1);
 
                 await transaction.CommitAsync();
 
@@ -85,28 +129,49 @@ namespace HsqvLogistica.Repositories
             }
         }
 
+        // ==========================================
+        // OBTENER MOVIMIENTO POR ID
+        // ==========================================
         public async Task<Movimiento?> GetByIdAsync(int id)
         {
-            return await _context.Movimientos
+            await using var context =
+                await _contextFactory.CreateDbContextAsync();
+
+            return await context.Movimientos
+                .AsNoTracking()
                 .Include(m => m.IdMotivoNavigation)
                 .Include(m => m.MovimientoDetalles)
                     .ThenInclude(d => d.IdArticuloNavigation)
                 .FirstOrDefaultAsync(m => m.Id == id);
         }
 
-        public async Task<bool> AnularMovimiento(int id, string usuarioModifica)
+        // ==========================================
+        // ANULAR MOVIMIENTO Y REVERTIR STOCK
+        // ==========================================
+        public async Task<bool> AnularMovimiento(
+            int id,
+            string usuarioModifica)
         {
-            await using var transaction = await _context.Database.BeginTransactionAsync();
+            await using var context =
+                await _contextFactory.CreateDbContextAsync();
+
+            await using var transaction =
+                await context.Database.BeginTransactionAsync();
 
             try
             {
-                var filas = await _context.Database.ExecuteSqlInterpolatedAsync($@"
-                EXEC sp_ActualizarAnularMovimiento
-                @Id = {id},
-                @Usuario_Modifica = {usuarioModifica}");
+                // Anular movimiento
+                await context.Database.ExecuteSqlInterpolatedAsync($@"
+                    EXEC sp_ActualizarAnularMovimiento
+                        @Id = {id},
+                        @Usuario_Modifica = {usuarioModifica}");
 
-                await ActualizarStockAsync(id, -1);
-               
+                // Revertir stock en la misma transacción
+                await ActualizarStockAsync(
+                    context,
+                    id,
+                    -1);
+
                 await transaction.CommitAsync();
 
                 return true;
@@ -118,13 +183,18 @@ namespace HsqvLogistica.Repositories
             }
         }
 
-        private async Task ActualizarStockAsync(int idMovimiento, int factor)
+        // ==========================================
+        // ACTUALIZAR STOCK
+        // ==========================================
+        private static async Task ActualizarStockAsync(
+            StoreDbContext context,
+            int idMovimiento,
+            int factor)
         {
-            await _context.Database.ExecuteSqlInterpolatedAsync($@"
+            await context.Database.ExecuteSqlInterpolatedAsync($@"
                 EXEC usp_ActualizarStockArticulo
-                @IdMovimiento = {idMovimiento},
-                @Factor = {factor}");
+                    @IdMovimiento = {idMovimiento},
+                    @Factor = {factor}");
         }
     }
-
 }

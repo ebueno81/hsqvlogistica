@@ -2,10 +2,14 @@
 @inherits SecurePageBase
 
 @using HsqvLogistica.Models.DTOs.Almacen
+@using HsqvLogistica.Models.DTOs.Articulos
 @using HsqvLogistica.Models.DTOs.Lineas
 @using HsqvLogistica.Models.DTOs.Reportes
 @using HsqvLogistica.Services.Interfaces
 @using MudBlazor
+
+@inject IArticuloService ArticuloService
+@inject ISnackbar Snackbar
 
 <MudContainer MaxWidth="MaxWidth.False" Class="mt-6 px-6">
 
@@ -67,16 +71,45 @@
 
                         </MudSelect>
 
+                        <MudAutocomplete T="ArticuloLookupDto"
+                                         Label="Artículo"
+                                         Placeholder="Todos los artículos"
+                                         @bind-Value="_articuloSeleccionado"
+                                         SearchFunc="BuscarArticulos"
+                                         ToStringFunc="@(a => a?.Descripcion ?? string.Empty)"
+                                         Clearable="true"
+                                         ResetValueOnEmptyText="true"
+                                         CoerceText="false"
+                                         Dense="true"
+                                         Margin="Margin.Dense"
+                                         MaxItems="20" />
                     </MudStack>
                 </MudCardContent>
 
                 <MudCardActions>
                     <MudButton Color="Color.Success"
                                Variant="Variant.Filled"
-                               StartIcon="@Icons.Material.Filled.FileDownload"
+                               StartIcon="@(_exportandoKardex
+                                              ? Icons.Material.Filled.HourglassEmpty
+                                              : Icons.Material.Filled.FileDownload)"
                                OnClick="ExportarKardexExcel"
+                               Disabled="@_exportandoKardex"
                                FullWidth>
-                        Exportar Excel
+
+                        @if (_exportandoKardex)
+                        {
+                            <MudProgressCircular Size="Size.Small"
+                                                 Indeterminate="true"
+                                                 Color="Color.Inherit"
+                                                 Class="me-2" />
+
+                            <MudText>Generando Excel...</MudText>
+                        }
+                        else
+                        {
+                            <MudText>Exportar Excel</MudText>
+                        }
+
                     </MudButton>
                 </MudCardActions>
 
@@ -149,11 +182,26 @@
                 <MudCardActions>
                     <MudButton Color="Color.Success"
                                Variant="Variant.Filled"
-                               StartIcon="@Icons.Material.Filled.FileDownload"
+                               StartIcon="@(_exportandoStock
+                                                  ? Icons.Material.Filled.HourglassEmpty
+                                                  : Icons.Material.Filled.FileDownload)"
                                OnClick="ExportarStockExcel"
+                               Disabled="@_exportandoStock"
                                FullWidth>
 
-                        Exportar Excel
+                        @if (_exportandoStock)
+                        {
+                            <MudProgressCircular Size="Size.Small"
+                                                 Indeterminate="true"
+                                                 Color="Color.Inherit"
+                                                 Class="me-2" />
+
+                            <MudText>Generando Excel...</MudText>
+                        }
+                        else
+                        {
+                            <MudText>Exportar Excel</MudText>
+                        }
 
                     </MudButton>
                 </MudCardActions>
@@ -210,10 +258,27 @@
                 <MudCardActions>
                     <MudButton Color="Color.Success"
                                Variant="Variant.Filled"
-                               StartIcon="@Icons.Material.Filled.FileDownload"
+                               StartIcon="@(_exportandoGarantia
+                                                  ? Icons.Material.Filled.HourglassEmpty
+                                                  : Icons.Material.Filled.FileDownload)"
                                OnClick="ExportarGarantiaExcel"
+                               Disabled="@_exportandoGarantia"
                                FullWidth>
-                        Exportar Excel
+
+                        @if (_exportandoGarantia)
+                        {
+                            <MudProgressCircular Size="Size.Small"
+                                                 Indeterminate="true"
+                                                 Color="Color.Inherit"
+                                                 Class="me-2" />
+
+                            <MudText>Generando Excel...</MudText>
+                        }
+                        else
+                        {
+                            <MudText>Exportar Excel</MudText>
+                        }
+
                     </MudButton>
                 </MudCardActions>
 
@@ -234,6 +299,8 @@
     private TipoMovimiento _tipo = TipoMovimiento.Todos;
     private TipoEstadoGarantia _tipoEstado = TipoEstadoGarantia.Todos;
 
+    private ArticuloLookupDto? _articuloSeleccionado;
+
     private int? _idAlmacen;
     private int? _idLinea;
 
@@ -251,6 +318,12 @@
 
     private DateTime? _fechaHastaGarantia =
         DateTime.Today;
+
+    private bool _exportandoKardex = false;
+
+    private bool _exportandoStock = false;
+
+    private bool _exportandoGarantia = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -275,18 +348,66 @@
 
     private async Task ExportarStockExcel()
     {
-        var filtro = new ReporteStockFilterDto
+        if (_exportandoStock)
+            return;
+
+        _exportandoStock = true;
+
+        try
         {
-            IdAlmacen = _idAlmacen,
-            IdLinea = _idLinea
-        };
+            var filtro = new ReporteStockFilterDto
+            {
+                IdAlmacen = _idAlmacen,
+                IdLinea = _idLinea
+            };
 
-        var archivo = await ReporteService.ExportarStockExcelAsync(filtro);
+            var archivo = await ReporteService.ExportarStockExcelAsync(filtro);
 
-        await JSRuntime.InvokeVoidAsync(
-            "downloadFile",
-            "ReporteStock.xlsx",
-            Convert.ToBase64String(archivo));
+            // Verificar si se generó un archivo
+            if (archivo == null || archivo.Length == 0)
+            {
+                Snackbar.Add(
+                    "No existen registros para exportar.",
+                    Severity.Info);
+
+                return;
+            }
+
+            await JSRuntime.InvokeVoidAsync(
+                "downloadFile",
+                "ReporteStock.xlsx",
+                Convert.ToBase64String(archivo));
+
+            Snackbar.Add(
+                "Reporte de Stock exportado correctamente.",
+                Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR EXPORTANDO STOCK: {ex}");
+
+            Snackbar.Add(
+                "Ocurrió un error al exportar el reporte de Stock.",
+                Severity.Error);
+        }
+        finally
+        {
+            _exportandoStock = false;
+        }
+    }
+
+    private async Task<IEnumerable<ArticuloLookupDto>> BuscarArticulos(string texto, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(texto))
+            return Enumerable.Empty<ArticuloLookupDto>();
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var articulos = await ArticuloService.SearchLookupAsync(texto.Trim());
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        return articulos.Take(20).ToList();
     }
 
     private bool? ObtenerEstadoGarantia()
@@ -302,19 +423,74 @@
 
     private async Task ExportarGarantiaExcel()
     {
-        var filtro = new ReporteGarantiaFilterDto
+        // Evitar múltiples ejecuciones
+        if (_exportandoGarantia)
+            return;
+
+        _exportandoGarantia = true;
+
+        try
         {
-            FechaDesde = _fechaDesdeGarantia!.Value,
-            FechaHasta = _fechaHastaGarantia!.Value,
-            Estado = ObtenerEstadoGarantia()
-        };
+            // Validar fechas
+            if (!_fechaDesdeGarantia.HasValue ||
+                !_fechaHastaGarantia.HasValue)
+            {
+                Snackbar.Add(
+                    "Debe seleccionar las fechas del reporte.",
+                    Severity.Warning);
+                return;
+            }
 
-        var archivo = await ReporteService.ExportarGarantiasExcelAsync(filtro);
+            if (_fechaDesdeGarantia.Value > _fechaHastaGarantia.Value)
+            {
+                Snackbar.Add(
+                    "La fecha inicial no puede ser mayor que la fecha final.",
+                    Severity.Warning);
+                return;
+            }
 
-        await JSRuntime.InvokeVoidAsync(
-            "downloadFile",
-            "ReporteGarantia.xlsx",
-            Convert.ToBase64String(archivo));
+            var filtro = new ReporteGarantiaFilterDto
+            {
+                FechaDesde = _fechaDesdeGarantia.Value,
+                FechaHasta = _fechaHastaGarantia.Value,
+                Estado = ObtenerEstadoGarantia()
+            };
+
+            // Generar Excel
+            var archivo = await ReporteService.ExportarGarantiasExcelAsync(filtro);
+
+            // Verificar si existen datos para exportar
+            if (archivo == null || archivo.Length == 0)
+            {
+                Snackbar.Add(
+                    "No existen registros para exportar.",
+                    Severity.Info);
+                return;
+            }
+
+            // Descargar archivo
+            await JSRuntime.InvokeVoidAsync(
+                "downloadFile",
+                "ReporteGarantia.xlsx",
+                Convert.ToBase64String(archivo));
+
+            Snackbar.Add(
+                "Reporte de Garantías exportado correctamente.",
+                Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR EXPORTANDO GARANTÍAS: {ex}");
+
+            Snackbar.Add(
+                "Ocurrió un error al exportar el reporte de Garantías.",
+                Severity.Error);
+        }
+        finally
+        {
+            // Habilitar nuevamente el botón
+            _exportandoGarantia = false;
+        }
     }
 
     public enum TipoMovimiento
@@ -330,48 +506,97 @@
         Pendientes,
         Cerrados
     }
-    
+
     private async Task ExportarKardexExcel()
     {
-        var filtro = new ReporteKardexFilterDto
+        // Evitar múltiples ejecuciones
+        if (_exportandoKardex)
+            return;
+
+        try
         {
-            FechaDesde = _fechaDesdeKardex!.Value,
-            FechaHasta = _fechaHastaKardex!.Value,
+            _exportandoKardex = true;
 
-            //Si tu Kardex trabaja por almacén
-            IdAlmacen = _idAlmacen ?? 1,
-            IdLinea = null,
-            IdArticulo = null
-        };
+            // Validar fechas
+            if (!_fechaDesdeKardex.HasValue ||
+                !_fechaHastaKardex.HasValue)
+            {
+                Snackbar.Add(
+                    "Debe seleccionar las fechas del reporte.",
+                    Severity.Warning);
+                return;
+            }
 
-        byte[] archivo;
+            if (_fechaDesdeKardex.Value > _fechaHastaKardex.Value)
+            {
+                Snackbar.Add(
+                    "La fecha inicial no puede ser mayor que la fecha final.",
+                    Severity.Warning);
+                return;
+            }
 
-        switch (_tipo)
-        {
-            case TipoMovimiento.Todos:
+            var filtro = new ReporteKardexFilterDto
+            {
+                FechaDesde = _fechaDesdeKardex.Value,
+                FechaHasta = _fechaHastaKardex.Value,
+                IdAlmacen = _idAlmacen ?? 1,
+                IdLinea = null,
+                IdArticulo = _articuloSeleccionado?.Id
+            };
 
-                archivo = await ReporteService.ExportarKardexExcelAsync(filtro);
-                break;
+            byte[] archivo;
 
-            case TipoMovimiento.Ingreso:
+            switch (_tipo)
+            {
+                case TipoMovimiento.Ingreso:
 
-                archivo = await ReporteService.ExportarIngresosExcelAsync(filtro);
-                break;
+                    archivo = await ReporteService
+                        .ExportarIngresosExcelAsync(filtro);
+                    break;
 
-            case TipoMovimiento.Salida:
+                case TipoMovimiento.Salida:
 
-                archivo = await ReporteService.ExportarSalidasExcelAsync(filtro);
-                break;
+                    archivo = await ReporteService
+                        .ExportarSalidasExcelAsync(filtro);
+                    break;
 
-            default:
+                default:
 
-                archivo = await ReporteService.ExportarKardexExcelAsync(filtro);
-                break;
+                    archivo = await ReporteService
+                        .ExportarKardexExcelAsync(filtro);
+                    break;
+            }
+
+            // Validar si se generó un archivo
+            if (archivo == null || archivo.Length == 0)
+            {
+                Snackbar.Add(
+                    "No existen registros para exportar.",
+                    Severity.Info);
+                return;
+            }
+
+            await JSRuntime.InvokeVoidAsync(
+                "downloadFile",
+                "ReporteKardex.xlsx",
+                Convert.ToBase64String(archivo));
+
+            Snackbar.Add(
+                "Reporte exportado correctamente.",
+                Severity.Success);
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR EXPORTANDO KARDEX: {ex}");
 
-        await JSRuntime.InvokeVoidAsync(
-            "downloadFile",
-            "ReporteKardex.xlsx",
-            Convert.ToBase64String(archivo));
+            Snackbar.Add(
+                "Ocurrió un error al exportar el reporte de Kardex.",
+                Severity.Error);
+        }
+        finally
+        {
+            // Siempre habilitar nuevamente el botón
+            _exportandoKardex = false;
+        }
     }
 }

@@ -132,20 +132,22 @@ public class ReporteService : IReporteService
 
         #region Encabezados
 
-        ws.Cell(5, 1).Value = "Código";
-        ws.Cell(5, 2).Value = "Línea";
-        ws.Cell(5, 3).Value = "Artículo";
-        ws.Cell(5, 4).Value = "Fecha";
-        ws.Cell(5, 5).Value = "Tipo";
-        ws.Cell(5, 6).Value = "Motivo";
-        ws.Cell(5, 7).Value = "Guía";
-        ws.Cell(5, 8).Value = "Cliente";
-        ws.Cell(5, 9).Value = "Ingreso";
-        ws.Cell(5, 10).Value = "Salida";
-        ws.Cell(5, 11).Value = "Saldo";
-        ws.Cell(5, 12).Value = "Detalles";
+        ws.Cell(5, 1).Value = "Id";
+        ws.Cell(5, 2).Value = "Pedido";
+        ws.Cell(5, 3).Value = "Código";
+        ws.Cell(5, 4).Value = "Línea";
+        ws.Cell(5, 5).Value = "Artículo";
+        ws.Cell(5, 6).Value = "Fecha";
+        ws.Cell(5, 7).Value = "Tipo";
+        ws.Cell(5, 8).Value = "Motivo";
+        ws.Cell(5, 9).Value = "Guía";
+        ws.Cell(5, 10).Value = "Cliente";
+        ws.Cell(5, 11).Value = "Ingreso";
+        ws.Cell(5, 12).Value = "Salida";
+        ws.Cell(5, 13).Value = "Saldo";
+        ws.Cell(5, 14).Value = "Detalles";
 
-        var header = ws.Range(5, 1, 5, 12);
+        var header = ws.Range(5, 1, 5, 14);
 
         header.Style.Font.Bold = true;
         header.Style.Font.FontColor = XLColor.White;
@@ -167,18 +169,20 @@ public class ReporteService : IReporteService
 
         foreach (var item in datos)
         {
-            ws.Cell(fila, 1).Value = item.Codigo;
-            ws.Cell(fila, 2).Value = item.Linea;
-            ws.Cell(fila, 3).Value = item.Articulo;
-            ws.Cell(fila, 4).Value = item.Fecha;
-            ws.Cell(fila, 5).Value = item.TipoMov;
-            ws.Cell(fila, 6).Value = item.Motivo;
-            ws.Cell(fila, 7).Value = item.Guia;
-            ws.Cell(fila, 8).Value = item.Cliente;
-            ws.Cell(fila, 9).Value = item.ING;
-            ws.Cell(fila, 10).Value = item.SAL;
-            ws.Cell(fila, 11).Value = item.Saldo;
-            ws.Cell(fila, 12).Value = item.Detalles;
+            ws.Cell(fila, 1).Value = item.IdKardex;
+            ws.Cell(fila, 2).Value = item.IdPedido;
+            ws.Cell(fila, 3).Value = item.Codigo;
+            ws.Cell(fila, 4).Value = item.Linea;
+            ws.Cell(fila, 5).Value = item.Articulo;
+            ws.Cell(fila, 6).Value = item.Fecha;
+            ws.Cell(fila, 7).Value = item.TipoMov;
+            ws.Cell(fila, 8).Value = item.Motivo;
+            ws.Cell(fila, 9).Value = item.Guia;
+            ws.Cell(fila, 10).Value = item.Cliente;
+            ws.Cell(fila, 11).Value = item.ING;
+            ws.Cell(fila, 12).Value = item.SAL;
+            ws.Cell(fila, 13).Value = item.Saldo;
+            ws.Cell(fila, 14).Value = item.Detalles;
 
             fila++;
         }
@@ -187,11 +191,11 @@ public class ReporteService : IReporteService
 
         #region Formatos
 
-        ws.Column(4).Style.DateFormat.Format = "dd/MM/yyyy";
+        ws.Column(6).Style.DateFormat.Format = "dd/MM/yyyy";
 
-        ws.Column(9).Style.NumberFormat.Format = "#,##0.00";
-        ws.Column(10).Style.NumberFormat.Format = "#,##0.00";
         ws.Column(11).Style.NumberFormat.Format = "#,##0.00";
+        ws.Column(12).Style.NumberFormat.Format = "#,##0.00";
+        ws.Column(13).Style.NumberFormat.Format = "#,##0.00";
 
         ws.Columns().AdjustToContents();
 
