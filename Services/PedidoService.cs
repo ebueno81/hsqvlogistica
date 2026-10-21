@@ -30,12 +30,16 @@ public class PedidoService : IPedidoService
         return pedido == null ? null : PedidoMapper.ToDto(pedido);
     }
 
+
     public async Task<int> CreateAsync(PedidoCreateDto dto)
     {
+        // Validar disponibilidad de artículos
         await ValidarDisponibilidadAsync(dto);
 
+        // Convertir DTO a entidad
         var pedido = PedidoMapper.ToEntity(dto);
 
+        // Agregar detalles
         foreach (var det in dto.DetallesPedido)
         {
             pedido.PedidoDetalles.Add(new PedidoDetalle
@@ -46,18 +50,22 @@ public class PedidoService : IPedidoService
             });
         }
 
+        // Guarda cabecera y detalles en una sola operación
         await _pedidoRepository.AddAsync(pedido);
 
-        await _pedidoRepository.SaveChangesAsync();
-
+        // Notificar solamente después de guardar
         try
         {
-            await _notificationService.NotificarPedidoCreadoAsync(pedido.Id);
+            await _notificationService.NotificarPedidoCreadoAsync(
+                pedido.Id);
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.ToString());
+            // La notificación no debe impedir el registro del pedido
+            Console.WriteLine(
+                $"ERROR NOTIFICANDO PEDIDO {pedido.Id}: {ex}");
         }
+
         return pedido.Id;
     }
 

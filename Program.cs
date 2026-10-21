@@ -9,8 +9,10 @@ using HsqvLogistica.Repositories.Interfaces;
 using HsqvLogistica.Services;
 using HsqvLogistica.Services.Interfaces;
 using HsqvLogistica.States;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -114,6 +116,23 @@ builder.Services.AddHttpClient<IEmpresaApiClient, EmpresaApiClient>(client =>
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
+
+var cultura = new CultureInfo("es-PE");
+
+CultureInfo.DefaultThreadCurrentCulture = cultura;
+CultureInfo.DefaultThreadCurrentUICulture = cultura;
+
+var supportedCultures = new[]
+{
+    cultura
+};
+
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture(cultura),
+    SupportedCultures = supportedCultures,
+    SupportedUICultures = supportedCultures
+});
 
 using (var scope = app.Services.CreateScope())
 {

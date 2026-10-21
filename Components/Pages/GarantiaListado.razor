@@ -99,20 +99,23 @@
               CurrentPage="@_filtro.Pagina"
               CurrentPageChanged="OnPaginaChanged"
               RowsPerPage="10"
+              Loading="@_procesandoGarantia"
+              LoadingProgressColor="Color.Primary"
               Dense
               Hover
               Striped>
 
+
         <HeaderContent>
-            <MudTh>#</MudTh>
-            <MudTh>Cliente</MudTh>
-            <MudTh>Guia</MudTh>
-            <MudTh>Transporte</MudTh>
-            <MudTh>Despacho</MudTh>
-            <MudTh>Entrega</MudTh>
-            <MudTh>Estado</MudTh>
-            <MudTh>Vigencia</MudTh>
-            <MudTh Align="Align.Right">Acciones</MudTh>
+            <MudTh Style="font-weight:bold;">Id</MudTh>
+            <MudTh Style="font-weight:bold;">Cliente</MudTh>
+            <MudTh Style="font-weight:bold;">Guia</MudTh>
+            <MudTh Style="font-weight:bold;">Transporte</MudTh>
+            <MudTh Style="font-weight:bold;">Despacho</MudTh>
+            <MudTh Style="font-weight:bold;">Entrega</MudTh>
+            <MudTh Style="font-weight:bold;">Estado</MudTh>
+            <MudTh Style="font-weight:bold;">Vigencia</MudTh>
+            <MudTh Align="Align.Right" Style="font-weight:bold;">Acciones</MudTh>
         </HeaderContent>
 
         <RowTemplate Context="row">
@@ -133,24 +136,44 @@
                 </MudChip>
             </MudTd>
 
+
             <!-- VIGENCIA -->
             <MudTd>
                 @if (row.Activo)
                 {
-                    <MudTooltip Text="Anular garantía">
-                        <MudChip T="string"
-                                 Color="Color.Success"
-                                 Variant="Variant.Filled"
-                                 Size="Size.Small"
-                                 Clickable="@PuedeAnular"
-                                 Style="@($"cursor:{(PuedeAnular ? "pointer" : "default")};")"
-                                 OnClick="@(PuedeAnular
-                                                                      ? (() => ConfirmarAnular(row.Id))
-                                                                      : null)">
-                        Activo
-                    </MudChip>
-                </MudTooltip>
-                                }
+                    <MudTooltip Text="@(_idGarantiaProcesando == row.Id
+                                                               ? "Procesando garantía..."
+                                                               : "Anular garantía")">
+
+                    <MudChip T="string"
+                             Color="Color.Success"
+                             Variant="Variant.Filled"
+                             Size="Size.Small"
+                             Clickable="@(PuedeAnular && !_procesandoGarantia)"
+                             Style="@($"cursor:{(PuedeAnular && !_procesandoGarantia ? "pointer" : "default")};")"
+                             OnClick="@(PuedeAnular && !_procesandoGarantia
+                                                      ? (() => ConfirmarAnular(row.Id))
+                                                      : null)">
+
+                        @if (_idGarantiaProcesando == row.Id &&
+                                                _operacionProcesando == "ANULAR")
+                            {
+                                <MudProgressCircular Size="Size.Small"
+                                                     Indeterminate="true"
+                                                     Color="Color.Inherit"
+                                                     Class="me-2" />
+
+                                <span>Anulando...</span>
+                            }
+                            else
+                            {
+                                <span>Activo</span>
+                            }
+
+                        </MudChip>
+
+                    </MudTooltip>
+                }
                 else
                 {
                     <MudChip T="string"
@@ -162,13 +185,16 @@
                 }
             </MudTd>
 
+
             <!-- ACCIONES -->
             <MudTd Align="Align.Right">
 
+                <!-- VER -->
                 <MudTooltip Text="Ver">
                     <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                    Color="Color.Primary"
                                    Size="Size.Small"
+                                   Disabled="@_procesandoGarantia"
                                    OnClick="@(() => Ver(row.Id))" />
                 </MudTooltip>
 
@@ -176,23 +202,36 @@
                 {
                     @if (UserSession.UsuarioActual?.Permisos.PuedeAnularOperaciones == true)
                     {
+                        <!-- EDITAR -->
                         <MudTooltip Text="Editar">
                             <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                            Color="Color.Info"
                                            Size="Size.Small"
+                                           Disabled="@_procesandoGarantia"
                                            OnClick="@(() => Editar(row.Id))" />
                         </MudTooltip>
 
-                        <MudTooltip Text="Cerrar">
-                            <MudIconButton Icon="@Icons.Material.Filled.DoneAll"
-                                           Color="Color.Success"
-                                           Size="Size.Small"
-                                           OnClick="@(() => ConfirmarCierre(row.Id))" />
+                        <!-- CERRAR -->
+                        <MudTooltip Text="@(_idGarantiaProcesando == row.Id &&
+                                                                    _operacionProcesando == "CERRAR"
+                                                                        ? "Cerrando garantía..."
+                                                                        : "Cerrar")">
+
+                    <MudIconButton Icon="@(_idGarantiaProcesando == row.Id &&
+                                                                          _operacionProcesando == "CERRAR"
+                                                                              ? Icons.Material.Filled.HourglassEmpty
+                                                                              : Icons.Material.Filled.DoneAll)"
+                                   Color="Color.Success"
+                                   Size="Size.Small"
+                                   Disabled="@_procesandoGarantia"
+                                   OnClick="@(() => ConfirmarCierre(row.Id))" />
+
                         </MudTooltip>
-                    }
+                                }
                 }
 
             </MudTd>
+
 
         </RowTemplate>
 
@@ -222,6 +261,16 @@
     private GarantiaFiltroState _filtro = new();
 
     private MudTable<GarantiaDto>? _table;
+
+    // Garantía que se encuentra en proceso
+    private int? _idGarantiaProcesando = null;
+
+    // Tipo de operación: CERRAR o ANULAR
+    private string? _operacionProcesando = null;
+
+    // Indica si existe una operación en curso
+    private bool _procesandoGarantia =>
+        _idGarantiaProcesando.HasValue;
 
     private bool PuedeAnular =>
         UserSession.UsuarioActual?.Permisos.PuedeAnularOperaciones == true;
@@ -355,28 +404,62 @@
     // CERRAR GARANTÍA
     // ==========================================
 
+
     private async Task ConfirmarCierre(int id)
     {
-        bool? ok = await DialogService.ShowMessageBox(
-            "Cerrar Garantía",
-            "¿Está seguro de cerrar esta garantía? No podrá modificarse luego.",
-            yesText: "Sí, cerrar",
-            cancelText: "Cancelar");
+        // Evitar doble clic y operaciones simultáneas
+        if (_procesandoGarantia)
+            return;
 
-        if (ok == true)
+        // Bloquear ANTES del primer await
+        _idGarantiaProcesando = id;
+        _operacionProcesando = "CERRAR";
+
+        try
         {
+            // Actualizar visualmente los botones
+            await InvokeAsync(StateHasChanged);
+
+            bool? ok = await DialogService.ShowMessageBox(
+                "Cerrar Garantía",
+                "¿Está seguro de cerrar esta garantía? No podrá modificarse luego.",
+                yesText: "Sí, cerrar",
+                cancelText: "Cancelar");
+
+            if (ok != true)
+                return;
+
+            // Ejecutar operación
             await GarantiaService.CloseAsync(
                 id,
                 UserSession.UsuarioActual!.Usuario);
 
-            Snackbar.Add(
-                "Garantía cerrada correctamente",
-                Severity.Success);
-
+            // Actualizar listado
             if (_table is not null)
                 await _table.ReloadServerData();
+
+            Snackbar.Add(
+                "Garantía cerrada correctamente.",
+                Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR CERRANDO GARANTÍA: {ex}");
+
+            Snackbar.Add(
+                "Ocurrió un error al cerrar la garantía.",
+                Severity.Error);
+        }
+        finally
+        {
+            // Liberar todos los botones
+            _idGarantiaProcesando = null;
+            _operacionProcesando = null;
+
+            await InvokeAsync(StateHasChanged);
         }
     }
+
 
     // ==========================================
     // ANULAR GARANTÍA
@@ -384,24 +467,57 @@
 
     private async Task ConfirmarAnular(int id)
     {
-        bool? ok = await DialogService.ShowMessageBox(
-            "Anular Garantía",
-            "¿Está seguro de anular esta garantía? Esta acción no se puede deshacer.",
-            yesText: "Sí, anular",
-            cancelText: "Cancelar");
+        // Evitar doble clic y operaciones simultáneas
+        if (_procesandoGarantia)
+            return;
 
-        if (ok == true)
+        // Bloquear ANTES del primer await
+        _idGarantiaProcesando = id;
+        _operacionProcesando = "ANULAR";
+
+        try
         {
+            // Actualizar visualmente los botones
+            await InvokeAsync(StateHasChanged);
+
+            bool? ok = await DialogService.ShowMessageBox(
+                "Anular Garantía",
+                "¿Está seguro de anular esta garantía? Esta acción no se puede deshacer.",
+                yesText: "Sí, anular",
+                cancelText: "Cancelar");
+
+            if (ok != true)
+                return;
+
+            // Ejecutar anulación
             await GarantiaService.AnularAsync(
                 id,
                 UserSession.UsuarioActual!.Usuario);
 
-            Snackbar.Add(
-                "Garantía anulada correctamente",
-                Severity.Warning);
-
+            // Actualizar listado
             if (_table is not null)
                 await _table.ReloadServerData();
+
+            Snackbar.Add(
+                "Garantía anulada correctamente.",
+                Severity.Warning);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR ANULANDO GARANTÍA: {ex}");
+
+            Snackbar.Add(
+                "Ocurrió un error al anular la garantía.",
+                Severity.Error);
+        }
+        finally
+        {
+            // Liberar todos los botones
+            _idGarantiaProcesando = null;
+            _operacionProcesando = null;
+
+            await InvokeAsync(StateHasChanged);
         }
     }
+
 }

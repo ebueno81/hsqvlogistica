@@ -529,4 +529,168 @@ public class ReporteService : IReporteService
         return await _configurationService.GetAsync(ConfiguracionKeys.Empresa)
                ?? string.Empty;
     }
+
+
+    public async Task<byte[]> ExportarPedidosExcelAsync(
+        ReportePedidoFilterDto filtro)
+    {
+        // 1. Obtener los pedidos y sus artículos
+        var datos = await _repository.ObtenerReportePedidosAsync(filtro);
+
+        // No generar Excel si no existen registros
+        if (datos.Count == 0)
+            return Array.Empty<byte>();
+
+        // 2. Obtener nombre de la empresa
+        var empresa = await ObtenerEmpresaAsync();
+
+        using var workbook = new XLWorkbook();
+
+        var ws = workbook.Worksheets.Add("Pedidos");
+
+        // 3. TÍTULO DEL REPORTE
+        ws.Cell(1, 1).Value = empresa;
+        ws.Cell(2, 1).Value = "REPORTE DE PEDIDOS - DETALLE DE ARTÍCULOS";
+        ws.Cell(3, 1).Value =
+            $"Generado: {DateTime.Now:dd/MM/yyyy HH:mm}";
+
+        ws.Range("A1:H1").Merge();
+        ws.Range("A2:H2").Merge();
+        ws.Range("A3:H3").Merge();
+
+        ws.Cell(1, 1).Style.Font.Bold = true;
+        ws.Cell(1, 1).Style.Font.FontSize = 18;
+
+        ws.Cell(2, 1).Style.Font.Bold = true;
+        ws.Cell(2, 1).Style.Font.FontSize = 14;
+
+        ws.Cell(3, 1).Style.Font.FontColor = XLColor.Gray;
+
+        // 4. MOSTRAR LOS FILTROS APLICADOS
+        string fechaDesde = filtro.FechaDesde.HasValue
+            ? filtro.FechaDesde.Value.ToString("dd/MM/yyyy")
+            : "Todas";
+
+        string fechaHasta = filtro.FechaHasta.HasValue
+            ? filtro.FechaHasta.Value.ToString("dd/MM/yyyy")
+            : "Todas";
+
+        string estado = filtro.Estado switch
+        {
+            0 => "Pendiente",
+            1 => "Aprobado",
+            2 => "Despacho",
+            3 => "Cerrado",
+            _ => "Todos"
+        };
+
+        string cliente = string.IsNullOrWhiteSpace(filtro.Cliente)
+            ? "Todos"
+            : filtro.Cliente.Trim();
+
+        ws.Cell(4, 1).Value =
+            $"Desde: {fechaDesde} | Hasta: {fechaHasta}";
+
+        ws.Cell(5, 1).Value =
+            $"Estado: {estado} | Cliente: {cliente}";
+
+        ws.Range("A4:H4").Merge();
+        ws.Range("A5:H5").Merge();
+
+        ws.Range("A4:H5").Style.Font.FontColor = XLColor.DimGray;
+
+        // 5. ENCABEZADOS
+        int filaEncabezado = 7;
+
+        ws.Cell(filaEncabezado, 1).Value = "N° Pedido";
+        ws.Cell(filaEncabezado, 2).Value = "Fecha Entrega";
+        ws.Cell(filaEncabezado, 3).Value = "Cliente";
+        ws.Cell(filaEncabezado, 4).Value = "Estado";
+        ws.Cell(filaEncabezado, 5).Value = "Vigencia";
+        ws.Cell(filaEncabezado, 6).Value = "Código";
+        ws.Cell(filaEncabezado, 7).Value = "Artículo";
+        ws.Cell(filaEncabezado, 8).Value = "Cantidad";
+
+        var encabezado = ws.Range(filaEncabezado, 1, filaEncabezado, 8);
+
+        encabezado.Style.Font.Bold = true;
+        encabezado.Style.Fill.BackgroundColor = XLColor.SteelBlue;
+        encabezado.Style.Font.FontColor = XLColor.White;
+        encabezado.Style.Alignment.Horizontal =
+            XLAlignmentHorizontalValues.Center;
+
+        // 6. LLENAR DATOS
+        int fila = filaEncabezado + 1;
+
+        foreach (var item in datos)
+        {
+            ws.Cell(fila, 1).Value = item.IdPedido;
+
+            if (item.FechaEntrega.HasValue)
+            {
+                ws.Cell(fila, 2).Value =
+                    item.FechaEntrega.Value.ToDateTime(TimeOnly.MinValue);
+
+                ws.Cell(fila, 2).Style.DateFormat.Format =
+                    "dd/MM/yyyy";
+            }
+
+            ws.Cell(fila, 3).Value = item.Cliente ?? "";
+
+            ws.Cell(fila, 4).Value = item.Estado switch
+            {
+                0 => "Pendiente",
+                1 => "Aprobado",
+                2 => "Despacho",
+                3 => "Cerrado",
+                _ => "Desconocido"
+            };
+
+            ws.Cell(fila, 5).Value =
+                item.Activo == true ? "Activo" : "Anulado";
+
+            ws.Cell(fila, 6).Value = item.CodigoArticulo ?? "";
+
+            ws.Cell(fila, 7).Value = item.DescripcionArticulo ?? "";
+
+            ws.Cell(fila, 8).Value = item.Cantidad;
+
+            ws.Cell(fila, 8).Style.NumberFormat.Format = "#,##0.00";
+
+            fila++;
+        }
+
+        int ultimaFila = fila - 1;
+
+        // 7. BORDES
+        var rangoDatos = ws.Range(
+            filaEncabezado, 1, ultimaFila, 8);
+
+        rangoDatos.Style.Border.OutsideBorder =
+            XLBorderStyleValues.Thin;
+
+        rangoDatos.Style.Border.InsideBorder =
+            XLBorderStyleValues.Thin;
+
+        // 8. AUTOFILTRO
+        rangoDatos.SetAutoFilter();
+
+        // 9. CONGELAR ENCABEZADOS
+        ws.SheetView.FreezeRows(filaEncabezado);
+
+        // 10. AJUSTAR COLUMNAS
+        ws.Columns(1, 8).AdjustToContents();
+
+        // Evitar columnas excesivamente anchas
+        ws.Column(3).Width = Math.Min(ws.Column(3).Width, 45);
+        ws.Column(7).Width = Math.Min(ws.Column(7).Width, 55);
+
+        // 11. GENERAR EXCEL
+        using var stream = new MemoryStream();
+
+        workbook.SaveAs(stream);
+
+        return stream.ToArray();
+    }
+
 }

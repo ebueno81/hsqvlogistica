@@ -39,20 +39,22 @@ public class PedidoRepository : IPedidoRepository
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
+
+
     public async Task AddAsync(Pedido pedido)
     {
         await using var context =
             await _contextFactory.CreateDbContextAsync();
 
+        // Agregar pedido con sus detalles
         await context.Pedidos.AddAsync(pedido);
-    }
 
-    public async Task SaveChangesAsync()
-    {
-        await using var context =
-            await _contextFactory.CreateDbContextAsync();
+        // Guardar en el mismo contexto
+        int registros = await context.SaveChangesAsync();
 
-        await context.SaveChangesAsync();
+        Console.WriteLine(
+            $"PEDIDO REGISTRADO: {pedido.Id} - " +
+            $"Entidades guardadas: {registros}");
     }
 
     public async Task<bool> ChangeStatusAsync(
@@ -131,6 +133,7 @@ public class PedidoRepository : IPedidoRepository
                 Cliente = p.Cliente,
                 FechaEntrega = p.FechaEntrega,
                 Estado = p.Estado,
+                UsuaCreacion = p.UsuaCreacion,
                 Activo = p.Activo
             })
             .ToListAsync(cancellationToken);

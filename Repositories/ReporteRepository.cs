@@ -262,4 +262,79 @@ public class ReporteRepository : IReporteRepository
             })
             .ToListAsync();
     }
+
+
+    public async Task<List<ReportePedidoDetalleDto>> ObtenerReportePedidosAsync(
+        ReportePedidoFilterDto filtro)
+    {
+        var query = _context.Pedidos
+            .AsNoTracking()
+            .AsQueryable();
+
+        // FECHA DESDE
+        if (filtro.FechaDesde.HasValue)
+        {
+            query = query.Where(p =>
+                p.FechaEntrega >= filtro.FechaDesde.Value);
+        }
+
+        // FECHA HASTA
+        if (filtro.FechaHasta.HasValue)
+        {
+            query = query.Where(p =>
+                p.FechaEntrega <= filtro.FechaHasta.Value);
+        }
+
+        // ESTADO DEL PEDIDO
+        // Null significa TODOS
+        if (filtro.Estado.HasValue)
+        {
+            query = query.Where(p =>
+                p.Estado == filtro.Estado.Value);
+        }
+
+        // CLIENTE
+        // Vacío significa TODOS
+        if (!string.IsNullOrWhiteSpace(filtro.Cliente))
+        {
+            string cliente = filtro.Cliente.Trim();
+
+            query = query.Where(p =>
+                p.Cliente != null &&
+                p.Cliente.Contains(cliente));
+        }
+
+        // CONSULTAR PEDIDOS CON SUS ARTÍCULOS
+        var datos = await query
+            .SelectMany(
+                p => p.PedidoDetalles,
+                (p, d) => new ReportePedidoDetalleDto
+                {
+                    IdPedido = p.Id,
+
+                    FechaEntrega = p.FechaEntrega,
+
+                    Cliente = p.Cliente,
+
+                    Estado = p.Estado,
+
+                    Activo = p.Activo,
+
+                    CodigoArticulo = d.IdArticuloNavigation != null
+                        ? d.IdArticuloNavigation.Codigo
+                        : null,
+
+                    DescripcionArticulo = d.IdArticuloNavigation != null
+                        ? d.IdArticuloNavigation.Descripcion
+                        : null,
+
+                    Cantidad = d.Cantidad ?? 0
+                })
+            .OrderByDescending(x => x.IdPedido)
+            .ThenBy(x => x.CodigoArticulo)
+            .ToListAsync();
+
+        return datos;
+    }
+
 }

@@ -1,0 +1,424 @@
+﻿@page "/ayuda"
+@inherits SecurePageBase
+
+@using MudBlazor
+@using Microsoft.AspNetCore.Components
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-6">
+
+    <!-- ENCABEZADO -->
+    <MudStack Row="true"
+              AlignItems="AlignItems.Center"
+              Spacing="2"
+              Class="mb-2">
+
+        <MudIcon Icon="@Icons.Material.Filled.HelpOutline"
+                 Color="Color.Primary"
+                 Size="Size.Large" />
+
+        <MudText Typo="Typo.h5">
+            Centro de Ayuda
+        </MudText>
+
+    </MudStack>
+
+    <MudText Typo="Typo.body2"
+             Color="Color.Secondary"
+             Class="mb-4">
+        Aprende a utilizar los diferentes módulos de HSQV Logística
+        mediante nuestros videotutoriales.
+    </MudText>
+
+    <!-- BUSCADOR Y FILTROS -->
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+
+        <MudGrid Spacing="3">
+
+            <MudItem xs="12" md="7">
+                <MudTextField T="string"
+                              Label="Buscar videotutorial"
+                              Placeholder="Ejemplo: Crear pedido"
+                              @bind-Value="_busqueda"
+                              Immediate="true"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search" />
+            </MudItem>
+
+            <MudItem xs="12" md="5">
+                <MudSelect T="string"
+                           Label="Módulo"
+                           @bind-Value="_modulo"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense">
+
+                    @foreach (var modulo in _modulos)
+                    {
+                        <MudSelectItem T="string" Value="@modulo">
+                            @modulo
+                        </MudSelectItem>
+                    }
+
+                </MudSelect>
+            </MudItem>
+
+        </MudGrid>
+
+    </MudPaper>
+
+    <!-- RESULTADOS -->
+    <MudText Typo="Typo.subtitle2" Class="mb-3">
+        Tutoriales disponibles (@VideosFiltrados.Count)
+    </MudText>
+
+    @if (VideosFiltrados.Count == 0)
+    {
+        <MudPaper Class="pa-8"
+                  Elevation="0"
+                  Style="text-align:center;">
+
+            <MudIcon Icon="@Icons.Material.Filled.OndemandVideo"
+                     Size="Size.Large"
+                     Color="Color.Secondary" />
+
+            <MudText Typo="Typo.h6" Class="mt-2">
+                No se encontraron videotutoriales
+            </MudText>
+
+            <MudText Color="Color.Secondary">
+                Prueba con otra búsqueda o selecciona otro módulo.
+            </MudText>
+
+        </MudPaper>
+    }
+    else
+    {
+        <MudGrid Spacing="3">
+
+            @foreach (var video in VideosFiltrados)
+            {
+                <MudItem xs="12" sm="6" md="4" @key="video.Id">
+
+                    <MudCard Elevation="2"
+                             Style="height:100%;">
+
+                        <!-- MINIATURA -->
+                        <div style="position:relative;
+                                                    aspect-ratio:16/9;
+                                                    background:#edf1f5;
+                                                    overflow:hidden;">
+
+                            @if (!string.IsNullOrWhiteSpace(video.YoutubeId))
+                            {
+                                <img src="@($"https://img.youtube.com/vi/{video.YoutubeId}/hqdefault.jpg")"
+                                     alt="@video.Titulo"
+                                     loading="lazy"
+                                     style="width:100%;
+                                                                    height:100%;
+                                                                    object-fit:cover;" />
+                            }
+                            else
+                            {
+                                <div style="height:100%;
+                                                                    display:flex;
+                                                                    justify-content:center;
+                                                                    align-items:center;">
+                                    <MudIcon Icon="@Icons.Material.Filled.OndemandVideo"
+                                             Size="Size.Large"
+                                             Color="Color.Secondary" />
+                                </div>
+                            }
+
+                            <div style="position:absolute;
+                                                        inset:0;
+                                                        display:flex;
+                                                        justify-content:center;
+                                                        align-items:center;">
+
+                                <MudIconButton Icon="@Icons.Material.Filled.PlayCircleFilled"
+                                               Color="Color.Primary"
+                                               Size="Size.Large"
+                                               Disabled="@string.IsNullOrWhiteSpace(video.YoutubeId)"
+                                               OnClick="@(() => Reproducir(video))" />
+
+                            </div>
+                        </div>
+
+                        <MudCardContent>
+
+                            <MudChip T="string"
+                                     Size="Size.Small"
+                                     Color="Color.Primary"
+                                     Variant="Variant.Outlined"
+                                     Class="mb-2">
+                                @video.Modulo
+                            </MudChip>
+
+                            <MudText Typo="Typo.subtitle1"
+                                     Style="font-weight:600;">
+                                @video.Titulo
+                            </MudText>
+
+                            <MudText Typo="Typo.body2"
+                                     Color="Color.Secondary"
+                                     Class="mt-2">
+                                @video.Descripcion
+                            </MudText>
+
+                        </MudCardContent>
+
+                        <MudCardActions>
+
+                            <MudButton Variant="Variant.Text"
+                                       Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.PlayArrow"
+                                       Disabled="@string.IsNullOrWhiteSpace(video.YoutubeId)"
+                                       OnClick="@(() => Reproducir(video))">
+                                Ver tutorial
+                            </MudButton>
+
+                        </MudCardActions>
+
+                    </MudCard>
+
+                </MudItem>
+            }
+
+        </MudGrid>
+    }
+
+
+    <!-- REPRODUCTOR -->
+
+    <MudDialog Visible="@_mostrarVideo"
+               VisibleChanged="OnDialogVisibleChanged"
+               Options="_opcionesDialogo">
+
+
+        <TitleContent>
+            <MudText Typo="Typo.h6">
+                @(_videoSeleccionado?.Titulo ?? "Videotutorial")
+            </MudText>
+        </TitleContent>
+
+        <DialogContent>
+
+            @if (_mostrarVideo && _videoSeleccionado is not null)
+            {
+                <div style="width:100%;
+                                aspect-ratio:16/9;
+                                background:#000;">
+
+                    <iframe @key="_videoSeleccionado.Id"
+                            src="@UrlVideo"
+                            title="@_videoSeleccionado.Titulo"
+                            style="width:100%;
+                                       height:100%;
+                                       border:0;"
+                            allow="autoplay; encrypted-media; picture-in-picture"
+                            allowfullscreen>
+                    </iframe>
+
+                </div>
+
+                <MudText Typo="Typo.body2"
+                         Color="Color.Secondary"
+                         Class="mt-3">
+                    @_videoSeleccionado.Descripcion
+                </MudText>
+            }
+
+        </DialogContent>
+
+        <DialogActions>
+            @if (_videoSeleccionado is not null)
+            {
+                <MudButton Color="Color.Secondary"
+                           Variant="Variant.Text"
+                           StartIcon="@Icons.Material.Filled.OpenInNew"
+                           Href="@($"https://www.youtube.com/watch?v={_videoSeleccionado.YoutubeId}")"
+                           Target="_blank">
+                    Abrir en YouTube
+                </MudButton>
+            }
+
+            <MudButton Color="Color.Primary"
+                       OnClick="CerrarVideo">
+                Cerrar
+            </MudButton>
+        </DialogActions>
+
+    </MudDialog>
+
+</MudContainer>
+
+@code {
+
+    private string _busqueda = string.Empty;
+    private string _modulo = "Todos";
+
+    private bool _mostrarVideo;
+    private VideoAyuda? _videoSeleccionado;
+
+    private string UrlVideo =>
+    _videoSeleccionado is null
+        ? string.Empty
+        : $"https://www.youtube.com/embed/{_videoSeleccionado.YoutubeId}?rel=0";
+
+    [SupplyParameterFromQuery(Name = "modulo")]
+    public string? ModuloQuery { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        _modulo = !string.IsNullOrWhiteSpace(ModuloQuery)
+                   && _modulos.Contains(
+                       ModuloQuery,
+                       StringComparer.OrdinalIgnoreCase)
+            ? _modulos.First(m =>
+                m.Equals(ModuloQuery,
+                    StringComparison.OrdinalIgnoreCase))
+            : "Todos";
+    }
+
+    private readonly DialogOptions _opcionesDialogo = new()
+    {
+        MaxWidth = MaxWidth.Medium,
+        FullWidth = true,
+        CloseButton = true,
+        CloseOnEscapeKey = true
+    };
+
+    private readonly List<string> _modulos = new()
+    {
+        "Todos",
+        "Pedidos",
+        "Kardex",
+        "Garantías",
+        "Reportes",
+        "Mantenimiento",
+        "Configuración"
+    };
+
+
+    private Task OnDialogVisibleChanged(bool visible)
+    {
+        _mostrarVideo = visible;
+
+        if (!visible)
+            _videoSeleccionado = null;
+
+        return Task.CompletedTask;
+    }
+
+    // Agregar aquí los videos publicados en YouTube.
+    // Reemplazar YoutubeId por el identificador real del video.
+
+    private readonly List<VideoAyuda> _videos = new()
+    {
+        new(1, "Pedidos",
+            "Cómo registrar un pedido",
+            "Aprende a crear pedidos y agregar artículos.",
+            "YNK8a6UzvMM"),
+
+        new(2, "Pedidos",
+            "Aprobar y cerrar pedidos",
+            "Conoce el proceso de aprobación y cierre.",
+            "rc-q8nG5h1k"),
+
+        new(3, "Kardex",
+            "Consultar movimientos de artículos",
+            "Revisa los ingresos, salidas y movimientos.",
+            "AfyVfb8ueEI"),
+        
+        new(4, "Kardex",
+            "Ingresos movimientos de artículos",
+            "Revisa los ingresos, salidas y movimientos.",
+            "-Fhj1u07SU0"),
+        
+        new(5, "Kardex",
+            "Salidas movimientos de artículos",
+            "Revisa los ingresos, salidas y movimientos.",
+            "Sihu-DHaoQg"),
+
+        new(6, "Garantías",
+            "Registrar una garantía",
+            "Aprende a registrar y consultar garantías.",
+            "jKEpPm-XBnw"),
+
+        new(7, "Garantías",
+            "Cerrar y anular garantías",
+            "Conoce las operaciones de cierre y anulación.",
+            "lqEuaOhSsgY"),
+
+        new(8, "Reportes",
+            "Generar reportes en Excel",
+            "Aprende a utilizar filtros y exportar información.",
+            "9d5aw5-3VrI"),
+
+        new(9, "Mantenimiento",
+            "Administración de artículos",
+            "Aprende a registrar y actualizar artículos.",
+            "9Bff6_WxXso"),
+
+        new(10, "Mantenimiento",
+            "Administración de líneas",
+            "Aprende a registrar y actualizar líneas.",
+            "e5NEI0d8MLc"),
+
+        new(11, "Mantenimiento",
+            "Administración de clientes",
+            "Consultar clientes creados.",
+            ""),
+
+        new(12, "Mantenimiento",
+            "Administración de empresas de transportes",
+            "Consultar empresas de transportes.",
+            ""),
+
+        new(13, "Configuración",
+            "Administración de usuarios",
+            "Conoce cómo gestionar usuarios y permisos.",
+            "")
+    };
+
+
+    private List<VideoAyuda> VideosFiltrados =>
+        _videos
+            .Where(v =>
+                (_modulo == "Todos" || v.Modulo == _modulo)
+                &&
+                (string.IsNullOrWhiteSpace(_busqueda)
+                 || v.Titulo.Contains(
+                     _busqueda,
+                     StringComparison.OrdinalIgnoreCase)
+                 || v.Descripcion.Contains(
+                     _busqueda,
+                     StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+
+
+    private void Reproducir(VideoAyuda video)
+    {
+        if (string.IsNullOrWhiteSpace(video.YoutubeId))
+            return;
+
+        _videoSeleccionado = video;
+        _mostrarVideo = true;
+    }
+
+    private void CerrarVideo()
+    {
+        _mostrarVideo = false;
+        _videoSeleccionado = null;
+    }
+
+    private sealed record VideoAyuda(
+        int Id,
+        string Modulo,
+        string Titulo,
+        string Descripcion,
+        string YoutubeId);
+}

@@ -18,4 +18,7 @@ public interface IReporteRepository
 
     Task<List<ReporteIngresoDto>> ObtenerReporteIngresosAsync(
         ReporteKardexFilterDto filtro);
+
+    Task<List<ReportePedidoDetalleDto>> ObtenerReportePedidosAsync(
+        ReportePedidoFilterDto filtro);
 }

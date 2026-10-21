@@ -18,4 +18,7 @@ public interface IReporteService
 
     Task<byte[]> ExportarIngresosExcelAsync(
         ReporteKardexFilterDto filtro);
+
+    Task<byte[]> ExportarPedidosExcelAsync(
+        ReportePedidoFilterDto filtro);
 }

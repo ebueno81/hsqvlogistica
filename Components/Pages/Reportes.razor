@@ -117,64 +117,81 @@
         </MudItem>
 
         <!-- =========================
-             Reporte de Stock
+             REPORTE DE PEDIDOS
              ========================= -->
         <MudItem xs="12" md="4">
             <MudCard Class="report-card">
 
                 <MudCardHeader Style="background-color:#f3f6fd;">
+
                     <CardHeaderAvatar>
-                        <MudAvatar Color="Color.Success" Size="Size.Small">
-                            <MudIcon Icon="@Icons.Material.Filled.Inventory" />
+                        <MudAvatar Color="Color.Primary" Size="Size.Small">
+                            <MudIcon Icon="@Icons.Material.Filled.Assignment" />
                         </MudAvatar>
                     </CardHeaderAvatar>
+
                     <CardHeaderContent>
                         <MudText Typo="Typo.subtitle1" Class="fw-bold">
-                            Reporte de Stock
+                            Reporte de Pedidos
                         </MudText>
                     </CardHeaderContent>
+
                 </MudCardHeader>
 
                 <MudCardContent>
                     <MudStack Spacing="1">
 
-                        <MudSelect T="int?"
-                                   Label="Almacén"
-                                   Dense
-                                   Margin="Margin.Dense"
-                                   @bind-Value="_idAlmacen">
+                        <!-- FECHA DESDE -->
+                        <MudDatePicker Label="Fecha Desde"
+                                       @bind-Date="_fechaDesdePedido"
+                                       Margin="Margin.Dense"
+                                       Dense="true" />
 
-                            <MudSelectItem Value="@((int?)null)">
-                                Todos los almacenes
+                        <!-- FECHA HASTA -->
+                        <MudDatePicker Label="Fecha Hasta"
+                                       @bind-Date="_fechaHastaPedido"
+                                       Margin="Margin.Dense"
+                                       Dense="true" />
+
+                        <!-- ESTADO -->
+                        <MudSelect T="int?"
+                                   Label="Estado del Pedido"
+                                   @bind-Value="_estadoPedido"
+                                   Dense="true"
+                                   Margin="Margin.Dense">
+
+                            <MudSelectItem T="int?" Value="@((int?)null)">
+                                Todos
                             </MudSelectItem>
 
-                            @foreach (var almacen in _almacenes)
-                            {
-                                <MudSelectItem Value="@((int?)almacen.Id)">
-                                    @almacen.Nombre
-                                </MudSelectItem>
-                            }
+                            <MudSelectItem T="int?" Value="@((int?)0)">
+                                Pendiente
+                            </MudSelectItem>
+
+                            <MudSelectItem T="int?" Value="@((int?)1)">
+                                Aprobado
+                            </MudSelectItem>
+
+                            <MudSelectItem T="int?" Value="@((int?)2)">
+                                Despacho
+                            </MudSelectItem>
+
+                            <MudSelectItem T="int?" Value="@((int?)3)">
+                                Cerrado
+                            </MudSelectItem>
 
                         </MudSelect>
 
-                        <MudSelect T="int?"
-                                   Label="Línea"
-                                   Dense
-                                   Margin="Margin.Dense"
-                                   @bind-Value="_idLinea">
-
-                            <MudSelectItem Value="@((int?)null)">
-                                Todas las líneas
-                            </MudSelectItem>
-
-                            @foreach (var linea in _lineas)
-                            {
-                                <MudSelectItem Value="@((int?)linea.Id)">
-                                    @linea.Descripcion
-                                </MudSelectItem>
-                            }
-
-                        </MudSelect>
+                        <!-- CLIENTE -->
+                        <MudTextField T="string"
+                                      Label="Cliente"
+                                      Placeholder="Todos los clientes"
+                                      @bind-Value="_clientePedido"
+                                      Clearable="true"
+                                      Dense="true"
+                                      Margin="Margin.Dense"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Search" />
 
                     </MudStack>
                 </MudCardContent>
@@ -182,14 +199,14 @@
                 <MudCardActions>
                     <MudButton Color="Color.Success"
                                Variant="Variant.Filled"
-                               StartIcon="@(_exportandoStock
-                                                  ? Icons.Material.Filled.HourglassEmpty
-                                                  : Icons.Material.Filled.FileDownload)"
-                               OnClick="ExportarStockExcel"
-                               Disabled="@_exportandoStock"
+                               StartIcon="@(_exportandoPedido
+                                                                                         ? Icons.Material.Filled.HourglassEmpty
+                                                                                         : Icons.Material.Filled.FileDownload)"
+                               OnClick="ExportarPedidoExcel"
+                               Disabled="@_exportandoPedido"
                                FullWidth>
 
-                        @if (_exportandoStock)
+                        @if (_exportandoPedido)
                         {
                             <MudProgressCircular Size="Size.Small"
                                                  Indeterminate="true"
@@ -208,7 +225,7 @@
 
             </MudCard>
         </MudItem>
-
+        
         <!-- =========================
              Reporte Garantías
              ========================= -->
@@ -285,6 +302,99 @@
             </MudCard>
         </MudItem>
 
+        <!-- =========================
+             Reporte de Stock
+             ========================= -->
+        <MudItem xs="12" md="4">
+            <MudCard Class="report-card">
+
+                <MudCardHeader Style="background-color:#f3f6fd;">
+                    <CardHeaderAvatar>
+                        <MudAvatar Color="Color.Success" Size="Size.Small">
+                            <MudIcon Icon="@Icons.Material.Filled.Inventory" />
+                        </MudAvatar>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.subtitle1" Class="fw-bold">
+                            Reporte de Stock
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+
+                <MudCardContent>
+                    <MudStack Spacing="1">
+
+                        <MudSelect T="int?"
+                                   Label="Almacén"
+                                   Dense
+                                   Margin="Margin.Dense"
+                                   @bind-Value="_idAlmacen">
+
+                            <MudSelectItem Value="@((int?)null)">
+                                Todos los almacenes
+                            </MudSelectItem>
+
+                            @foreach (var almacen in _almacenes)
+                            {
+                                <MudSelectItem Value="@((int?)almacen.Id)">
+                                    @almacen.Nombre
+                                </MudSelectItem>
+                            }
+
+                        </MudSelect>
+
+                        <MudSelect T="int?"
+                                   Label="Línea"
+                                   Dense
+                                   Margin="Margin.Dense"
+                                   @bind-Value="_idLinea">
+
+                            <MudSelectItem Value="@((int?)null)">
+                                Todas las líneas
+                            </MudSelectItem>
+
+                            @foreach (var linea in _lineas)
+                            {
+                                <MudSelectItem Value="@((int?)linea.Id)">
+                                    @linea.Descripcion
+                                </MudSelectItem>
+                            }
+
+                        </MudSelect>
+
+                    </MudStack>
+                </MudCardContent>
+
+                <MudCardActions>
+                    <MudButton Color="Color.Success"
+                               Variant="Variant.Filled"
+                               StartIcon="@(_exportandoStock
+                                                                                 ? Icons.Material.Filled.HourglassEmpty
+                                                                                 : Icons.Material.Filled.FileDownload)"
+                               OnClick="ExportarStockExcel"
+                               Disabled="@_exportandoStock"
+                               FullWidth>
+
+                        @if (_exportandoStock)
+                        {
+                            <MudProgressCircular Size="Size.Small"
+                                                 Indeterminate="true"
+                                                 Color="Color.Inherit"
+                                                 Class="me-2" />
+
+                            <MudText>Generando Excel...</MudText>
+                        }
+                        else
+                        {
+                            <MudText>Exportar Excel</MudText>
+                        }
+
+                    </MudButton>
+                </MudCardActions>
+
+            </MudCard>
+        </MudItem>
+
     </MudGrid>
 
 </MudContainer>
@@ -324,6 +434,25 @@
     private bool _exportandoStock = false;
 
     private bool _exportandoGarantia = false;
+
+
+    // =============================
+    // FILTROS REPORTE DE PEDIDOS
+    // =============================
+
+    private DateTime? _fechaDesdePedido =
+        new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+
+    private DateTime? _fechaHastaPedido = DateTime.Today;
+
+    // Null = todos los estados
+    private int? _estadoPedido = null;
+
+    // Vacío = todos los clientes
+    private string? _clientePedido = string.Empty;
+
+    // Evita exportaciones duplicadas
+    private bool _exportandoPedido = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -599,4 +728,95 @@
             _exportandoKardex = false;
         }
     }
+
+
+    private async Task ExportarPedidoExcel()
+    {
+        // Evitar múltiples ejecuciones
+        if (_exportandoPedido)
+            return;
+
+        _exportandoPedido = true;
+
+        try
+        {
+            // Validar fechas obligatorias
+            if (!_fechaDesdePedido.HasValue ||
+                !_fechaHastaPedido.HasValue)
+            {
+                Snackbar.Add(
+                    "Debe seleccionar las fechas del reporte.",
+                    Severity.Warning);
+                return;
+            }
+
+            // Validar rango de fechas
+            if (_fechaDesdePedido.Value.Date >
+                _fechaHastaPedido.Value.Date)
+            {
+                Snackbar.Add(
+                    "La fecha inicial no puede ser mayor que la fecha final.",
+                    Severity.Warning);
+                return;
+            }
+
+            // Preparar filtros
+            var filtro = new ReportePedidoFilterDto
+            {
+                FechaDesde = DateOnly.FromDateTime(
+                    _fechaDesdePedido.Value),
+
+                FechaHasta = DateOnly.FromDateTime(
+                    _fechaHastaPedido.Value),
+
+                Estado = _estadoPedido,
+
+                Cliente = string.IsNullOrWhiteSpace(_clientePedido)
+                    ? null
+                    : _clientePedido.Trim()
+            };
+
+            // Generar Excel mediante el servicio
+            var archivo = await ReporteService
+                .ExportarPedidosExcelAsync(filtro);
+
+            // Validar si existen registros
+            if (archivo == null || archivo.Length == 0)
+            {
+                Snackbar.Add(
+                    "No existen pedidos para exportar con los filtros seleccionados.",
+                    Severity.Info);
+                return;
+            }
+
+            // Nombre del archivo
+            string nombreArchivo =
+                $"ReportePedidos_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+            // Descargar Excel
+            await JSRuntime.InvokeVoidAsync(
+                "downloadFile",
+                nombreArchivo,
+                Convert.ToBase64String(archivo));
+
+            Snackbar.Add(
+                "Reporte de Pedidos exportado correctamente.",
+                Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(
+                $"ERROR EXPORTANDO PEDIDOS: {ex}");
+
+            Snackbar.Add(
+                "Ocurrió un error al exportar el reporte de Pedidos.",
+                Severity.Error);
+        }
+        finally
+        {
+            // Habilitar nuevamente el botón
+            _exportandoPedido = false;
+        }
+    }
+
 }

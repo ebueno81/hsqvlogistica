@@ -59,33 +59,24 @@
                                Variant="Variant.Outlined" />
             </MudItem>
 
-            <MudItem xs="12" sm="6" md="3">
+            <MudItem xs="12" sm="6" md="2">
                 <MudSelect T="int?"
                            Label="Estado del Pedido"
                            @bind-Value="_filtro.Estado"
                            Variant="Variant.Outlined"
-                           Margin="Margin.Dense"
-                           Dense="true">
+                           
+                           FullWidth="true">
 
                     <MudSelectItem T="int?" Value="@((int?)null)">
                         Todos
                     </MudSelectItem>
 
-                    <MudSelectItem T="int?" Value="@((int?)0)">
-                        Pendiente
-                    </MudSelectItem>
-
-                    <MudSelectItem T="int?" Value="@((int?)1)">
-                        Pendiente de despacho
-                    </MudSelectItem>
-
-                    <MudSelectItem T="int?" Value="@((int?)2)">
-                        Despachado
-                    </MudSelectItem>
-
-                    <MudSelectItem T="int?" Value="@((int?)3)">
-                        Entregado
-                    </MudSelectItem>
+                    @foreach (var estado in _estadosPedido)
+                    {
+                        <MudSelectItem T="int?" Value="@((int?)estado)">
+                            @GetEstadoTexto(estado)
+                        </MudSelectItem>
+                    }
 
                 </MudSelect>
             </MudItem>
@@ -116,13 +107,14 @@
                   RowsPerPage="10">
 
             <HeaderContent>
-                <MudTh>#</MudTh>
-                <MudTh>Cliente</MudTh>
-                <MudTh>Fecha</MudTh>
-                <MudTh>Estado</MudTh>
+                <MudTh Style="font-weight:bold;">Id</MudTh>
+                <MudTh Style="font-weight:bold;">Cliente</MudTh>
+                <MudTh Style="font-weight:bold;">Fecha</MudTh>
+                <MudTh Style="font-weight:bold;">Usuario</MudTh>
+                <MudTh Style="font-weight:bold;">Estado</MudTh>
                 @if (UserSession.UsuarioActual?.Permisos.PuedeAnularOperaciones == true)
                 {
-                    <MudTh>Anulado</MudTh>
+                    <MudTh Style="font-weight:bold;">Anulado</MudTh>
                 }
                 <MudTh Align="Right"></MudTh>
             </HeaderContent>
@@ -132,28 +124,16 @@
                 <MudTd>@row.Id</MudTd>
                 <MudTd>@row.Cliente</MudTd>
                 <MudTd>@row.FechaEntrega?.ToString("dd/MM/yyyy")</MudTd>
+                <MudTd>@row.UsuaCreacion</MudTd>
 
-                <MudItem xs="12" sm="6" md="3">
-                    <MudSelect T="int?"
-                               Label="Estado del Pedido"
-                               @bind-Value="_filtro.Estado"
-                               Variant="Variant.Outlined"
-                               Margin="Margin.Dense"
-                               Dense="true">
-
-                        <MudSelectItem T="int?" Value="@((int?)null)">
-                            Todos
-                        </MudSelectItem>
-
-                        @foreach (var estado in _estadosPedido)
-                        {
-                            <MudSelectItem T="int?" Value="@((int?)estado)">
-                                @GetEstadoTexto(estado)
-                            </MudSelectItem>
-                        }
-
-                    </MudSelect>
-                </MudItem>
+                <MudTd DataLabel="Estado">
+                    <MudChip T="string"
+                             Color="@GetEstadoColor(row.Estado)"
+                             Variant="Variant.Filled"
+                             Size="Size.Small">
+                        @GetEstadoTexto(row.Estado)
+                    </MudChip>
+                </MudTd>
                 @if (UserSession.UsuarioActual?.Permisos.PuedeAnularOperaciones == true)
                 {
                     <MudTd>
@@ -161,30 +141,45 @@
                                  Color="@(row.Activo == true ? Color.Success : Color.Error)"
                                  Variant="Variant.Filled"
                                  Size="Size.Small"
-                                 Clickable="@PuedeAnular(row)"
+                                 Clickable="@(PuedeAnular(row) && !_idPedidoProcesando.HasValue)"
                                  Style="@(PuedeAnular(row) ? "cursor:pointer;" : "cursor:default;")"
-                                 OnClick="@(PuedeAnular(row) ? (() => ConfirmarAnulacion(row)) : null)">
+                                 OnClick="@(PuedeAnular(row) && !_idPedidoProcesando.HasValue
+                                     ? (() => ConfirmarAnulacion(row))
+                                     : null)">
                             @(row.Activo == true ? "Activo" : "Anulado")
                         </MudChip>
                     </MudTd>
                 }
 
+
                 <MudTd Align="Align.Right">
+
+                    @* MOSTRAR PEDIDO *@
                     <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                    Color="Color.Primary"
+                                   Title="Mostrar pedido"
+                                   Disabled="@(_idPedidoProcesando.HasValue)"
                                    OnClick="@(() => Navigation.NavigateTo($"/pedidos/ver/{row.Id}"))" />
+
                     @if (UserSession.UsuarioActual?.Permisos.PuedeAprobarPedidos == true)
                     {
-                        <!-- Aprobar (solo Pendiente + Activo) -->
+                        @* APROBAR: solo pedidos pendientes y activos *@
                         @if (row.Estado == 0 && row.Activo == true)
                         {
-                            <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
-                                           Color="Color.Success"
-                                           Title="Aprobar pedido"
-                                           OnClick="@(() => ConfirmarAprobacion(row))" />
-                        }
+                            <MudIconButton Icon="@(_idPedidoProcesando == row.Id
+                                                                           ? Icons.Material.Filled.HourglassEmpty
+                                                                           : Icons.Material.Filled.CheckCircle)"
+                                   Color="Color.Success"
+                                   Title="@(_idPedidoProcesando == row.Id
+                                                                   ? "Procesando aprobación..."
+                                                                   : "Aprobar pedido")"
+                                   Disabled="@(_idPedidoProcesando.HasValue)"
+                                   OnClick="@(() => ConfirmarAprobacion(row))" />
+                                        }
                     }
+
                 </MudTd>
+
             </RowTemplate>
 
             <NoRecordsContent>
@@ -219,6 +214,8 @@
     private bool _isNavigating = false;
 
     private readonly int[] _estadosPedido = { 0, 1, 2, 3 };
+
+    private int? _idPedidoProcesando = null;
 
     private void GoNuevoPedido()
     {
@@ -329,40 +326,94 @@
         }
     }
 
-    async Task ConfirmarAprobacion(PedidoDto pedido)
+
+    private async Task ConfirmarAprobacion(PedidoDto pedido)
     {
-        var options = new DialogOptions
+        // Evitar múltiples ejecuciones simultáneas
+        if (_idPedidoProcesando.HasValue)
+            return;
+
+        // Verificar permisos y estado actual de la fila
+        if (UserSession.UsuarioActual?.Permisos.PuedeAprobarPedidos != true ||
+            pedido.Estado != 0 ||
+            pedido.Activo != true)
+            return;
+
+        // Bloquear inmediatamente
+        _idPedidoProcesando = pedido.Id;
+
+        try
         {
-            CloseButton = true,   // 👈 MUESTRA LA ❌
-            MaxWidth = MaxWidth.Small,
-            FullWidth = true
-        };
+            // Mostrar los botones deshabilitados
+            await InvokeAsync(StateHasChanged);
 
-        bool? result = await DialogService.ShowMessageBox(
-            title: "Confirmar aprobación",
-            message: $"¿Desea aprobar el pedido #{pedido.Id}?",
-            yesText: "Aprobar",
-            options: options,
-            cancelText: "Cancelar");
+            var options = new DialogOptions
+            {
+                CloseButton = true,
+                MaxWidth = MaxWidth.Small,
+                FullWidth = true
+            };
 
-        if (result == true)
-        {
-            var actualizado = await actualizarEstadoPedido(
-                    pedido.Id,
-                    1,
-                    UserSession.UsuarioActual.Usuario);
-            Snackbar.Add(
-                "Pedido fue aprobado correctamente",
-                Severity.Info,
-                options =>
-                {
-                    options.CloseAfterNavigation = true;
-                });
+            bool? result = await DialogService.ShowMessageBox(
+                title: "Confirmar aprobación",
+                message: $"¿Desea aprobar el pedido #{pedido.Id}?",
+                yesText: "Aprobar",
+                cancelText: "Cancelar",
+                options: options);
 
+            // El usuario canceló o cerró el diálogo
+            if (result != true)
+                return;
+
+            var usuario = UserSession.UsuarioActual?.Usuario;
+
+            if (string.IsNullOrWhiteSpace(usuario))
+            {
+                Snackbar.Add(
+                    "La sesión no está disponible.",
+                    Severity.Warning);
+                return;
+            }
+
+            // Actualizar estado en SQL Server
+            bool actualizado = await actualizarEstadoPedido(
+                pedido.Id,
+                1,
+                usuario);
+
+            // Validar el resultado del servicio
+            if (!actualizado)
+            {
+                Snackbar.Add(
+                    "No se pudo aprobar el pedido. Verifique su estado.",
+                    Severity.Warning);
+                return;
+            }
+
+            // Refrescar la tabla antes de desbloquear
             if (_table is not null)
                 await _table.ReloadServerData();
+
+            Snackbar.Add(
+                $"Pedido #{pedido.Id} aprobado correctamente.",
+                Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(
+                $"ERROR AL APROBAR PEDIDO #{pedido.Id}: {ex}");
+
+            Snackbar.Add(
+                "Ocurrió un error al aprobar el pedido.",
+                Severity.Error);
+        }
+        finally
+        {
+            // Desbloquear si cancela, falla o termina correctamente
+            _idPedidoProcesando = null;
         }
     }
+
 
     bool PuedeAnular(PedidoDto row)
     {
