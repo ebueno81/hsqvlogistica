@@ -1,0 +1,2 @@
+# Comando para crear la imagen de Docker y poder subirla a un hosting
+docker save -o D:\HsqvLogistica_1.0.tar hsqvlogistica:1.0

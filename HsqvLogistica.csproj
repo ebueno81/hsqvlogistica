@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Dockerfile" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="Common\Email\EmailTemplates\GarantiaCerrada.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

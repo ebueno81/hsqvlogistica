@@ -1,0 +1,19 @@
+
+# Carpetas de compilación .NET
+**/bin/
+**/obj/
+
+# Visual Studio
+.vs/
+**/.vs/
+*.user
+*.suo
+
+# Git
+.git/
+.gitignore
+
+# Otros
+**/node_modules/
+**/TestResults/
+*.log
